@@ -166,8 +166,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aff7782eb4b7a8f439f991708e333aa3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resolution: 10
-  convertToSphere: 0
+  sphereType: 0
+  resolution: 256
+  convertToSphere: 1
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0

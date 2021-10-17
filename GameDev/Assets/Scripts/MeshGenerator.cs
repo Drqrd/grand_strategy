@@ -14,11 +14,13 @@ using UnityEngine;
  * - https://www.youtube.com/watch?v=lctXaT9pxA0&t=194s&ab_channel=SebastianLague
 */
 
+// TODO Fix the fibonacci delaunay triangulation. Probably broken in the conversion of 3d to 2d points
 
 namespace MeshGenerator
 {
     public abstract class CustomMesh
     {
+        public MeshFilter[] meshFilters { get; protected set; }
         public abstract void Build();  
     }
 
@@ -27,7 +29,6 @@ namespace MeshGenerator
         private Vector3[] ups   = new Vector3[] { Vector3.up, Vector3.down };
         private Vector3[] sides = new Vector3[] { Vector3.forward, Vector3.right, Vector3.back, Vector3.left, Vector3.forward };
 
-        private MeshFilter[] meshFilters = new MeshFilter[8];
         private Transform parent;
         private int resolution;
         private bool normalize;
@@ -37,6 +38,7 @@ namespace MeshGenerator
             this.parent     = parent;
             this.resolution = resolution;
             this.normalize = normalize;
+            meshFilters = new MeshFilter[8];
         }
 
         // Constructs the mesh
@@ -198,13 +200,12 @@ namespace MeshGenerator
         private int numPoints;
         private bool normalize;
 
-        private MeshFilter meshFilter;
-
         public FibonacciSphere(Transform parent, int numPoints, bool normalize = true)
         {
             this.parent = parent;
             this.numPoints = numPoints;
             this.normalize = normalize;
+            meshFilters = new MeshFilter[1];
         }
 
         public override void Build()
@@ -230,17 +231,17 @@ namespace MeshGenerator
             }
 
             meshObj.AddComponent<MeshRenderer>().sharedMaterial = Resources.Load<Material>("Materials/Surface");
-            meshFilter = meshObj.AddComponent<MeshFilter>();
-            meshFilter.sharedMesh = new Mesh();
+            meshFilters[0] = meshObj.AddComponent<MeshFilter>();
+            meshFilters[0].sharedMesh = new Mesh();
 
-            meshFilter.sharedMesh.vertices = vertices;
+            meshFilters[0].sharedMesh.vertices = vertices;
 
             // Delaunay Triangulation
             // Approach: divide sphere into two hemispheres, flatten, triangulate, stitch the sides
-            Triangulate(meshFilter.sharedMesh);
+            Triangulate(meshFilters[0].sharedMesh);
 
-            meshFilter.sharedMesh.RecalculateNormals();
-            meshFilter.sharedMesh.Optimize();
+            meshFilters[0].sharedMesh.RecalculateNormals();
+            meshFilters[0].sharedMesh.Optimize();
         }
 
         private void Triangulate(Mesh mesh)
