@@ -166,7 +166,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aff7782eb4b7a8f439f991708e333aa3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resolution: 20
+  resolution: 10
   convertToSphere: 0
 --- !u!1 &705507993
 GameObject:

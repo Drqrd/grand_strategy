@@ -5,14 +5,16 @@ using MeshGenerator;
 
 public class World : MonoBehaviour
 {
-    [Range(1,1000)]
     [SerializeField] private int resolution = 1;
     [SerializeField] private bool convertToSphere = false;
+
+    CustomMesh sphere;
+
 
     // Start is called before the first frame updates
     void Start()
     {
-        OctahedronSphere sphere = new OctahedronSphere(transform, resolution, convertToSphere);
+        sphere = new FibonacciSphere(transform, resolution, convertToSphere);
         sphere.Build();
 
         // GetComponent<MeshFilter>().sharedMesh = sphere.SharedMesh;
