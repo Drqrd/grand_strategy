@@ -50,7 +50,7 @@ namespace MeshGenerator
                 // For each side (4)
                 for (int side = 0; side < sides.Length - 1; side++)
                 {
-                    int index = up * ups.Length + side;
+                    int index = up * (sides.Length - 1) + side;
 
                     // GameObject for heirarchy control
                     GameObject obj       = new GameObject("Face " + index);

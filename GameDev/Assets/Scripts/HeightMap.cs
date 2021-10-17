@@ -22,6 +22,7 @@ public class HeightMap
     public void Build()
     {
         GetContinentCenters();
+        AddHeight();
     }
 
     private void GetContinentCenters()
@@ -66,6 +67,23 @@ public class HeightMap
         continentCenters = centers.ToArray();
     }
 
+    private void AddHeight()
+    {
+        for (int a = 0; a < meshFilters.Length; a++)
+        {
+            Vector3[] vertices = meshFilters[a].sharedMesh.vertices;
+
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                vertices[i] *= ((Sample(vertices[i]) * .1f + 1f));
+            }
+
+            meshFilters[a].sharedMesh.vertices = vertices;
+            meshFilters[a].sharedMesh.RecalculateNormals();
+            meshFilters[a].sharedMesh.Optimize();
+        }
+    }
+
     private float DistanceBetweenPoints(Vector3 a, Vector3 b)
     {
         return Mathf.Sqrt(Mathf.Pow(b.x - a.x, 2f) + Mathf.Pow(b.y - a.y, 2f) + Mathf.Pow(b.z - a.z, 2f));
@@ -74,5 +92,10 @@ public class HeightMap
     private Vector3 TriangleCentroid(Vector3 a, Vector3 b, Vector3 c)
     {
         return new Vector3((a.x + b.x + c.x) / 3f, (a.y + b.y + c.y) / 3f, (a.z + b.z + c.z) / 3f);
+    }
+
+    private float Sample(Vector3 v)
+    {
+        return Noise.Sum(Noise.methods[3][2], v, 1, 8,2f,0.5f).value;
     }
 }
