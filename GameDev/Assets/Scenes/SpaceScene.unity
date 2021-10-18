@@ -167,7 +167,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sphereType: 0
-  resolution: 256
+  continentSize: 3
+  resolution: 10
   convertToSphere: 1
 --- !u!1 &705507993
 GameObject:

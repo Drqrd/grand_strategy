@@ -44,6 +44,9 @@ namespace MeshGenerator
         // Constructs the mesh
         public override void Build()
         {
+            GameObject parentObj = new GameObject("Mesh");
+            parentObj.transform.parent = parent;
+
             // For each the top and the bottom (2)
             for (int up = 0; up < ups.Length; up++)
             {
@@ -54,7 +57,7 @@ namespace MeshGenerator
 
                     // GameObject for heirarchy control
                     GameObject obj       = new GameObject("Face " + index);
-                    obj.transform.parent = parent;
+                    obj.transform.parent = parentObj.transform;
 
                     // Add mesh components
                     obj.AddComponent<MeshRenderer>().sharedMaterial = Resources.Load<Material>("Materials/Surface");
