@@ -20,9 +20,9 @@ public class HLZS
         RainTundra, WetTundra, MoistTundra, DryTundra, DryScrub, DesertScrub,
         Steppe, ThornSteppe, ThornWoodland, Desert }
 
-    public static float maxHeight = 4000f;
-    public static float averageHeight = 800f;
-    public static float minHeight = -4000f;
+    public static float maxHeight = 8000f;
+    public static float averageHeight = 2800f;
+    public static float minHeight = 0f;
 
     private float[] elevationTime = new float[] { 0.0f, 0.27f, 0.55f, 0.82f, 1.0f }; // 2750 m max
     private float[] latitudeTime = new float[] { 0.0f, 0.12f, 0.25f, 0.5f, .73f, 1.0f }; // 90 deg max

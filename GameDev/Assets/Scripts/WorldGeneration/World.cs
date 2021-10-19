@@ -8,6 +8,16 @@ using MapGenerator;
 
 public class World : MonoBehaviour
 {
+    public enum PlateSize 
+    {
+        Islands, 
+        Small, 
+        Medium, 
+        Large, 
+        Enormous
+    };
+
+    public float[] distBetweenCenters = new float[] { .2f, .5f, .7f, .9f, 1.2f };
 
     public enum SphereType
     {
@@ -19,6 +29,7 @@ public class World : MonoBehaviour
     public enum MapDisplay
     {
         Mesh,
+        Plates,
         Terrain,
         HeightMap,
         MoistureMap,
@@ -27,7 +38,7 @@ public class World : MonoBehaviour
 
     [Header("Parameters")]
     [SerializeField] private SphereType sphereType;
-    [SerializeField] private HeightMap.ContinentSize continentSize;
+    [SerializeField] private PlateSize plateSize;
     [SerializeField] private int resolution = 1;
     [SerializeField] private bool convertToSphere = false;
 
@@ -35,14 +46,21 @@ public class World : MonoBehaviour
     [SerializeField] private MapDisplay mapDisplay;
     private MapDisplay previousDisplay;
 
+
+    private Vector3[] plateCenters;
+    private TectonicPlate[] plates;
     private CustomMesh sphere;
     private HeightMap heightMap;
+    private TectonicPlateMap plateMap;
+    private MoistureMap moistureMap;
+    private TemperatureMap temperatureMap;
 
     // Start is called before the first frame updates
     private void Start()
     {
         BuildMesh();
         BuildMaps();
+        previousDisplay = MapDisplay.Plates;
     }
 
     private void Update()
@@ -74,92 +92,163 @@ public class World : MonoBehaviour
 
     private void BuildMaps()
     {
+        BuildTectonicPlates();
         BuildHeightMap();
         BuildMoistureMap();
         BuildTemperatureMap();
     }
 
+    private void BuildTectonicPlates()
+    {
+        GeneratePlateCenters();
+        GeneratePlates();
+        BuildTectonicPlateMap();
+    }
+
+    private void BuildTectonicPlateMap()
+    {
+        plateMap = new TectonicPlateMap(transform, plates);
+        plateMap.Build();
+    }
+
     private void BuildHeightMap()
     {
         heightMap = new HeightMap(transform, sphere.meshFilters);
-        heightMap.continentSize = continentSize;
         heightMap.Build();
     }
 
     private void BuildMoistureMap()
     {
-
+        moistureMap = new MoistureMap(transform, sphere.meshFilters);
+        moistureMap.Build();
     }
 
     private void BuildTemperatureMap()
     {
-
+        temperatureMap = new TemperatureMap(transform, sphere.meshFilters);
+        temperatureMap.Build();
     }
 
     private void ChangeMap()
     {
-        switch (mapDisplay)
+        if (previousDisplay != mapDisplay)
         {
-            case MapDisplay.Mesh:
-                previousDisplay = MapDisplay.Mesh;
-                transform.Find("Mesh").gameObject.SetActive(true);
-                transform.Find("Terrain").gameObject.SetActive(false);
-                transform.Find("Height Map").gameObject.SetActive(false);
-                transform.Find("Moisture Map").gameObject.SetActive(false);
-                transform.Find("Temperature Map").gameObject.SetActive(false);
-                break;
-            case MapDisplay.Terrain:
-                previousDisplay = MapDisplay.Terrain;
-                transform.Find("Mesh").gameObject.SetActive(false);
-                transform.Find("Terrain").gameObject.SetActive(true);
-                transform.Find("Height Map").gameObject.SetActive(false);
-                transform.Find("Moisture Map").gameObject.SetActive(false);
-                transform.Find("Temperature Map").gameObject.SetActive(false);
-                break;
-            case MapDisplay.HeightMap:
-                previousDisplay = MapDisplay.Mesh;
-                transform.Find("Mesh").gameObject.SetActive(false);
-                transform.Find("Terrain").gameObject.SetActive(false);
-                transform.Find("Height Map").gameObject.SetActive(true);
-                transform.Find("Moisture Map").gameObject.SetActive(false);
-                transform.Find("Temperature Map").gameObject.SetActive(false);
-                break;
-            case MapDisplay.MoistureMap:
-                previousDisplay = MapDisplay.Mesh;
-                transform.Find("Mesh").gameObject.SetActive(false);
-                transform.Find("Terrain").gameObject.SetActive(false);
-                transform.Find("Height Map").gameObject.SetActive(false);
-                transform.Find("Moisture Map").gameObject.SetActive(true);
-                transform.Find("Temperature Map").gameObject.SetActive(false);
-                break;
-            case MapDisplay.TemperatureMap:
-                previousDisplay = MapDisplay.Mesh;
-                transform.Find("Mesh").gameObject.SetActive(false);
-                transform.Find("Terrain").gameObject.SetActive(false);
-                transform.Find("Height Map").gameObject.SetActive(false);
-                transform.Find("Moisture Map").gameObject.SetActive(true);
-                transform.Find("Temperature Map").gameObject.SetActive(false);
-                break;
-            default:
-                previousDisplay = MapDisplay.Mesh;
-                transform.Find("Mesh").gameObject.SetActive(true);
-                transform.Find("Terrain").gameObject.SetActive(false);
-                transform.Find("Height Map").gameObject.SetActive(false);
-                transform.Find("Moisture Map").gameObject.SetActive(false);
-                transform.Find("Temperature Map").gameObject.SetActive(false);
-                break;
+            previousDisplay = mapDisplay;
+            foreach (Transform child in transform)
+            {
+                if (child.gameObject.name.Contains(mapDisplay.ToString())) { child.gameObject.SetActive(true); }
+                else { child.gameObject.SetActive(false); }
+            }
         }
     }
 
-    private void OnDrawGizmosSelected()
+    private void GeneratePlateCenters()
     {
-        if (heightMap != null)
+        List<Vector3> centers = new List<Vector3>();
+
+        centers.Add(Random.onUnitSphere);
+    
+            float minDist = distBetweenCenters[(int)plateSize];
+            bool addToCenters;
+            int MAX_TRIES = 999, tries = 0;
+
+        while (tries < MAX_TRIES)
         {
-            foreach (Vector3 center in heightMap.continentCenters)
+            // Get random point
+            addToCenters = true;
+            Vector3 c = Random.onUnitSphere;
+
+            // iterate through
+            for (int i = 0; i < centers.Count; i++)
             {
-                Gizmos.color = Color.blue;
-                Gizmos.DrawSphere(center, .01f);
+                // If distance is larger than allowed, add to tries, tell it to not execute last bit, and break
+                float dist = IMath.DistanceBetweenPoints(centers[i], c);
+
+                if (dist <= minDist)
+                {
+                    tries += 1;
+                    addToCenters = false;
+                }
             }
+
+            if (addToCenters)
+            {
+                centers.Add(c);
+                tries = 0;
+            }
+
+        };
+
+        plateCenters = centers.ToArray();
+    }
+    
+    // First sort the points into their nearest plates
+    private void GeneratePlates()
+    {
+        // Initialization
+        List<int>[] plateTriangles = new List<int>[plateCenters.Length];
+        List<Vector3>[] plateVertices = new List<Vector3>[plateCenters.Length];
+        List<Color>[] plateColors = new List<Color>[plateCenters.Length];
+
+        for (int i = 0; i < plateCenters.Length; i++)
+        {
+            plateTriangles[i] = new List<int>();
+            plateVertices[i] = new List<Vector3>();
+            plateColors[i] = new List<Color>();
+        }
+
+        // For each vertex in each meshfilter...
+        for (int i = 0; i < sphere.meshFilters.Length; i++)
+        {
+            int[] t = sphere.meshFilters[i].mesh.triangles;
+            Vector3[] v = sphere.meshFilters[i].mesh.vertices;
+            for (int j = 0; j < t.Length; j += 3)
+            {
+                Vector3 centroid = IMath.TriangleCentroid(v[t[j+0]], v[t[j + 1]], v[t[j + 2]]);
+                float dist = IMath.DistanceBetweenPoints(centroid, plateCenters[0]);
+                int distInd = 0;
+
+                // Find the closest plate center
+                for(int k = 1; k < plateCenters.Length; k++)
+                {
+                    float newDist = IMath.DistanceBetweenPoints(centroid, plateCenters[k]);
+                    if (dist > newDist)
+                    {
+                        dist = newDist;
+                        distInd = k;
+                    }
+                }
+                // Add to triangles and vertices
+                for(int k = 0; k < 3; k++)
+                {
+                    plateVertices[distInd].Add(v[t[j + k]]);
+                }
+            }
+        }
+
+        // Do triangles
+        for(int i = 0; i < plateCenters.Length; i++)
+        {
+            for (int j = 0; j < plateVertices[i].Count; j++)
+            {
+                plateTriangles[i].Add(j);
+            }
+        }
+
+        // Do colors
+        for (int i = 0; i < plateCenters.Length; i++)
+        {
+            Color color = Random.ColorHSV();
+            for (int j = 0; j < plateVertices[i].Count; j++)
+            {
+                plateColors[i].Add(color);
+            }
+        }
+
+        plates = new TectonicPlate[plateCenters.Length];
+        for(int i = 0; i < plateCenters.Length; i++)
+        {
+            plates[i] = new TectonicPlate(plateCenters[i], plateVertices[i].ToArray(), plateTriangles[i].ToArray(), plateColors[i].ToArray());
         }
     }
 }

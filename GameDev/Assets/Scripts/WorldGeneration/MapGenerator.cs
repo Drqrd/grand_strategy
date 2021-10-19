@@ -27,87 +27,74 @@ namespace MapGenerator
     // Approach:
     // - For continents vs oceans, get random distribution of points a set distance from one another.
     // - Decrement height from the continent centers, which will be considered mountains
+    public class TectonicPlateMap : NoiseMap
+    {
+        private TectonicPlate[] plates;
+
+        public TectonicPlateMap(Transform parent, TectonicPlate[] plates, MeshFilter[] meshFilters = null ) : base(parent, meshFilters)
+        {
+            this.parent = parent;
+            this.plates = plates;
+
+            this.meshFilters = new MeshFilter[plates.Length];
+        }
+
+        public override void Build()
+        {
+            GameObject parentObj = new GameObject(World.MapDisplay.Plates.ToString());
+            parentObj.transform.parent = parent;
+
+            for(int i = 0; i < plates.Length; i++)
+            {
+                GameObject obj = new GameObject("Plate" + i);
+                obj.transform.parent = parentObj.transform;
+
+                meshFilters[i] = obj.AddComponent<MeshFilter>();
+                meshFilters[i].sharedMesh = plates[i].SharedMesh;
+                obj.AddComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/Surface");
+            }
+        }
+    }
+
     public class HeightMap : NoiseMap
     {
-        public enum ContinentSize { Islands, Small, Medium, Large, Enormous, Pangea };
-        public float[] distBetweenCenters = new float[] { .2f, .5f, .7f, .9f, 1.2f };
-        public float[] continentFalloff = new float[] { 2f, 1f, .8f, .6f, .2f };
-
-        public ContinentSize continentSize { get; set; }
-        public Vector3[] continentCenters { get; private set; }
         private Vector3[][] globalVertices;
+        private int[][] globalTriangles;
+
+        private float[][] map;
 
         // Height parameters (For coloring the map)
         private float minHeight = HLZS.minHeight;
         private float startHeight = HLZS.averageHeight;
         private float maxHeight = HLZS.maxHeight;
 
-
-
         public HeightMap(Transform parent, MeshFilter[] meshFilters) : base(parent, meshFilters)
         {
             this.parent = parent;
             this.meshFilters = meshFilters;
 
-            // Global verts
+            // Global verts, triangles and map
             globalVertices = new Vector3[meshFilters.Length][];
+            globalTriangles = new int[meshFilters.Length][];
+            map = new float[globalVertices.Length][];
             for (int i = 0; i < meshFilters.Length; i++)
             {
                 globalVertices[i] = new Vector3[meshFilters[i].sharedMesh.vertexCount];
+                globalTriangles[i] = new int[meshFilters[i].sharedMesh.triangles.Length];
                 globalVertices[i] = meshFilters[i].sharedMesh.vertices;
+                globalTriangles[i] = meshFilters[i].sharedMesh.triangles;
+
+                map[i] = new float[globalVertices[i].Length];
             }
         }
 
         public override void Build()
         {
-            GameObject obj = new GameObject("Height Map");
+            GameObject obj = new GameObject(World.MapDisplay.HeightMap.ToString());
             obj.transform.parent = parent;
-
-            GenerateContinentCenters();
-            GenerateContinents();
         }
 
-        private void GenerateContinentCenters()
-        {
-            List<Vector3> centers = new List<Vector3>();
-
-            centers.Add(Random.onUnitSphere);
-
-            if (continentSize != ContinentSize.Pangea)
-            {
-                float minDist = distBetweenCenters[(int)continentSize];
-                bool addToCenters;
-                int MAX_TRIES = 999, tries = 0;
-
-                while (tries < MAX_TRIES)
-                {
-                    // Get random point
-                    addToCenters = true;
-                    Vector3 c = Random.onUnitSphere;
-
-                    // iterate through
-                    for (int i = 0; i < centers.Count; i++)
-                    {
-                        // If distance is larger than allowed, add to tries, tell it to not execute last bit, and break
-                        float dist = DistanceBetweenPoints(centers[i], c);
-
-                        if (dist <= minDist)
-                        {
-                            tries += 1;
-                            addToCenters = false;
-                        }
-                    }
-
-                    if (addToCenters)
-                    {
-                        centers.Add(c);
-                        tries = 0;
-                    }
-                }
-            };
-
-            continentCenters = centers.ToArray();
-        }
+        
 
         // Approach: From the continent center, steadily decrease the average height of the vertex until it hits ocean level.
         //           Variation through sampling
@@ -116,14 +103,7 @@ namespace MapGenerator
         // - for each vertex
         // -    for each continent center, find closest continent center to vertex
         // -    with distance from continent center, apply height falloff + sample
-        private void GenerateContinents()
-        {
-            // Loop through each 
-            for (int i = 0; i < globalVertices.Length; i++)
-            {
-
-            }
-        }
+        
 
         /*
         private void AddHeight()
@@ -143,16 +123,6 @@ namespace MapGenerator
             }
         }
         */
-
-        private float DistanceBetweenPoints(Vector3 a, Vector3 b)
-        {
-            return Mathf.Sqrt(Mathf.Pow(b.x - a.x, 2f) + Mathf.Pow(b.y - a.y, 2f) + Mathf.Pow(b.z - a.z, 2f));
-        }
-
-        private Vector3 TriangleCentroid(Vector3 a, Vector3 b, Vector3 c)
-        {
-            return new Vector3((a.x + b.x + c.x) / 3f, (a.y + b.y + c.y) / 3f, (a.z + b.z + c.z) / 3f);
-        }
     }
     
     public class MoistureMap : NoiseMap
@@ -165,7 +135,7 @@ namespace MapGenerator
 
         public override void Build()
         {
-            GameObject obj = new GameObject("Moisture Map");
+            GameObject obj = new GameObject(World.MapDisplay.MoistureMap.ToString());
             obj.transform.parent = parent;
         }
 
@@ -194,7 +164,7 @@ namespace MapGenerator
 
         public override void Build()
         {
-            GameObject obj = new GameObject("Temperature Map");
+            GameObject obj = new GameObject(World.MapDisplay.TemperatureMap.ToString());
             obj.transform.parent = parent;
         }
     }
