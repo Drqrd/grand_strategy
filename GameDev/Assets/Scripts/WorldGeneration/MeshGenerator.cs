@@ -13,7 +13,8 @@ using UnityEngine;
  * - https://www.youtube.com/watch?v=lctXaT9pxA0&t=194s&ab_channel=SebastianLague
 */
 
-// TODO Fix the fibonacci delaunay triangulation. Probably broken in the conversion of 3d to 2d points
+// TODO Fix the fibonacci delaunay triangulation. Probably broken in the conversion of 3d to 2d points,
+// Also stereopgraphic projection goes to inf at -1 and 1, so move the points from those
 
 namespace MeshGenerator
 {
@@ -31,6 +32,7 @@ namespace MeshGenerator
         private Transform parent;
         private int resolution;
         private bool normalize;
+        private float jitter;
 
         public OctahedronSphere(Transform parent, int resolution, bool normalize = true)
         {

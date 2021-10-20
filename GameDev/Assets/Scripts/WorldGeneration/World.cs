@@ -1,10 +1,11 @@
-using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using MeshGenerator;
 using MapGenerator;
 
-// TODO: Create a get seed function to input into the map generators
+// TODO: - Create a get seed function to input into the map generators
+//       - Add jitter functionality to Fibonacci
 
 public class World : MonoBehaviour
 {
@@ -40,7 +41,9 @@ public class World : MonoBehaviour
     [SerializeField] private SphereType sphereType;
     [SerializeField] private PlateSize plateSize;
     [SerializeField] private int resolution = 1;
+    [SerializeField] [Tooltip("Fibonacci Sphere Only")] [Range(0f, 1f)] private float jitter = 0;
     [SerializeField] private bool convertToSphere = false;
+    [SerializeField] private bool smoothMapSurface = true;
 
     [Header("Display")]
     [SerializeField] private MapDisplay mapDisplay;
@@ -181,7 +184,7 @@ public class World : MonoBehaviour
 
         plateCenters = centers.ToArray();
     }
-    
+
     // First sort the points into their nearest plates
     private void GeneratePlates()
     {
@@ -218,7 +221,8 @@ public class World : MonoBehaviour
                         distInd = k;
                     }
                 }
-                // Add to triangles and vertices
+
+                // Add to vertices
                 for(int k = 0; k < 3; k++)
                 {
                     plateVertices[distInd].Add(v[t[j + k]]);
@@ -232,6 +236,15 @@ public class World : MonoBehaviour
             for (int j = 0; j < plateVertices[i].Count; j++)
             {
                 plateTriangles[i].Add(j);
+            }
+        }
+        
+        // Squash vertices
+        if (smoothMapSurface)
+        {
+            for (int i = 0; i < plateVertices.Length; i++)
+            {
+                CondenseVerticesAndTriangles(plateVertices[i], plateTriangles[i], out plateVertices[i], out plateTriangles[i]);
             }
         }
 
@@ -249,6 +262,44 @@ public class World : MonoBehaviour
         for(int i = 0; i < plateCenters.Length; i++)
         {
             plates[i] = new TectonicPlate(plateCenters[i], plateVertices[i].ToArray(), plateTriangles[i].ToArray(), plateColors[i].ToArray());
+        }
+    }
+
+    // Each triangle has their own set of vertices, the triangles should share vertices with neighboring triangles
+    // to smooth the surface of the sphere
+    // Approach: Loop through each vertex element, find matching vertices, get their indices into a list and delete afterwards
+    private void CondenseVerticesAndTriangles(List<Vector3> v, List<int> t, out List<Vector3> vertices, out List<int> triangles)
+    {
+        // Get distinct members of v
+        vertices = v.Distinct().ToList();
+        for (int i = 0; i < vertices.Count; i++)
+        {
+            // For each vertex, if they match the current comparison vertex, change the triangle to the proper index
+            for (int j = i; j < v.Count; j++)
+            {
+                if (vertices[i] == v[j])
+                {
+                    t[j] = i;
+                }
+            }
+        }
+
+        triangles = t;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (Application.isPlaying)
+        {
+            if (mapDisplay == MapDisplay.Plates)
+            {
+                Gizmos.color = Color.red;
+                for (int i = 0; i < plates.Length; i++)
+                {
+                    Gizmos.DrawLine(plates[i].Center, plates[i].Direction);
+                    Gizmos.DrawSphere(plates[i].Center, 0.01f);
+                }
+            }
         }
     }
 }

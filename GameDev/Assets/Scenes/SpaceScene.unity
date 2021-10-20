@@ -173,9 +173,11 @@ MonoBehaviour:
   - 0.9
   - 1.2
   sphereType: 0
-  plateSize: 2
-  resolution: 100
+  plateSize: 3
+  resolution: 10
+  jitter: 0.363
   convertToSphere: 1
+  smoothMapSurface: 0
   mapDisplay: 0
 --- !u!1 &705507993
 GameObject:

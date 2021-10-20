@@ -11,4 +11,9 @@ public static class IMath
     {
         return new Vector3((a.x + b.x + c.x) / 3f, (a.y + b.y + c.y) / 3f, (a.z + b.z + c.z) / 3f);
     }
+
+    public static Vector3 RandomVector3()
+    {
+        return new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f)).normalized;
+    }
 }
