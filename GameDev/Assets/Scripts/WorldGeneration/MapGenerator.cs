@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace MapGenerator
@@ -46,13 +44,20 @@ namespace MapGenerator
 
             for(int i = 0; i < plates.Length; i++)
             {
-                GameObject obj = new GameObject("Plate" + i);
+                GameObject obj = new GameObject("Plate " + i);
                 obj.transform.parent = parentObj.transform;
 
                 meshFilters[i] = obj.AddComponent<MeshFilter>();
                 meshFilters[i].sharedMesh = plates[i].SharedMesh;
                 obj.AddComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/Surface");
+
+                GameObject lineObj = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/Line"));
+                lineObj.transform.parent = obj.transform;
+           
+                plates[i].Boundary = lineObj.GetComponent<LineRenderer>();
             }
+            plates[0].Boundary.positionCount = plates[0].BoundaryVertices.Length;
+            plates[0].Boundary.SetPositions(plates[0].BoundaryVertices);
         }
     }
 
