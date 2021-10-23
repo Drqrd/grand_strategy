@@ -1,88 +1,108 @@
-=using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
-// TODO: Reorder boundary vertices
+// TODO: Reorder boundary Vertices
 
 public class TectonicPlate
 {
-    public Vector3[] Vertices { get { return vertices; } set { vertices = value; } }
-    public Vector3[] BoundaryVertices { get { return boundaryVertices; } set { boundaryVertices = value; } }
-    public int[] Triangles { get { return triangles; } set { triangles = value; } }
-    public Vector3 Direction { get { return direction; } set { direction = value; } }
-    public Vector3 Center { get { return center; } }
-    public Color[] Colors { get { return colors; } set { colors = value; } }
-    public Vector3[] Neighbors { get { return neighbors; } }
-    public Mesh SharedMesh { get { return mesh; } set { mesh = value; } }
-    public LineRenderer Boundary { get { return boundary; } set { boundary = value; } }
+    public Vector3[] Vertices { get; private set; }
+    public int[] Triangles { get; private set; }
+    public Vector3 Direction { get; private set; }
+    public Vector3 Center { get; private set; }
+    public Color[] Colors { get; private set; }
+    public Vector3[] Neighbors { get; private set; }
+    public Mesh SharedMesh { get; private set; }
 
+    public Cell[] Cells { get; private set; }
 
-    private Vector3[] vertices;
-    private Vector3[] boundaryVertices;
-    private int[] triangles;
-    private Vector3 direction;
-    private Vector3 center;
-    private Color[] colors;
-    private Vector3[] neighbors;
+    // Public set
+    public LineRenderer Boundary { get; set; }
+    public Vector3[] BoundaryVertices { get; private set; }
+    public int[] BVMap { get; private set; }
 
-    private Mesh mesh;
-    private LineRenderer boundary;
+    private const int BOUNDARY_VALUE = 2;
+
 
     // Mapping parts
     private float height, moisture, temperature;
 
     public TectonicPlate(Vector3 center, Vector3[] vertices = null, int[] triangles = null, Color[] colors = null)
     {
-        this.center = center;
-        this.vertices = vertices;
-        this.triangles = triangles;
-        this.colors = colors;
+        Center = center;
+        Vertices = vertices;
+        Triangles = triangles;
+        Colors = colors;
 
-        mesh = new Mesh();
+        SharedMesh = new Mesh();
 
-        mesh.vertices = vertices;
-        mesh.triangles = triangles;
-        mesh.colors = colors;
-        mesh.RecalculateNormals();
-        mesh.Optimize();
+        Direction = Vector3.Lerp(Center, (GetRandomDirection() + Center), .15f);
 
-        direction = Vector3.Lerp(center,(GetRandomDirection() + center), .15f);
+        if (Vertices != null && Triangles != null)
+        {
+            SharedMesh.vertices = Vertices;
+            SharedMesh.triangles = Triangles;
+            if (colors != null) { SharedMesh.colors = Colors; }
+            SharedMesh.RecalculateNormals();
+            SharedMesh.Optimize();
 
-        boundaryVertices = FindBoundaryVertices();
+            FindBoundaryVertices();
+
+            Cells = GenerateCells();            
+        }
     }
 
     private Vector3 GetRandomDirection()
     {
-        Vector3 tangent = Vector3.Cross(center, Vector3.up);
-        if (tangent.sqrMagnitude < float.Epsilon) { tangent = Vector3.Cross(center, Vector3.forward); }
+        Vector3 tangent = Vector3.Cross(Center, Vector3.up);
+        if (tangent.sqrMagnitude < float.Epsilon) { tangent = Vector3.Cross(Center, Vector3.forward); }
         tangent.Normalize();
 
-        Quaternion rotation = Quaternion.AngleAxis(Random.Range(0f, 360f), center);
+        Quaternion rotation = Quaternion.AngleAxis(Random.Range(0f, 360f), Center);
         return rotation * tangent;
     }
 
-    // Finds the boundary vertices through locating vertices attached to only one triangle
-    private Vector3[] FindBoundaryVertices()
+    private void FindBoundaryVertices()
     {
         List<Vector3> bv = new List<Vector3>();
+        List<int> bvMap = new List<int>();
         Dictionary<Vector3, int> mp = new Dictionary<Vector3, int>();
 
         // Store all the elements in the map with
         // their occurrence
-        for (int i = 0; i < triangles.Length; i++)
+        for (int i = 0; i < Triangles.Length; i++)
         {
-            if (mp.ContainsKey(vertices[triangles[i]])) { mp[vertices[triangles[i]]] = 1 + mp[vertices[triangles[i]]]; }
-            else { mp.Add(vertices[triangles[i]], 1); }
+            if (mp.ContainsKey(Vertices[Triangles[i]])) { mp[Vertices[Triangles[i]]] = 1 + mp[Vertices[Triangles[i]]]; }
+            else { mp.Add(Vertices[Triangles[i]], 1); }
         }
 
         // Traverse the map and print all the
-        // elements with occurrence 1
+        // elements with occurrence of 2 or less
         foreach (KeyValuePair<Vector3, int> entry in mp)
         {
-            if (uint.Parse(string.Join("", entry.Value)) <= 2) { bv.Add(entry.Key); }
+            int num = (int)uint.Parse(string.Join("", entry.Value));
+
+            if (num <= BOUNDARY_VALUE) { bv.Add(entry.Key); }
+            bvMap.Add(num);
         }
 
-        // Reorder boundary vertices into a counterclockwise manner, to draw a circle
+        // Reorder boundary Vertices into a counterclockwise manner, to draw a circle
         
-        return bv.ToArray();
+        BoundaryVertices = bv.ToArray();
+        BVMap = bvMap.ToArray();
+    }
+
+    // Finds the boundary Vertices through locating Vertices attached to only one triangle
+    private Cell[] GenerateCells()
+    {
+        List<Cell> c = new List<Cell>();
+
+        for (int i = 0; i < Triangles.Length; i += 3)
+        {
+            
+            int[] tri = new int[] { Triangles[i], Triangles[i + 1], Triangles[i + 2] };
+            c.Add(new Cell(this, tri));
+        }
+
+        return c.ToArray();
     }
 }
