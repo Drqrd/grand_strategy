@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 // TODO: Reorder boundary Vertices
@@ -13,11 +15,10 @@ public class TectonicPlate
     public Vector3[] Neighbors { get; private set; }
     public Mesh SharedMesh { get; private set; }
 
-    public Cell[] Cells { get; private set; }
-
     // Public set
     public LineRenderer Boundary { get; set; }
     public Vector3[] BoundaryVertices { get; private set; }
+    public int[][] BoundaryEdges { get; private set; }
     public int[] BVMap { get; private set; }
 
     private const int BOUNDARY_VALUE = 2;
@@ -45,9 +46,8 @@ public class TectonicPlate
             SharedMesh.RecalculateNormals();
             SharedMesh.Optimize();
 
+            FindBoundaryEdges();
             FindBoundaryVertices();
-
-            Cells = GenerateCells();            
         }
     }
 
@@ -63,6 +63,16 @@ public class TectonicPlate
 
     private void FindBoundaryVertices()
     {
+        List<Vector3> verts = new List<Vector3>();
+        foreach (int[] edge in BoundaryEdges)
+        {
+            for (int i = 0; i < edge.Length; i++) { verts.Add(Vertices[edge[i]]); }
+        }
+
+        BoundaryVertices = verts.Distinct().ToArray();
+
+
+        /*
         List<Vector3> bv = new List<Vector3>();
         List<int> bvMap = new List<int>();
         Dictionary<Vector3, int> mp = new Dictionary<Vector3, int>();
@@ -71,11 +81,11 @@ public class TectonicPlate
         // their occurrence
         for (int i = 0; i < Triangles.Length; i++)
         {
-            if (mp.ContainsKey(Vertices[Triangles[i]])) { mp[Vertices[Triangles[i]]] = 1 + mp[Vertices[Triangles[i]]]; }
+            if (mp.ContainsKey(Vertices[Triangles[i]])) { mp[Vertices[Triangles[i]]] += 1; }
             else { mp.Add(Vertices[Triangles[i]], 1); }
         }
 
-        // Traverse the map and print all the
+        // Traverse the map and add all the
         // elements with occurrence of 2 or less
         foreach (KeyValuePair<Vector3, int> entry in mp)
         {
@@ -89,20 +99,75 @@ public class TectonicPlate
         
         BoundaryVertices = bv.ToArray();
         BVMap = bvMap.ToArray();
+        */
     }
 
-    // Finds the boundary Vertices through locating Vertices attached to only one triangle
-    private Cell[] GenerateCells()
+    private void FindBoundaryEdges()
     {
-        List<Cell> c = new List<Cell>();
-
+        List<int[]> edges = new List<int[]>();
+        Dictionary<int[], int> mp = new Dictionary<int[], int>(new IntArrCompareOverride());
         for (int i = 0; i < Triangles.Length; i += 3)
         {
-            
-            int[] tri = new int[] { Triangles[i], Triangles[i + 1], Triangles[i + 2] };
-            c.Add(new Cell(this, tri));
+            int[][] es = new int[][] { new int[] { Triangles[i + 0], Triangles[i + 1] },
+                                       new int[] { Triangles[i + 1], Triangles[i + 2] },
+                                       new int[] { Triangles[i + 2], Triangles[i + 0] } };
+
+            int[][] esInv = new int[][] { new int[] { Triangles[i + 1], Triangles[i + 0] },
+                                          new int[] { Triangles[i + 2], Triangles[i + 1] },
+                                          new int[] { Triangles[i + 0], Triangles[i + 2] } };
+
+            for (int j = 0; j < es.Length; j++)
+            {
+                if (mp.ContainsKey(es[j])) { mp[es[j]] += 1; }
+                else if (mp.ContainsKey(esInv[j])) { mp[esInv[j]] += 1; }
+                else { mp.Add(es[j], 1); }
+            }
         }
 
-        return c.ToArray();
+        // Add
+        foreach (KeyValuePair<int[], int> entry in mp)
+        {
+            uint num = uint.Parse(string.Join("", entry.Value));
+            if (num == 1) { edges.Add(entry.Key); }
+        }
+
+        // Reorder edges so that they connect
+        for (int i = 0; i < edges.Count - 1; i++)
+        {
+
+            for (int j = i + 2; j < edges.Count; j++)
+            {
+                if (edges[j][0] == edges[i][1])
+                {
+                    int[] tempEdge = edges[j];
+                    edges[j] = edges[i + 1];
+                    edges[i + 1] = tempEdge;
+                    continue;
+                }
+            }
+        }
+
+        BoundaryEdges = edges.ToArray();
+    }
+}
+
+
+class IntArrCompareOverride : IEqualityComparer<int[]>
+{
+    public bool Equals(int[] i1, int[] i2)
+    {
+        if (i1 == null && i2 == null) { return true; }
+        if (i1 == null || i2 == null) { return false; }
+
+        bool val = true;
+        for (int ind = 0; ind < i1.Length; ind++) { if (i1[ind] != i2[ind]) { val = false; } }
+        return val;
+    }
+
+    public int GetHashCode(int[] arr)
+    {
+        int hc = arr.Length;
+        foreach (int val in arr) { hc = unchecked(hc * 314159 + val); }
+        return hc;
     }
 }

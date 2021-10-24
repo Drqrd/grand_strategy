@@ -55,9 +55,10 @@ namespace MapGenerator
                 lineObj.transform.parent = obj.transform;
            
                 plates[i].Boundary = lineObj.GetComponent<LineRenderer>();
+
+                plates[i].Boundary.positionCount = plates[i].BoundaryVertices.Length;
+                plates[i].Boundary.SetPositions(plates[i].BoundaryVertices);
             }
-            plates[0].Boundary.positionCount = plates[0].BoundaryVertices.Length;
-            plates[0].Boundary.SetPositions(plates[0].BoundaryVertices);
         }
     }
 
