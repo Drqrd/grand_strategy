@@ -6,6 +6,7 @@ using MapGenerator;
 
 // TODO: - Create a get seed function to input into the map generators
 //       - Add jitter functionality to Fibonacci
+//       - Fix fibonacci
 
 public class World : MonoBehaviour
 {

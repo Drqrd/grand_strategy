@@ -64,9 +64,9 @@ public class TectonicPlate
     private void FindBoundaryVertices()
     {
         List<Vector3> verts = new List<Vector3>();
-        foreach (int[] edge in BoundaryEdges)
+        for(int i = 0; i < BoundaryEdges.Length; i++)
         {
-            for (int i = 0; i < edge.Length; i++) { verts.Add(Vertices[edge[i]]); }
+            verts.Add(Vertices[BoundaryEdges[i][0]]); 
         }
 
         BoundaryVertices = verts.Distinct().ToArray();
