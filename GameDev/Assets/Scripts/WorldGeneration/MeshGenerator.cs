@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
+using DelaunatorSharp;
 
 /*
  * Fibonacci Distribution on Sphere
@@ -8,9 +10,13 @@ using UnityEngine;
  * Delaunay triangulation on sphere
  * - https://fsu.digital.flvc.org/islandora/object/fsu:182663/datastream/PDF/view
  * - https://en.wikipedia.org/wiki/Bowyer%E2%80%93Watson_algorithm
+ * - https://github.com/nol1fe/delaunator-sharp
  *
  * Octahedron Sphere triangulation
  * - https://www.youtube.com/watch?v=lctXaT9pxA0&t=194s&ab_channel=SebastianLague
+ * 
+ * Altered Fibonacci Lattice
+ * - http://extremelearning.com.au/how-to-evenly-distribute-points-on-a-sphere-more-effectively-than-the-canonical-fibonacci-lattice/
 */
 
 // TODO Fix the fibonacci delaunay triangulation. Probably broken in the conversion of 3d to 2d points,
@@ -194,21 +200,24 @@ namespace MeshGenerator
 
 
 
-// --------------------------------------------------------------------------------------------------------------------------------------
-
+    // --------------------------------------------------------------------------------------------------------------------------------------
 
 
     public class FibonacciSphere : CustomMesh
     {
+        public Mesh PPMesh { get; private set; }
+
         private Transform parent;
         private int numPoints;
-        private bool normalize;
+        private float jitter;
+        private bool alterFibonacciLattice;
 
-        public FibonacciSphere(Transform parent, int numPoints, bool normalize = true)
+        public FibonacciSphere(Transform parent, int numPoints, float jitter = 0f, bool alterFibonacciLattice = true)
         {
             this.parent = parent;
             this.numPoints = numPoints;
-            this.normalize = normalize;
+            this.jitter = jitter;
+            this.alterFibonacciLattice = alterFibonacciLattice;
             meshFilters = new MeshFilter[1];
         }
 
@@ -219,217 +228,176 @@ namespace MeshGenerator
 
             Vector3[] vertices = new Vector3[numPoints];
 
-            // Easy vertices using golden ratio
-            for (int i = 0; i < numPoints; i++)
+            // Altered fibonacci lattice
+            if (alterFibonacciLattice)
             {
-                float k = i + .5f;
+                float epsilon;
+                if (numPoints >= 600000) { epsilon = 214f; }
+                else if (numPoints >= 400000) { epsilon = 75f; }
+                else if (numPoints >= 11000) { epsilon = 27f; }
+                else if (numPoints >= 890) { epsilon = 10f; }
+                else if (numPoints >= 177) { epsilon = 3.33f; }
+                else if (numPoints >= 24) { epsilon = 1.33f; }
+                else { epsilon = .33f; }
 
-                float phi = Mathf.Acos(1f - 2f * k / numPoints);
-                float theta = Mathf.PI * (1 + Mathf.Sqrt(5)) * k;
+                float goldenRatio = (1f + Mathf.Sqrt(5f)) / 2f;
 
-                float x = Mathf.Cos(theta) * Mathf.Sin(phi);
-                float y = Mathf.Sin(theta) * Mathf.Sin(phi);
-                float z = Mathf.Cos(phi);
+                for (int i = 0; i < numPoints; i++)
+                {
+                    float theta = 2f * Mathf.PI * i / goldenRatio;
+                    float phi = Mathf.Acos(1f - 2f * (i + epsilon) / (numPoints - 1f + 2f * epsilon));
 
-                vertices[i] = new Vector3(x, y, z);
+                    float x = Mathf.Cos(theta) * Mathf.Sin(phi);
+                    float y = Mathf.Sin(theta) * Mathf.Sin(phi);
+                    float z = Mathf.Cos(phi);
+
+                    vertices[i] = new Vector3(x, y, z);
+                }
+            }
+            // Default vertices
+            else
+            {
+                for (int i = 0; i < numPoints; i++)
+                {
+                    float k = i + .5f;
+
+                    float phi = Mathf.Acos(1f - 2f * k / numPoints);
+                    float theta = Mathf.PI * (1 + Mathf.Sqrt(5)) * k;
+
+                    float x = Mathf.Cos(theta) * Mathf.Sin(phi);
+                    float y = Mathf.Sin(theta) * Mathf.Sin(phi);
+                    float z = Mathf.Cos(phi);
+
+                    vertices[i] = new Vector3(x, y, z);
+                }
             }
 
             meshObj.AddComponent<MeshRenderer>().sharedMaterial = Resources.Load<Material>("Materials/Surface");
             meshFilters[0] = meshObj.AddComponent<MeshFilter>();
             meshFilters[0].sharedMesh = new Mesh();
 
-            meshFilters[0].sharedMesh.vertices = vertices;
-
-            // Delaunay Triangulation
-            // Approach: divide sphere into two hemispheres, flatten, triangulate, stitch the sides
-            Triangulate(meshFilters[0].sharedMesh);
+            // Delaunator Triangluation
+            Vector3[] pp = DelaunatorTriangulate(meshFilters[0].sharedMesh, vertices);
 
             meshFilters[0].sharedMesh.RecalculateNormals();
             meshFilters[0].sharedMesh.Optimize();
         }
 
-        private void Triangulate(Mesh mesh)
+        private Vector3[] DelaunatorTriangulate(Mesh mesh, Vector3[] vertices)
         {
-            Vector3[] vertices = mesh.vertices;
-            List<int[]> triangles = new List<int[]>();
+            // Delaunay wizardry
+            IPoint[] planarProjection = new IPoint[vertices.Length];
+            for (int i = 0; i < vertices.Length; i++) { planarProjection[i] = V2SphereToPlane(vertices[i]); }
+            Delaunator delaunay = new Delaunator(planarProjection);
 
+            // For debug
+            Vector3[] pp = new Vector3[vertices.Length];
+            for (int i = 0; i < vertices.Length; i++) { pp[i] = SphereToPlane(vertices[i]); }
+            
 
-            // Project onto plane
-            Vector2[] planarProjection = new Vector2[vertices.Length + 3];
-            for (int i = 0; i < vertices.Length; i++) { planarProjection[i] = SphereToPlane(vertices[i]); }
+            // Figure out the final point in the back. Takes the convex hull given by delaunator and the final point added,
+            // draws triangles
+            List<Vector3> addTheNegZ = vertices.ToList();
+            addTheNegZ.Add(Vector3.forward);
 
-            // Add the "infinitely" large triangle that contains all points
-            Vector2[] superTriangle = GetSuperTriangle(planarProjection);
-            planarProjection[vertices.Length + 0] = superTriangle[0];
-            planarProjection[vertices.Length + 1] = superTriangle[1];
-            planarProjection[vertices.Length + 2] = superTriangle[2];
-            triangles.Add(new int[] { vertices.Length + 0, vertices.Length + 1, vertices.Length + 2 });
+            // Get the indices of the convex hull points
+            List<IPoint> cv = delaunay.GetHullPoints().ToList();
+            List<IPoint> v = delaunay.Points.ToList();
+            int[] convexHull = new int[cv.Count];
+            for (int i = 0; i < cv.Count; i++) { convexHull[i] = v.IndexOf(cv[i]); }
 
-            // Triangulate
-            // For all real vertices, add to triangles
-            for (int i = 0; i < vertices.Length; i++)
+            // Add jitter
+            if (jitter > 0)
             {
-                List<int[]> badTriangles = new List<int[]>();
-
-                for(int tri = 0; tri < triangles.Count; tri++)
+                for (int i = 0; i < addTheNegZ.Count; i++)
                 {
-                    // Current triangle
-                    int[] triangle = triangles[tri];
-
-                    // If the point is in the triangle, add the triangle to the bad triangles
-                    if (TriangleContainsPoint(planarProjection, triangle, i))
-                    {
-                        badTriangles.Add(triangle);
-                    }
-                }
-
-                List<int[]> polygon = new List<int[]>();
-
-                // Get the polygon formed from the edges of bad triangles that enclose the point
-                for (int tri = 0; tri < badTriangles.Count; tri++)
-                {
-                    int[][] edges = new int[3][] { new int[]{ badTriangles[tri][0], badTriangles[tri][1] },
-                                                   new int[]{ badTriangles[tri][1], badTriangles[tri][2] },
-                                                   new int[]{ badTriangles[tri][2], badTriangles[tri][0] }};
-
-                    // For each edge in triangle, if the edge is not shared by any other triangle in badTriangles,
-                    // Add to the polygon list
-                    for (int e = 0; e < edges.Length; e++)
-                    {
-                        if (!EdgeIsShared(edges[e], badTriangles, tri)) { polygon.Add(edges[e]); }
-                    }
-                }
-
-                // Remove the bad triangles from the triangles list
-                foreach(int[] triangle in badTriangles) { triangles.Remove(triangle); }
-
-                
-                // Re-triangulate using polygon edges (clockwise)
-                foreach (int[] edge in polygon)
-                {
-                    List<int> verts = new List<int>();
-                    verts.Add(edge[0]);
-                    verts.Add(edge[1]);
-                    verts.Add(i);
-                    // Edge = 2 vertex indices, i = current vertex index. a = highest, b = rightmost, c = leftmost
-
-                    // Find greatest y
-                    int a = planarProjection[edge[0]].y > planarProjection[edge[1]].y ? edge[0] : edge[1];
-                    a = planarProjection[i].y > planarProjection[a].y ? i : a;
-
-                    // Remove from the list
-                    verts.Remove(a);
-
-                    // Find rightmost, then remove
-                    int b = planarProjection[verts[0]].x > planarProjection[verts[1]].x ? verts[0] : verts[1];
-                    verts.Remove(b);
-
-                    //Remainder is leftmost
-                    int c = verts[0];
-
-                    // Add clockwise oriented triangle
-                    triangles.Add(new int[3] { a, b, c });
+                    addTheNegZ[i] = AddJitter(addTheNegZ[i]);
                 }
             }
 
-            // Delete the triangles created by the super triangle
-            List<int[]> deleteMe = new List<int[]>();
-            foreach (int[] triangle in triangles)
-            {
-                // Check for if any vertex is the ones tacked on at the end (the super triangle's)
-                if (triangle[0] >= vertices.Length || triangle[1] >= vertices.Length || triangle[2] >= vertices.Length)
-                {
-                    deleteMe.Add(triangle);
-                }
-            }
 
-            foreach (int[] triangle in deleteMe)
-            {
-                triangles.Remove(triangle);
-            }
+            int[] triangles = CloseMesh(addTheNegZ.ToArray(), delaunay.Triangles.ToList(), convexHull);
 
-            int[] flattenedTriangles = new int[triangles.Count * 3];
+            mesh.vertices = addTheNegZ.ToArray();
+            mesh.triangles = triangles;
 
-            // Assign to 1d triangles array
-            int ind = 0;
-            for (int a = 0; a < triangles.Count; a++)
-            {
-                for (int b = 0; b < triangles[a].Length; b++)
-                {
-                    flattenedTriangles[ind] = triangles[a][b];
-                    ind++;
-                }
-            }
-
-            // Assign to mesh
-            mesh.triangles = flattenedTriangles;
+            return pp;
         }
 
-        private bool TriangleContainsPoint(Vector2[] pp, int[] tri, int i)
+
+        private int[] CloseMesh(Vector3[] vertices, List<int> triangles, int[] convexHull)
         {
-            Vector2[] t = new Vector2[3] { pp[tri[0]], pp[tri[2]], pp[tri[1]] };
-            Vector2   p = pp[i];
-
-            // determinant of counterclockwise triangle circumcircle + point
-            // if positive, point is inside of the circumcircle
-
-            // matrix
-            float a1 = t[0].x - p.x, a2 = t[0].y - p.y, a3 = (Mathf.Pow(t[0].x, 2f) - Mathf.Pow(p.x, 2f)) + (Mathf.Pow(t[0].y, 2f) - Mathf.Pow(p.y,2f));
-            float b1 = t[1].x - p.x, b2 = t[1].y - p.y, b3 = (Mathf.Pow(t[1].x, 2f) - Mathf.Pow(p.x, 2f)) + (Mathf.Pow(t[1].y, 2f) - Mathf.Pow(p.y, 2f));
-            float c1 = t[2].x - p.x, c2 = t[2].y - p.y, c3 = (Mathf.Pow(t[2].x, 2f) - Mathf.Pow(p.x, 2f)) + (Mathf.Pow(t[2].y, 2f) - Mathf.Pow(p.y, 2f));
-
-            // returns true if determinant of the matrix above is greater than 0
-            return a1*(b2*c3 - b3*c2) - a2*(b1*c3 - b3*c1) + a3*(b1*c2 - b2*c1) > 0;
-        }
-
-        private bool EdgeIsShared(int[] edge, List<int[]> badTriangles, int skip)
-        {
-            for(int i = 0; i < badTriangles.Count; i++)
+            int a = vertices.Length - 1;
+            int b, c;
+            for(int i = 0; i < convexHull.Length - 1; i++)
             {
-                if (i != skip)
+                if (TriDeterminant(vertices[a], vertices[convexHull[i]], vertices[convexHull[i + 1]]))
                 {
-                    int[][] edges = new int[3][] { new int[]{ badTriangles[i][0], badTriangles[i][1] },
-                                                   new int[]{ badTriangles[i][1], badTriangles[i][2] },
-                                                   new int[]{ badTriangles[i][2], badTriangles[i][0] } };
-
-                    foreach(int[] e in edges) { if (edge == e) { return true; } }
+                    b = convexHull[i];
+                    c = convexHull[i + 1];
                 }
+                else
+                {
+                    b = convexHull[i + 1];
+                    c = convexHull[i];
+                }
+
+                triangles.Add(a);
+                triangles.Add(b);
+                triangles.Add(c);
             }
-            return false;
+
+            if (TriDeterminant(vertices[a], vertices[convexHull[convexHull.Length - 1]], vertices[convexHull[0]]))
+            {
+                b = convexHull[convexHull.Length - 1];
+                c = convexHull[0];
+            }
+            else
+            {
+                b = convexHull[0];
+                c = convexHull[convexHull.Length - 1];
+            }
+
+            triangles.Add(a);
+            triangles.Add(b);
+            triangles.Add(c);
+
+            return triangles.ToArray();
         }
         
-        // Returns planar projection of the point
+        private bool TriDeterminant(Vector2 a, Vector2 b, Vector2 c)
+        {
+            return (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y) > 0;
+        }
+
         private Vector2 SphereToPlane(Vector3 v3)
         {
-            return new Vector2(v3.x/ (1f - v3.z), v3.y / (1f - v3.z));
+            return new Vector2(v3.x / (1f - v3.z), v3.y / (1f - v3.z));
         }
 
-        // Returns spherical projection of the planar projected point
-        private Vector3 PlaneToSphere(Vector2 v2)
+        private V2 V2SphereToPlane(Vector3 v3)
         {
-            float divisor = 1f + Mathf.Pow(v2.x, 2f) + Mathf.Pow(v2.y, 2f);
-            float x = (2f * v2.x) / divisor;
-            float y = (2f * v2.y) / divisor;
-            float z = (-1f + Mathf.Pow(v2.x, 2f) + Mathf.Pow(v2.y, 2f)) / divisor;
-            return new Vector3(x,y,z);
+            V2 p = new V2(v3.x / (1f - v3.z), v3.y / (1f - v3.z));
+            return p;
         }
-
-        private Vector2[] GetSuperTriangle(Vector2[]pp)
+        private Vector3 AddJitter(Vector3 v)
         {
-            float xMax = pp[0].x, xMin = pp[0].x, yMax = pp[0].y, yMin = pp[0].y;
-            for (int i = 1; i < pp.Length - 3; i++)
-            {
-                xMax = pp[i].x > xMax ? pp[i].x : xMax;
-                xMin = pp[i].x < xMin ? pp[i].x : xMin;
-                yMax = pp[i].y > yMax ? pp[i].y : yMax;
-                yMin = pp[i].y < yMin ? pp[i].y : yMin;
-            }
-
-            float margin = 500;
-            Vector2 a = new Vector2(0.5f * xMax, -2f * xMax - margin);
-            Vector2 b = new Vector2(-2f * yMax - margin, 2f * yMax + margin);
-            Vector2 c = new Vector2(2 * xMax + yMax + margin, 2f * yMax + margin);
-            return new Vector2[3] { a, b, c };
+            float j = jitter / Mathf.Sqrt(numPoints);
+            Vector3 r = new Vector3(Random.Range(-1,1), Random.Range(-1, 1), Random.Range(-1, 1)) * Random.Range(-j,j);
+            return (v + r).normalized;
         }
     }
+
+    public class V2 : IPoint
+    {
+        public double X { get; set; }
+        public double Y { get; set; }
+
+        public V2(double X, double Y)
+        {
+            this.X = X;
+            this.Y = Y;
+        }
+    }
+
 }

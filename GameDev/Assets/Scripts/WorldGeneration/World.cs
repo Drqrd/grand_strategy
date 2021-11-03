@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 using MeshGenerator;
@@ -6,20 +7,19 @@ using MapGenerator;
 
 // TODO: - Create a get seed function to input into the map generators
 //       - Add jitter functionality to Fibonacci
-//       - Fix fibonacci
 
 public class World : MonoBehaviour
 {
-    public enum PlateSize 
+    public enum PlateSize
     {
-        Islands, 
-        Small, 
-        Medium, 
-        Large, 
+        Islands,
+        Small,
+        Medium,
+        Large,
         Enormous
     };
 
-    public float[] distBetweenCenters = new float[] { .2f, .5f, .7f, .9f, 1.2f };
+    private float[] distBetweenCenters = new float[] { .2f, .5f, .7f, .9f, 1.2f };
 
     public enum SphereType
     {
@@ -38,18 +38,28 @@ public class World : MonoBehaviour
         TemperatureMap
     }
 
+    public enum PlateDetermination
+    {
+        ClosestCenter,
+        FloodFill
+    }
+
     [Header("Parameters")]
     [SerializeField] private SphereType sphereType;
     [SerializeField] private PlateSize plateSize;
-    [SerializeField] private int resolution = 1;
-    [SerializeField] [Tooltip("Fibonacci Sphere Only")] [Range(0f, 1f)] private float jitter = 0;
+    [SerializeField] private PlateDetermination plateDeterminationType;
+    [SerializeField] [Range(1, 65534)] private int resolution = 1;
     [SerializeField] private bool convertToSphere = false;
     [SerializeField] private bool smoothMapSurface = true;
+    [SerializeField] private bool displayVertices = false;
+
+    [Header("Fibonacci Exclusive Parameters")]
+    [SerializeField] [Range(0f, 1f)] private float jitter = 0;
+    [SerializeField] private bool alterFibonacciLattice = true;
 
     [Header("Display")]
     [SerializeField] private MapDisplay mapDisplay;
     private MapDisplay previousDisplay;
-
 
     private Vector3[] plateCenters;
     private TectonicPlate[] plates;
@@ -82,13 +92,13 @@ public class World : MonoBehaviour
             case SphereType.Cube:
                 break;
             case SphereType.Fibonacci:
-                sphere = new FibonacciSphere(transform, resolution, convertToSphere);
+                sphere = new FibonacciSphere(transform, resolution, jitter, alterFibonacciLattice);
                 break;
             default:
                 sphere = null;
                 break;
         }
-        if (sphere != null) 
+        if (sphere != null)
         {
             sphere.Build();
         }
@@ -151,10 +161,10 @@ public class World : MonoBehaviour
         List<Vector3> centers = new List<Vector3>();
 
         centers.Add(Random.onUnitSphere);
-    
-            float minDist = distBetweenCenters[(int)plateSize];
-            bool addToCenters;
-            int MAX_TRIES = 999, tries = 0;
+
+        float minDist = distBetweenCenters[(int)plateSize];
+        bool addToCenters;
+        int MAX_TRIES = 999, tries = 0;
 
         while (tries < MAX_TRIES)
         {
@@ -201,6 +211,25 @@ public class World : MonoBehaviour
             plateColors[i] = new List<Color>();
         }
 
+        if (plateDeterminationType == PlateDetermination.ClosestCenter)
+        {
+            GetCenterClosestCenter(plateTriangles, plateVertices, plateColors, out plateTriangles, out plateVertices, out plateColors);
+        }
+        else if (plateDeterminationType == PlateDetermination.FloodFill)
+        {
+            GetCenterFloodFill(plateTriangles, plateVertices, plateColors, out plateTriangles, out plateVertices, out plateColors);
+        }
+
+
+        plates = new TectonicPlate[plateCenters.Length];
+        for (int i = 0; i < plateCenters.Length; i++)
+        {
+            plates[i] = new TectonicPlate(plateCenters[i], plateVertices[i].ToArray(), plateTriangles[i].ToArray(), plateColors[i].ToArray());
+        }
+    }
+
+    private void GetCenterClosestCenter(List<int>[] plateTriangles, List<Vector3>[] plateVertices, List<Color>[] plateColors, out List<int>[] pt, out List<Vector3>[] pv, out List<Color>[] pc)
+    {
         // For each vertex in each meshfilter...
         for (int i = 0; i < sphere.meshFilters.Length; i++)
         {
@@ -208,12 +237,12 @@ public class World : MonoBehaviour
             Vector3[] v = sphere.meshFilters[i].mesh.vertices;
             for (int j = 0; j < t.Length; j += 3)
             {
-                Vector3 centroid = IMath.TriangleCentroid(v[t[j+0]], v[t[j + 1]], v[t[j + 2]]);
+                Vector3 centroid = IMath.TriangleCentroid(v[t[j + 0]], v[t[j + 1]], v[t[j + 2]]);
                 float dist = IMath.DistanceBetweenPoints(centroid, plateCenters[0]);
                 int distInd = 0;
 
                 // Find the closest plate center
-                for(int k = 1; k < plateCenters.Length; k++)
+                for (int k = 1; k < plateCenters.Length; k++)
                 {
                     float newDist = IMath.DistanceBetweenPoints(centroid, plateCenters[k]);
                     if (dist > newDist)
@@ -224,7 +253,7 @@ public class World : MonoBehaviour
                 }
 
                 // Add to vertices
-                for(int k = 0; k < 3; k++)
+                for (int k = 0; k < 3; k++)
                 {
                     plateVertices[distInd].Add(v[t[j + k]]);
                 }
@@ -232,14 +261,14 @@ public class World : MonoBehaviour
         }
 
         // Do triangles
-        for(int i = 0; i < plateCenters.Length; i++)
+        for (int i = 0; i < plateCenters.Length; i++)
         {
             for (int j = 0; j < plateVertices[i].Count; j++)
             {
                 plateTriangles[i].Add(j);
             }
         }
-        
+
         // Squash vertices
         if (smoothMapSurface)
         {
@@ -259,12 +288,60 @@ public class World : MonoBehaviour
             }
         }
 
-        plates = new TectonicPlate[plateCenters.Length];
-        for(int i = 0; i < plateCenters.Length; i++)
-        {
-            plates[i] = new TectonicPlate(plateCenters[i], plateVertices[i].ToArray(), plateTriangles[i].ToArray(), plateColors[i].ToArray());
-        }
+        pt = plateTriangles;
+        pv = plateVertices;
+        pc = plateColors;
     }
+
+    private void GetCenterFloodFill(List<int>[] plateTriangles, List<Vector3>[] plateVertices, List<Color>[] plateColors, out List<int>[] pt, out List<Vector3>[] pv, out List<Color>[] pc)
+    {
+        // queue initialization
+        Queue<Triangle> floodQueue = new Queue<Triangle>();
+        List<Triangle> triangles = new List<Triangle>();
+
+
+        // Loop through all triangles and create a triangle object with relevant information
+        for (int i = 0; i < plateTriangles.Length; i++)
+        {
+            for (int j = 0; j < plateTriangles.Length; j += 3)
+            {
+                int[] tri = new int[] { plateTriangles[i][j + 0], plateTriangles[i][j + 1], plateTriangles[i][j + 2] };
+                Vector3 triCenter = IMath.TriangleCentroid(plateVertices[i][tri[0]], plateVertices[i][tri[1]], plateVertices[i][tri[2]]);
+                triangles.Add(new Triangle(tri, triCenter));
+            }
+        }
+       
+
+
+        foreach (Vector3 center in plateCenters) { FloodFill(); }
+        
+
+
+        pt = plateTriangles;
+        pv = plateVertices;
+        pc = plateColors;
+    }
+
+    private void FloodFill()
+    {
+
+    }
+
+
+    // Triangle Object for flood fill
+    private class Triangle
+    {
+        public int PlateCenter { get; set; }
+        public int[] Triangles { get; private set; }
+        public Vector3 TriangleCenter { get; private set; }
+        public Triangle(int[] triangles, Vector3 triangleCenter)
+        {
+            Triangles = triangles;
+            TriangleCenter = triangleCenter;
+
+            PlateCenter = -1;
+        }
+    }   
 
     // Each triangle has their own set of vertices, the triangles should share vertices with neighboring triangles
     // to smooth the surface of the sphere
@@ -292,13 +369,24 @@ public class World : MonoBehaviour
     {
         if (Application.isPlaying)
         {
-            if (mapDisplay == MapDisplay.Plates)
+            if (mapDisplay == MapDisplay.Plates && plates != null)
             {
                 Gizmos.color = Color.red;
                 for (int i = 0; i < plates.Length; i++)
                 {
                     Gizmos.DrawLine(plates[i].Center, plates[i].Direction);
                     Gizmos.DrawSphere(plates[i].Center, 0.01f);
+                }
+            }
+
+            if (displayVertices)
+            {
+                for(int i = 0; i < sphere.meshFilters.Length; i++)
+                {
+                    foreach (Vector3 v in sphere.meshFilters[i].sharedMesh.vertices)
+                    {
+                        Gizmos.DrawSphere(v, 0.01f);
+                    }
                 }
             }
         }

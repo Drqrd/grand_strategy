@@ -166,18 +166,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aff7782eb4b7a8f439f991708e333aa3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  distBetweenCenters:
-  - 0.2
-  - 0.5
-  - 0.7
-  - 0.9
-  - 1.2
-  sphereType: 0
+  sphereType: 2
   plateSize: 0
-  resolution: 200
-  jitter: 0
+  resolution: 65534
   convertToSphere: 1
   smoothMapSurface: 1
+  displayVertices: 0
+  jitter: 1
+  alterFibonacciLattice: 0
   mapDisplay: 0
 --- !u!1 &705507993
 GameObject:
