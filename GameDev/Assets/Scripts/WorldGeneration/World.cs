@@ -1,12 +1,10 @@
 using System.Collections.Generic;
-using System.Collections;
 using System.Linq;
 using UnityEngine;
 using MeshGenerator;
 using MapGenerator;
 
 // TODO: - Create a get seed function to input into the map generators
-//       - Add jitter functionality to Fibonacci
 
 public class World : MonoBehaviour
 {
@@ -44,14 +42,18 @@ public class World : MonoBehaviour
         FloodFill
     }
 
-    [Header("Parameters")]
+
     [SerializeField] private SphereType sphereType;
+
+    [Header("General Parameters")]
     [SerializeField] private PlateSize plateSize;
     [SerializeField] private PlateDetermination plateDeterminationType;
     [SerializeField] [Range(1, 65534)] private int resolution = 1;
     [SerializeField] private bool convertToSphere = false;
     [SerializeField] private bool smoothMapSurface = true;
     [SerializeField] private bool displayVertices = false;
+    [SerializeField] private bool displayPlateCenters = false;
+    [SerializeField] private bool displayPlateDirections = false;
 
     [Header("Fibonacci Exclusive Parameters")]
     [SerializeField] [Range(0f, 1f)] private float jitter = 0;
@@ -60,6 +62,10 @@ public class World : MonoBehaviour
     [Header("Display")]
     [SerializeField] private MapDisplay mapDisplay;
     private MapDisplay previousDisplay;
+
+    [Header("Gradients")]
+    [SerializeField] private Gradient continental;
+    [SerializeField] private Gradient oceanic;
 
     private Vector3[] plateCenters;
     private TectonicPlate[] plates;
@@ -213,13 +219,32 @@ public class World : MonoBehaviour
 
         if (plateDeterminationType == PlateDetermination.ClosestCenter)
         {
-            GetCenterClosestCenter(plateTriangles, plateVertices, plateColors, out plateTriangles, out plateVertices, out plateColors);
+            GetCenterClosestCenter(plateTriangles, plateVertices, out plateTriangles, out plateVertices);
         }
         else if (plateDeterminationType == PlateDetermination.FloodFill)
         {
-            GetCenterFloodFill(plateTriangles, plateVertices, plateColors, out plateTriangles, out plateVertices, out plateColors);
+            GetCenterFloodFill(plateTriangles, plateVertices, out plateTriangles, out plateVertices);
         }
 
+        // Do colors
+        // After initialization for flood fill
+        bool[] plateIsContinental = new bool[plateCenters.Length];
+        for (int i = 0; i < plateIsContinental.Length; i++)
+        {
+            plateIsContinental[i] = Random.Range(0f, 1f) >= 0.5f ? true : false;
+        }
+
+
+        for (int i = 0; i < plateCenters.Length; i++)
+        {
+            // Percent on gradient
+            float onGradient = IMath.FloorFloat(Random.Range(0f, 1f), 0.1f);
+            Color color = plateIsContinental[i] ? continental.Evaluate(onGradient) : oceanic.Evaluate(onGradient);
+            for (int j = 0; j < plateVertices[i].Count; j++)
+            {
+                plateColors[i].Add(color);
+            }
+        }
 
         plates = new TectonicPlate[plateCenters.Length];
         for (int i = 0; i < plateCenters.Length; i++)
@@ -228,7 +253,7 @@ public class World : MonoBehaviour
         }
     }
 
-    private void GetCenterClosestCenter(List<int>[] plateTriangles, List<Vector3>[] plateVertices, List<Color>[] plateColors, out List<int>[] pt, out List<Vector3>[] pv, out List<Color>[] pc)
+    private void GetCenterClosestCenter(List<int>[] plateTriangles, List<Vector3>[] plateVertices, out List<int>[] pt, out List<Vector3>[] pv)
     {
         // For each vertex in each meshfilter...
         for (int i = 0; i < sphere.meshFilters.Length; i++)
@@ -278,64 +303,107 @@ public class World : MonoBehaviour
             }
         }
 
-        // Do colors
-        for (int i = 0; i < plateCenters.Length; i++)
-        {
-            Color color = Random.ColorHSV();
-            for (int j = 0; j < plateVertices[i].Count; j++)
-            {
-                plateColors[i].Add(color);
-            }
-        }
-
         pt = plateTriangles;
         pv = plateVertices;
-        pc = plateColors;
     }
 
-    private void GetCenterFloodFill(List<int>[] plateTriangles, List<Vector3>[] plateVertices, List<Color>[] plateColors, out List<int>[] pt, out List<Vector3>[] pv, out List<Color>[] pc)
+    private void GetCenterFloodFill(List<int>[] plateTriangles, List<Vector3>[] plateVertices, out List<int>[] pt, out List<Vector3>[] pv)
     {
-        // queue initialization
-        Queue<Triangle> floodQueue = new Queue<Triangle>();
-        List<Triangle> triangles = new List<Triangle>();
-
-
-        // Loop through all triangles and create a triangle object with relevant information
-        for (int i = 0; i < plateTriangles.Length; i++)
+        Vector3[][] v = new Vector3[sphere.meshFilters.Length][];
+        int[][] t = new int[sphere.meshFilters.Length][];
+        for (int i = 0; i < sphere.meshFilters.Length; i++)
         {
-            for (int j = 0; j < plateTriangles.Length; j += 3)
+            v[i] = sphere.meshFilters[i].mesh.vertices;
+            t[i] = sphere.meshFilters[i].mesh.triangles;
+        }
+        
+        // Loop through all triangles and create a triangle object with relevant information
+        List<Triangle> triangles = new List<Triangle>();
+        for (int i = 0; i < t.Length; i++)
+        {
+            for (int j = 0; j < t[i].Length; j += 3)
             {
-                int[] tri = new int[] { plateTriangles[i][j + 0], plateTriangles[i][j + 1], plateTriangles[i][j + 2] };
-                Vector3 triCenter = IMath.TriangleCentroid(plateVertices[i][tri[0]], plateVertices[i][tri[1]], plateVertices[i][tri[2]]);
-                triangles.Add(new Triangle(tri, triCenter));
+                int[] tri = new int[] { t[i][j + 0], t[i][j + 1], t[i][j + 2] };
+                Vector3[] ver = new Vector3[] { v[i][tri[0]], v[i][tri[1]], v[i][tri[2]]};
+                Vector3 triCenter = IMath.TriangleCentroid(ver[0], ver[1], ver[2]);
+                triangles.Add(new Triangle(tri, ver, triCenter));
             }
         }
-
+        
         int ind = 0;
         List<Triangle> tempCenters = new List<Triangle>();
         // Set triangle centers as random triangles in the triangles list
-        while (ind < plateCenters.Length)
+        while (ind < plateCenters.Length && ind < triangles.Count)
         {
             tempCenters.Add(triangles[Random.Range(0, triangles.Count - 1)]);
             if (tempCenters.Count != tempCenters.Distinct().Count()) { tempCenters.RemoveAt(tempCenters.Count - 1); }
             else { ind++; }
         }
-        
-        // Enqueue the centers of the plates
-        for (int i = 0; i < tempCenters.Count; i++) 
+
+        // Resize
+        plateCenters = new Vector3[tempCenters.Count];
+
+        // Proper plate centers
+        for (int i = 0; i < tempCenters.Count; i++)
         {
             plateCenters[i] = tempCenters[i].TriangleCenter;
             tempCenters[i].PlateCenter = i;
-            floodQueue.Enqueue(tempCenters[i]); 
         }
 
-        // Start the floodfill(4 way), add to end of queue to check
+        // Floodfill esque algorithm:
+        // - Create 2d array of closest to farthest centers for each center
+        // - Iterate through from closest to farthest, from first to last center and assign to center if the val is -1
 
+        // closest to farthest map
+        SortedList<float, int>[] distanceMap = new SortedList<float, int>[plateCenters.Length];
+        for (int i = 0; i < plateCenters.Length; i++)
+        {
+            distanceMap[i] = new SortedList<float, int>();
+            for (int j = 0; j < triangles.Count; j++)
+            {
+                float dist = IMath.DistanceBetweenPoints(plateCenters[i], triangles[j].TriangleCenter);
+                // If dist key already exists, adjust until its right behind
+                while (distanceMap[i].ContainsKey(dist)) { dist += .00001f; }
+                distanceMap[i].Add(dist, j);
+            }
+        }
+        
+        // iterate through each plate center by way of distance map, and if it hasnt been touched yet, assign it to the plate
+        for (int i = 0; i < triangles.Count; i++)
+        {
+            for (int j = 0; j < plateCenters.Length; j++)
+            {
+                if (triangles[distanceMap[j].Values[i]].PlateCenter == -1)
+                {
+                    triangles[distanceMap[j].Values[i]].PlateCenter = j;
+                }
+            }
+        }
+
+        // With assigned plate centers, assign to the proper arrays
+        for (int i = 0; i < triangles.Count; i++)
+        {
+            int[] tri = triangles[i].Triangles;
+            Vector3[] ver = triangles[i].Vertices;
+            for (int j = 0; j < tri.Length; j++) 
+            {
+                plateTriangles[triangles[i].PlateCenter].Add(tri[j]);
+                plateVertices[triangles[i].PlateCenter].Add(ver[j]);
+            }  
+        }
+        
+        // Squash vertices
+        if (smoothMapSurface)
+        {
+            for (int i = 0; i < plateVertices.Length; i++)
+            {
+                CondenseVerticesAndTriangles(plateVertices[i], plateTriangles[i], out plateVertices[i], out plateTriangles[i]);
+            }
+        }
 
         // Assign
         pt = plateTriangles;
         pv = plateVertices;
-        pc = plateColors;
     }
 
     // Triangle Object for flood fill
@@ -343,10 +411,12 @@ public class World : MonoBehaviour
     {
         public int PlateCenter { get; set; }
         public int[] Triangles { get; private set; }
+        public Vector3[] Vertices { get; private set; }
         public Vector3 TriangleCenter { get; private set; }
-        public Triangle(int[] triangles, Vector3 triangleCenter)
+        public Triangle(int[] triangles, Vector3[] vertices, Vector3 triangleCenter)
         {
             Triangles = triangles;
+            Vertices = vertices;
             TriangleCenter = triangleCenter;
 
             PlateCenter = -1;
@@ -384,14 +454,14 @@ public class World : MonoBehaviour
                 Gizmos.color = Color.red;
                 for (int i = 0; i < plates.Length; i++)
                 {
-                    Gizmos.DrawLine(plates[i].Center, plates[i].Direction);
-                    Gizmos.DrawSphere(plates[i].Center, 0.01f);
+                    if (displayPlateDirections) { Gizmos.DrawLine(plates[i].Center, plates[i].Direction); }
+                    if (displayPlateCenters) { Gizmos.DrawSphere(plates[i].Center, 0.01f); }
                 }
             }
 
             if (displayVertices)
             {
-                for(int i = 0; i < sphere.meshFilters.Length; i++)
+                for (int i = 0; i < sphere.meshFilters.Length; i++)
                 {
                     foreach (Vector3 v in sphere.meshFilters[i].sharedMesh.vertices)
                     {

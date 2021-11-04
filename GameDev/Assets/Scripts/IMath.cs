@@ -16,4 +16,10 @@ public static class IMath
     {
         return new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f)).normalized;
     }
+
+    // Floors to the nearest to
+    public static float FloorFloat(float f, float to)
+    { 
+        return Mathf.Floor(f / to) * to;
+    }
 }
