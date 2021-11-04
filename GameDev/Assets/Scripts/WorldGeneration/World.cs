@@ -4,8 +4,10 @@ using UnityEngine;
 using MeshGenerator;
 using MapGenerator;
 
-// TODO: - Create a get seed function to input into the map generators
-
+// TODO:
+//  - Create a get seed function to input into the map generators
+//  - Nearest neighor calculation for plate boundary work.
+//      Determined by same (adjacent) vertices / sides
 public class World : MonoBehaviour
 {
     public enum PlateSize
@@ -231,7 +233,7 @@ public class World : MonoBehaviour
         bool[] plateIsContinental = new bool[plateCenters.Length];
         for (int i = 0; i < plateIsContinental.Length; i++)
         {
-            plateIsContinental[i] = Random.Range(0f, 1f) >= 0.5f ? true : false;
+            plateIsContinental[i] = Random.Range(0f, 1f) > 0.5f ? true : false;
         }
 
 

@@ -167,9 +167,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sphereType: 2
-  plateSize: 2
+  plateSize: 1
   plateDeterminationType: 1
-  resolution: 1000
+  resolution: 2000
   convertToSphere: 1
   smoothMapSurface: 1
   displayVertices: 0
@@ -177,7 +177,7 @@ MonoBehaviour:
   displayPlateDirections: 0
   jitter: 1
   alterFibonacciLattice: 0
-  mapDisplay: 1
+  mapDisplay: 0
   continental:
     serializedVersion: 2
     key0: {r: 0, g: 0.3773585, b: 0.12485855, a: 1}
