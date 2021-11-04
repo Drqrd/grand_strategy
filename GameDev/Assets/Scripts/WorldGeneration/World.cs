@@ -310,23 +310,33 @@ public class World : MonoBehaviour
                 triangles.Add(new Triangle(tri, triCenter));
             }
         }
-       
 
-
-        foreach (Vector3 center in plateCenters) { FloodFill(); }
+        int ind = 0;
+        List<Triangle> tempCenters = new List<Triangle>();
+        // Set triangle centers as random triangles in the triangles list
+        while (ind < plateCenters.Length)
+        {
+            tempCenters.Add(triangles[Random.Range(0, triangles.Count - 1)]);
+            if (tempCenters.Count != tempCenters.Distinct().Count()) { tempCenters.RemoveAt(tempCenters.Count - 1); }
+            else { ind++; }
+        }
         
+        // Enqueue the centers of the plates
+        for (int i = 0; i < tempCenters.Count; i++) 
+        {
+            plateCenters[i] = tempCenters[i].TriangleCenter;
+            tempCenters[i].PlateCenter = i;
+            floodQueue.Enqueue(tempCenters[i]); 
+        }
+
+        // Start the floodfill(4 way), add to end of queue to check
 
 
+        // Assign
         pt = plateTriangles;
         pv = plateVertices;
         pc = plateColors;
     }
-
-    private void FloodFill()
-    {
-
-    }
-
 
     // Triangle Object for flood fill
     private class Triangle
