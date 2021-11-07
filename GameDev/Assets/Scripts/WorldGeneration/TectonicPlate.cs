@@ -8,6 +8,7 @@ using IDict;
 
 public class TectonicPlate
 {
+    // Private set
     public Vector3[] Vertices { get; private set; }
     public int[] Triangles { get; private set; }
     public Vector3 Direction { get; private set; }
@@ -15,30 +16,33 @@ public class TectonicPlate
     public Color[] Colors { get; private set; }
     public Vector3[] Neighbors { get; private set; }
     public Mesh SharedMesh { get; private set; }
+    public Vector3[] BoundaryVertices { get; private set; }
+    public int[][] BoundaryEdges { get; private set; }
+    public bool IsContinental { get; private set; }
 
     // Public set
     public LineRenderer Boundary { get; set; }
-    public Vector3[] BoundaryVertices { get; private set; }
-    public int[][] BoundaryEdges { get; private set; }
-    public int[] BVMap { get; private set; }
-
-    private const int BOUNDARY_VALUE = 2;
-
 
     // Mapping parts
     private float height, moisture, temperature;
 
+    // Constructor
     public TectonicPlate(Vector3 center, Vector3[] vertices = null, int[] triangles = null, Color[] colors = null)
     {
         Center = center;
         Vertices = vertices;
         Triangles = triangles;
-        Colors = colors;
+        if (colors != null) { Colors = colors; }
 
         SharedMesh = new Mesh();
 
+        // Random assign of direction
         Direction = Vector3.Lerp(Center, (GetRandomDirection() + Center), .15f);
 
+        // Random assign if continental or oceanic
+        IsContinental = Random.Range(0f, 1f) > 0.5f ? true : false;
+
+        // Build mesh if vertices and triangles arent null
         if (Vertices != null && Triangles != null)
         {
             SharedMesh.vertices = Vertices;
@@ -52,6 +56,7 @@ public class TectonicPlate
         }
     }
 
+    /* Constructor Functions */
     private Vector3 GetRandomDirection()
     {
         Vector3 tangent = Vector3.Cross(Center, Vector3.up);
@@ -71,36 +76,6 @@ public class TectonicPlate
         }
 
         BoundaryVertices = verts.Distinct().ToArray();
-
-
-        /*
-        List<Vector3> bv = new List<Vector3>();
-        List<int> bvMap = new List<int>();
-        Dictionary<Vector3, int> mp = new Dictionary<Vector3, int>();
-
-        // Store all the elements in the map with
-        // their occurrence
-        for (int i = 0; i < Triangles.Length; i++)
-        {
-            if (mp.ContainsKey(Vertices[Triangles[i]])) { mp[Vertices[Triangles[i]]] += 1; }
-            else { mp.Add(Vertices[Triangles[i]], 1); }
-        }
-
-        // Traverse the map and add all the
-        // elements with occurrence of 2 or less
-        foreach (KeyValuePair<Vector3, int> entry in mp)
-        {
-            int num = (int)uint.Parse(string.Join("", entry.Value));
-
-            if (num <= BOUNDARY_VALUE) { bv.Add(entry.Key); }
-            bvMap.Add(num);
-        }
-
-        // Reorder boundary Vertices into a counterclockwise manner, to draw a circle
-        
-        BoundaryVertices = bv.ToArray();
-        BVMap = bvMap.ToArray();
-        */
     }
 
     private void FindBoundaryEdges()
@@ -149,5 +124,19 @@ public class TectonicPlate
         }
 
         BoundaryEdges = edges.ToArray();
+    }
+
+    /*------------------------------------------------------------------------------------*/
+    
+    /* Public Functions */
+
+    // Sets color of the entire mesh (mono)
+    public void SetColors(Color color)
+    {
+        List<Color> colors = new List<Color>();
+        for(int i = 0; i < Vertices.Length; i++) { colors.Add(color); }
+        Colors = colors.ToArray();
+
+        SharedMesh.colors = Colors;
     }
 }

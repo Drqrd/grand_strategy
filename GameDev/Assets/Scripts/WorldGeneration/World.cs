@@ -210,13 +210,11 @@ public class World : MonoBehaviour
         // Initialization
         List<int>[] plateTriangles = new List<int>[plateCenters.Length];
         List<Vector3>[] plateVertices = new List<Vector3>[plateCenters.Length];
-        List<Color>[] plateColors = new List<Color>[plateCenters.Length];
 
         for (int i = 0; i < plateCenters.Length; i++)
         {
             plateTriangles[i] = new List<int>();
             plateVertices[i] = new List<Vector3>();
-            plateColors[i] = new List<Color>();
         }
 
         if (plateDeterminationType == PlateDetermination.ClosestCenter)
@@ -228,30 +226,24 @@ public class World : MonoBehaviour
             GetCenterFloodFill(plateTriangles, plateVertices, out plateTriangles, out plateVertices);
         }
 
-        // Do colors
-        // After initialization for flood fill
-        bool[] plateIsContinental = new bool[plateCenters.Length];
-        for (int i = 0; i < plateIsContinental.Length; i++)
-        {
-            plateIsContinental[i] = Random.Range(0f, 1f) > 0.5f ? true : false;
-        }
-
-
-        for (int i = 0; i < plateCenters.Length; i++)
-        {
-            // Percent on gradient
-            float onGradient = IMath.FloorFloat(Random.Range(0f, 1f), 0.1f);
-            Color color = plateIsContinental[i] ? continental.Evaluate(onGradient) : oceanic.Evaluate(onGradient);
-            for (int j = 0; j < plateVertices[i].Count; j++)
-            {
-                plateColors[i].Add(color);
-            }
-        }
-
+        // Build plates
         plates = new TectonicPlate[plateCenters.Length];
         for (int i = 0; i < plateCenters.Length; i++)
         {
-            plates[i] = new TectonicPlate(plateCenters[i], plateVertices[i].ToArray(), plateTriangles[i].ToArray(), plateColors[i].ToArray());
+            plates[i] = new TectonicPlate(plateCenters[i], plateVertices[i].ToArray(), plateTriangles[i].ToArray());
+        }
+
+        
+        foreach(TectonicPlate plate in plates)
+        {
+            // Do colors
+            // Percent on gradient
+            float onGradient = IMath.FloorFloat(Random.Range(0f, 1f), 0.1f);
+            Color color = plate.IsContinental ? continental.Evaluate(onGradient) : oceanic.Evaluate(onGradient);
+            plate.SetColors(color);
+
+            // Find adjacent boundaries / plates foreach plate
+            FindNeighbors(plate);
         }
     }
 
@@ -445,6 +437,15 @@ public class World : MonoBehaviour
         }
 
         triangles = t;
+    }
+
+    // Find neighbors through comparing all boundary edges (slow af)
+    private void FindNeighbors(TectonicPlate plate)
+    {
+        for (int i = 0; i < plates.Length; i++)
+        {
+
+        }
     }
 
     private void OnDrawGizmosSelected()
