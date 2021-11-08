@@ -77,6 +77,8 @@ public class World : MonoBehaviour
     private MoistureMap moistureMap;
     private TemperatureMap temperatureMap;
 
+    /* ------------------------------------------------------------------------------------------------------------------------------------------- */
+
     // Start is called before the first frame updates
     private void Start()
     {
@@ -89,6 +91,8 @@ public class World : MonoBehaviour
     {
         if (mapDisplay != previousDisplay) { ChangeMap(); }
     }
+
+    /* ------------------------------------------------------------------------------------------------------------------------------------------- */
 
     private void BuildMesh()
     {
@@ -151,6 +155,8 @@ public class World : MonoBehaviour
         temperatureMap.Build();
     }
 
+    /* ------------------------------------------------------------------------------------------------------------------------------------------- */
+
     private void ChangeMap()
     {
         if (previousDisplay != mapDisplay)
@@ -164,6 +170,7 @@ public class World : MonoBehaviour
         }
     }
 
+    /* ------------------------------------------------------------------------------------------------------------------------------------------- */
     private void GeneratePlateCenters()
     {
         List<Vector3> centers = new List<Vector3>();
@@ -203,6 +210,8 @@ public class World : MonoBehaviour
 
         plateCenters = centers.ToArray();
     }
+
+    /* ------------------------------------------------------------------------------------------------------------------------------------------- */
 
     // First sort the points into their nearest plates
     private void GeneratePlates()
@@ -246,6 +255,8 @@ public class World : MonoBehaviour
             FindNeighbors(plate);
         }
     }
+
+    /* ------------------------------------------------------------------------------------------------------------------------------------------- */
 
     private void GetCenterClosestCenter(List<int>[] plateTriangles, List<Vector3>[] plateVertices, out List<int>[] pt, out List<Vector3>[] pv)
     {
@@ -300,6 +311,8 @@ public class World : MonoBehaviour
         pt = plateTriangles;
         pv = plateVertices;
     }
+
+    /* ------------------------------------------------------------------------------------------------------------------------------------------- */
 
     private void GetCenterFloodFill(List<int>[] plateTriangles, List<Vector3>[] plateVertices, out List<int>[] pt, out List<Vector3>[] pv)
     {
@@ -415,7 +428,9 @@ public class World : MonoBehaviour
 
             PlateCenter = -1;
         }
-    }   
+    }
+
+    /* ------------------------------------------------------------------------------------------------------------------------------------------- */
 
     // Each triangle has their own set of vertices, the triangles should share vertices with neighboring triangles
     // to smooth the surface of the sphere
@@ -439,14 +454,50 @@ public class World : MonoBehaviour
         triangles = t;
     }
 
+    /* ------------------------------------------------------------------------------------------------------------------------------------------- */
+
     // Find neighbors through comparing all boundary edges (slow af)
+    // Approach:
+    // - Add the index of the plate and the edge to dictionary ( n )
+    // - Loop through once more and "compress" the values
+    //   ( if two vertices are the same, combine the indices into an array and delete the duplicate entry )
+    // - There should be only two indices per edge, and that will be the adjacent plates
     private void FindNeighbors(TectonicPlate plate)
     {
+
+        List<BoundaryEdge> edges = new List<BoundaryEdge>();
+        Dictionary<List<int>, BoundaryEdge> sharedBoundariesMap = new Dictionary<List<int>, BoundaryEdge>();
         for (int i = 0; i < plates.Length; i++)
         {
-
+            for (int j = 0; j < plates[i].BoundaryEdges.Length; j++)
+            {
+                
+            }
         }
     }
+
+    // Data class for easy readability in the neighbors searching algorithm
+    private class BoundaryEdge
+    {
+        public Vector3[] Edge { get; private set; }
+        public Vector3[] InverseEdge { get; private set; }
+
+        public BoundaryEdge(Vector3[] edge)
+        {
+            if (edge.Length == 2)
+            {
+                Edge = edge;
+                InverseEdge = new Vector3[2] { edge[1], edge[0] };
+            }
+            else
+            {
+                Edge = null;
+                InverseEdge = null;
+            }
+        }
+    }
+
+    /* ------------------------------------------------------------------------------------------------------------------------------------------- */
 
     private void OnDrawGizmosSelected()
     {
