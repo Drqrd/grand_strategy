@@ -22,6 +22,7 @@ public class TectonicPlate
 
     // Public set
     public LineRenderer Boundary { get; set; }
+    public LineRenderer[] WeightedBoundary { get; set; }
     public int[] BoundaryNeighbors { get; set; }    // Size of boundary edges, labels the edge with corresponding neighbor
 
     // Mapping parts

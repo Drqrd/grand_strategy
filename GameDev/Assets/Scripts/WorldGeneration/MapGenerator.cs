@@ -53,8 +53,21 @@ namespace MapGenerator
 
                 GameObject lineObj = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/Line"));
                 lineObj.transform.parent = obj.transform;
-           
+
+                GameObject weightedLine = new GameObject("WeightedBoundary");
+                weightedLine.transform.parent = obj.transform;
+
+                LineRenderer[] weightedLineObj = new LineRenderer[plates[i].BoundaryNeighbors.Length];
+                for (int j = 0; j < plates[i].BoundaryNeighbors.Length; j++)
+                {
+                    GameObject wlo = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/Line"));
+                    wlo.transform.parent = weightedLine.transform;
+
+                    weightedLineObj[j] = wlo.GetComponent<LineRenderer>();
+                }
+
                 plates[i].Boundary = lineObj.GetComponent<LineRenderer>();
+                plates[i].WeightedBoundary = weightedLineObj;
 
                 plates[i].Boundary.positionCount = plates[i].BoundaryVertices.Length;
                 plates[i].Boundary.SetPositions(plates[i].BoundaryVertices);

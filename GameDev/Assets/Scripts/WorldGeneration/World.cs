@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using MeshGenerator;
 using MapGenerator;
+using IDict;
 
 // TODO:
 //  - Create a get seed function to input into the map generators
@@ -456,28 +457,44 @@ public class World : MonoBehaviour
 
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
 
-    // Find neighbors through comparing all boundary edges (slow af)
+    // Find neighbors through comparing all boundary edges (not slow af?)
     // Approach:
-    // - Add the index of the plate and the edge to dictionary ( n )
-    // - Loop through once more and "compress" the values
-    //   ( if two vertices are the same, combine the indices into an array and delete the duplicate entry )
+    // - O(n): have a dictionary, if boundary edge exists (if is the edge or the inverse), append to the List, else add the edge 
     // - There should be only two indices per edge, and that will be the adjacent plates
     private void FindNeighbors(TectonicPlate plate)
     {
 
-        List<BoundaryEdge> edges = new List<BoundaryEdge>();
-        Dictionary<List<int>, BoundaryEdge> sharedBoundariesMap = new Dictionary<List<int>, BoundaryEdge>();
+        // Find all existing edges, if edge is in Dictionary, append to list in value. 
+        // Else, add to dictionary
+        Dictionary<BoundaryEdge, List<int>> sharedBoundariesMap = new Dictionary<BoundaryEdge, List<int>>(new BoundaryEdgeCompareOverride());
         for (int i = 0; i < plates.Length; i++)
         {
+            int[][] edgeIndices = plates[i].BoundaryEdges;
+            Vector3[] edgeVertices = plates[i].Vertices;
+            // For each edge in each plate
             for (int j = 0; j < plates[i].BoundaryEdges.Length; j++)
             {
-                
+                Vector3[] e = new Vector3[] { edgeVertices[edgeIndices[j][0]], edgeVertices[edgeIndices[j][1]] };
+                BoundaryEdge edge = new BoundaryEdge(e);
+
+                if (sharedBoundariesMap.ContainsKey(edge)) { sharedBoundariesMap[edge].Add(i); }
+                else
+                {
+                    sharedBoundariesMap.Add(edge, new List<int>());
+                    sharedBoundariesMap[edge].Add(i);
+                }
             }
+        }
+
+        // Assign appropriate edges
+        for (int i = 0; i < sharedBoundariesMap.Count; i++)
+        {
+
         }
     }
 
     // Data class for easy readability in the neighbors searching algorithm
-    private class BoundaryEdge
+    public class BoundaryEdge
     {
         public Vector3[] Edge { get; private set; }
         public Vector3[] InverseEdge { get; private set; }
@@ -496,6 +513,8 @@ public class World : MonoBehaviour
             }
         }
     }
+
+
 
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
 
