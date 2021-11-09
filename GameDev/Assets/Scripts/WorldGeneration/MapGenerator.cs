@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace MapGenerator
 {
@@ -51,27 +52,40 @@ namespace MapGenerator
                 meshFilters[i].sharedMesh = plates[i].SharedMesh;
                 obj.AddComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/Surface");
 
-                GameObject lineObj = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/Line"));
-                lineObj.transform.parent = obj.transform;
-
-                GameObject weightedLine = new GameObject("WeightedBoundary");
-                weightedLine.transform.parent = obj.transform;
-
-                LineRenderer[] weightedLineObj = new LineRenderer[plates[i].BoundaryNeighbors.Length];
-                for (int j = 0; j < plates[i].BoundaryNeighbors.Length; j++)
-                {
-                    GameObject wlo = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/Line"));
-                    wlo.transform.parent = weightedLine.transform;
-
-                    weightedLineObj[j] = wlo.GetComponent<LineRenderer>();
-                }
-
-                plates[i].Boundary = lineObj.GetComponent<LineRenderer>();
-                plates[i].WeightedBoundary = weightedLineObj;
-
-                plates[i].Boundary.positionCount = plates[i].BoundaryVertices.Length;
-                plates[i].Boundary.SetPositions(plates[i].BoundaryVertices);
+                BuildBoundaries(obj.transform, i);
             }
+        }
+
+        private void BuildBoundaries(Transform parent, int i)
+        {
+            // Parent obj
+            GameObject boundary = new GameObject("Boundary");
+            boundary.transform.parent = parent;
+
+            // All boundary
+            GameObject lineObj = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/Line"));
+            lineObj.name = "All";
+            lineObj.transform.parent = parent;
+
+            plates[i].Boundary = lineObj.GetComponent<LineRenderer>();
+
+            plates[i].Boundary.positionCount = plates[i].BoundaryVertices.Length;
+            plates[i].Boundary.SetPositions(plates[i].BoundaryVertices);
+
+            // Neighbors boundary
+            GameObject weightedLine = new GameObject("Neighbors");
+            weightedLine.transform.parent = parent;
+
+            LineRenderer[] neighborsLineObj = new LineRenderer[plates[i].BoundaryNeighborsInd.Length];
+            for (int j = 0; j < plates[i].BoundaryNeighborsInd.Length; j++)
+            {
+                GameObject nlo = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/Line"));
+                nlo.transform.parent = weightedLine.transform;
+
+                neighborsLineObj[j] = nlo.GetComponent<LineRenderer>();
+            }
+
+            plates[i].NeighborsBoundary = neighborsLineObj;
         }
     }
 

@@ -22,8 +22,8 @@ public class TectonicPlate
 
     // Public set
     public LineRenderer Boundary { get; set; }
-    public LineRenderer[] WeightedBoundary { get; set; }
-    public int[] BoundaryNeighbors { get; set; }    // Size of boundary edges, labels the edge with corresponding neighbor
+    public LineRenderer[] NeighborsBoundary { get; set; }
+    public int[] BoundaryNeighborsInd { get; set; }    // Size of boundary edges, labels the edge with corresponding neighbor
 
     // Mapping parts
     private float height, moisture, temperature;
@@ -55,6 +55,8 @@ public class TectonicPlate
 
             FindBoundaryEdges();
             FindBoundaryVertices();
+
+            BoundaryNeighborsInd = new int[BoundaryEdges.Length];
         }
     }
 

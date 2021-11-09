@@ -45,6 +45,14 @@ public class World : MonoBehaviour
         FloodFill
     }
 
+    public enum BoundaryDisplay
+    {
+        All,
+        Neighbors,
+        Weighted
+    }
+
+
 
     [SerializeField] private SphereType sphereType;
 
@@ -466,7 +474,7 @@ public class World : MonoBehaviour
 
         // Find all existing edges, if edge is in Dictionary, append to list in value. 
         // Else, add to dictionary
-        Dictionary<BoundaryEdge, List<int>> sharedBoundariesMap = new Dictionary<BoundaryEdge, List<int>>(new BoundaryEdgeCompareOverride());
+        Dictionary<BoundaryEdge, List<int[]>> sharedBoundariesMap = new Dictionary<BoundaryEdge, List<int[]>>(new BoundaryEdgeCompareOverride());
         for (int i = 0; i < plates.Length; i++)
         {
             int[][] edgeIndices = plates[i].BoundaryEdges;
@@ -475,13 +483,13 @@ public class World : MonoBehaviour
             for (int j = 0; j < plates[i].BoundaryEdges.Length; j++)
             {
                 Vector3[] e = new Vector3[] { edgeVertices[edgeIndices[j][0]], edgeVertices[edgeIndices[j][1]] };
-                BoundaryEdge edge = new BoundaryEdge(e);
+                BoundaryEdge edge = new BoundaryEdge(e, i);
 
-                if (sharedBoundariesMap.ContainsKey(edge)) { sharedBoundariesMap[edge].Add(i); }
+                if (sharedBoundariesMap.ContainsKey(edge)) { sharedBoundariesMap[edge].Add(new int[] { i, j }); }
                 else
                 {
-                    sharedBoundariesMap.Add(edge, new List<int>());
-                    sharedBoundariesMap[edge].Add(i);
+                    sharedBoundariesMap.Add(edge, new List<int[]>());
+                    sharedBoundariesMap[edge].Add(new int[] { i, j });
                 }
             }
         }
@@ -489,7 +497,13 @@ public class World : MonoBehaviour
         // Assign appropriate edges
         for (int i = 0; i < sharedBoundariesMap.Count; i++)
         {
+            List<int[]> data = sharedBoundariesMap.ElementAt(i).Value;
+            BoundaryEdge edge = sharedBoundariesMap.ElementAt(i).Key;
 
+            for (int j = 0; j < data.Count; j++)
+            {
+                plates[data[j][0]].BoundaryNeighborsInd[data[j][1]] = edge.Plate;
+            }
         }
     }
 
@@ -498,18 +512,21 @@ public class World : MonoBehaviour
     {
         public Vector3[] Edge { get; private set; }
         public Vector3[] InverseEdge { get; private set; }
+        public int Plate { get; private set; }
 
-        public BoundaryEdge(Vector3[] edge)
+        public BoundaryEdge(Vector3[] edge, int plate)
         {
             if (edge.Length == 2)
             {
                 Edge = edge;
                 InverseEdge = new Vector3[2] { edge[1], edge[0] };
+                Plate = plate;
             }
             else
             {
                 Edge = null;
                 InverseEdge = null;
+                Plate = -1;
             }
         }
     }
