@@ -29,11 +29,13 @@ namespace MapGenerator
     public class TectonicPlateMap : NoiseMap
     {
         private TectonicPlate[] plates;
+        private World.BoundaryDisplay boundaryDisplay;
 
-        public TectonicPlateMap(Transform parent, TectonicPlate[] plates, MeshFilter[] meshFilters = null ) : base(parent, meshFilters)
+        public TectonicPlateMap(Transform parent, TectonicPlate[] plates, World.BoundaryDisplay boundaryDisplay, MeshFilter[] meshFilters = null ) : base(parent, meshFilters)
         {
             this.parent = parent;
             this.plates = plates;
+            this.boundaryDisplay = boundaryDisplay;
 
             this.meshFilters = new MeshFilter[plates.Length];
         }
@@ -62,30 +64,45 @@ namespace MapGenerator
             GameObject boundary = new GameObject("Boundary");
             boundary.transform.parent = parent;
 
+            BuildBoundaryAll(boundary.transform, i, boundaryDisplay == World.BoundaryDisplay.All);
+            BuildBoundaryNeighbors(boundary.transform, i, boundaryDisplay == World.BoundaryDisplay.Neighbors);
+        }
+
+        private void BuildBoundaryAll(Transform parent, int index, bool isActive)
+        {
             // All boundary
             GameObject lineObj = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/Line"));
             lineObj.name = "All";
             lineObj.transform.parent = parent;
 
-            plates[i].Boundary = lineObj.GetComponent<LineRenderer>();
+            plates[index].Boundary = lineObj.GetComponent<LineRenderer>();
 
-            plates[i].Boundary.positionCount = plates[i].BoundaryVertices.Length;
-            plates[i].Boundary.SetPositions(plates[i].BoundaryVertices);
+            plates[index].Boundary.positionCount = plates[index].BoundaryVertices.Length;
+            plates[index].Boundary.SetPositions(plates[index].BoundaryVertices);
 
+            // Disable if Start() says so
+            lineObj.SetActive(isActive);
+        }
+
+        private void BuildBoundaryNeighbors(Transform parent, int index, bool isActive)
+        {
             // Neighbors boundary
-            GameObject weightedLine = new GameObject("Neighbors");
-            weightedLine.transform.parent = parent;
+            GameObject neighborsLine = new GameObject("Neighbors");
+            neighborsLine.transform.parent = parent;
 
-            LineRenderer[] neighborsLineObj = new LineRenderer[plates[i].BoundaryNeighborsInd.Length];
-            for (int j = 0; j < plates[i].BoundaryNeighborsInd.Length; j++)
+            LineRenderer[] neighborsLineObj = new LineRenderer[plates[index].BoundaryNeighborsInd.Length];
+            for (int j = 0; j < plates[index].BoundaryNeighborsInd.Length; j++)
             {
                 GameObject nlo = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/Line"));
-                nlo.transform.parent = weightedLine.transform;
+                nlo.transform.parent = neighborsLine.transform;
 
                 neighborsLineObj[j] = nlo.GetComponent<LineRenderer>();
             }
 
-            plates[i].NeighborsBoundary = neighborsLineObj;
+            plates[index].NeighborsBoundary = neighborsLineObj;
+
+            // Disable if Start() says so
+            neighborsLine.SetActive(isActive);
         }
     }
 

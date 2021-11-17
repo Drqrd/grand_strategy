@@ -36,7 +36,7 @@ public class World : MonoBehaviour
         Terrain,
         HeightMap,
         MoistureMap,
-        TemperatureMap
+        TemperatureMap,
     }
 
     public enum PlateDetermination
@@ -72,7 +72,10 @@ public class World : MonoBehaviour
 
     [Header("Display")]
     [SerializeField] private MapDisplay mapDisplay;
-    private MapDisplay previousDisplay;
+    private MapDisplay previousMapDisplay;
+
+    [SerializeField] private BoundaryDisplay boundaryDisplay;
+    private BoundaryDisplay previousBoundaryDisplay;
 
     [Header("Gradients")]
     [SerializeField] private Gradient continental;
@@ -93,12 +96,16 @@ public class World : MonoBehaviour
     {
         BuildMesh();
         BuildMaps();
-        previousDisplay = MapDisplay.Plates;
+
+        // If the display is the last value, make prev - 1, otherwise + 1
+        previousMapDisplay = (int)mapDisplay == System.Enum.GetValues(typeof(MapDisplay)).Length ? (MapDisplay)((int)mapDisplay + 1) : (MapDisplay)((int)mapDisplay - 1);
+        previousBoundaryDisplay = (int)boundaryDisplay == System.Enum.GetValues(typeof(BoundaryDisplay)).Length ? (BoundaryDisplay)((int)mapDisplay + 1) : (BoundaryDisplay)((int)mapDisplay - 1);
     }
 
     private void Update()
     {
-        if (mapDisplay != previousDisplay) { ChangeMap(); }
+        if (mapDisplay != previousMapDisplay) { ChangeMapDisplay(); }
+        if (boundaryDisplay != previousBoundaryDisplay && mapDisplay == MapDisplay.Plates) { ChangeBoundaryDisplay(); }
     }
 
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -142,7 +149,7 @@ public class World : MonoBehaviour
 
     private void BuildTectonicPlateMap()
     {
-        plateMap = new TectonicPlateMap(transform, plates);
+        plateMap = new TectonicPlateMap(transform, plates, boundaryDisplay);
         plateMap.Build();
     }
 
@@ -166,15 +173,27 @@ public class World : MonoBehaviour
 
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
 
-    private void ChangeMap()
+    private void ChangeMapDisplay()
     {
-        if (previousDisplay != mapDisplay)
+        previousMapDisplay = mapDisplay;
+        foreach (Transform child in transform)
         {
-            previousDisplay = mapDisplay;
-            foreach (Transform child in transform)
+            if (child.gameObject.name.Contains(mapDisplay.ToString())) { child.gameObject.SetActive(true); }
+            else { child.gameObject.SetActive(false); }
+        }
+    }
+
+    private void ChangeBoundaryDisplay()
+    {
+        previousBoundaryDisplay = boundaryDisplay;
+        Transform plateRef = transform.Find(MapDisplay.Plates.ToString());
+        foreach (Transform plate in plateRef)
+        {
+            Transform boundaryRef = plate.Find("Boundary");
+            foreach (Transform boundary in boundaryRef)
             {
-                if (child.gameObject.name.Contains(mapDisplay.ToString())) { child.gameObject.SetActive(true); }
-                else { child.gameObject.SetActive(false); }
+                if (boundary.name.Contains(boundaryDisplay.ToString())) { boundary.gameObject.SetActive(true); }
+                else { boundary.gameObject.SetActive(false); }
             }
         }
     }
