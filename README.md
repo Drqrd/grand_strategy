@@ -23,5 +23,26 @@ http://eveliosdev.blogspot.com/2016/06/plate-tectonics.html <br>
 http://experilous.com/1/blog/post/procedural-planet-generation <br>
 <br>
 With all of this new information buzzing around in my head, I decided to tackle the first step in planet generation, creating a sphere.
-<h4> The Spheres </h4>
+<h4> Spheres Spheres Spheres </h4>
 There are many approaches to procedural sphere mesh generation, most notably the UV Sphere and Icosphere. Both of these sphere types have issues with point distribution though, as they are other shapes expanded into the shape of a sphere. <br>
+<br>
+<p align="center"> 
+  <img src= "Readme Additions/Icosphere UV Sphere Example.PNG"> <br>
+  Top down example: UV Sphere on left, Ico Sphere on right
+</p> <br>
+The above example shows how the point distribution on each sphere differs. In the UV sphere, there is a higher level of detail (LOD) towards the poles, while the icosphere has a much more even distribution. <br>
+An alternative approach to sphere generation is to expand a cube (a cube sphere as it were), which leaves an uneven distribution of points on the seams, rather than the poles as in the UV sphere. <br>
+<br>
+<p align="center">
+  <img src= "Readme Additions/Cube Sphere.png"> <br>
+  Expansion of Cube to Cube Sphere Example
+</p> <br>
+Definitely an improvement, but still worse when compared to the distribution on the icosphere. Now while the icosphere might seem as the best decision for point distribution, it definitely takes its toll (on the mind) in code complexity. To avoid this, I took a tip from the ever inspiring Sebastian Lague in one of his newer videos of planet generation (https://www.youtube.com/watch?v=lctXaT9pxA0&ab_channel=SebastianLague) to work with an octohedron rather than an icosahedron as a compromise between point distribution and code complexity, the results of which are...
+<h4> The Octohedron Sphere </h4>
+<br>
+<p align="center">
+  <img src= "Readme Additions/Octohedron.PNG"> <br>
+  <img src= "Readme Additions/Octosphere.PNG"> <br>
+  My personal implementation of the Octosphere
+</p> <br>
+Probably one of my favorite to personally implement as I took a different approach than in Sebastian's aforementioned video! By structuring the vertices array as a jagged array, I was able to simplify the code and improve readability (see OctahedronSphere class in MeshGenerator.cs). A summary on the method was
