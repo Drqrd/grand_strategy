@@ -64,6 +64,6 @@ Unity meshes: https://docs.unity3d.com/Manual/AnatomyofaMesh.html <br>
 Brief explanation of vertices, triangles and their orientations: https://youtu.be/ucuOVL7c5Hw?t=182 <br>
 Winding order, determining front face of triangle: https://cmichel.io/understanding-front-faces-winding-order-and-normals <br>
 <br>
-Now while I am proud of my Octosphere implementation, I felt that the seams were very clearly noticable and would not do for what I planned for the project in the future, so I decided I needed pursue a different kind of sphere generation that would give me even better distribution. While the icosphere would definitely be an improvement I had in my mind the sphere type which Red Blob Games used in their blog post...
-<h4> The Fibonacci Sphere </h4> 
-COMING SOON (There is a lot to write about this one and I need to focus on other things for a bit)
+Now while I am proud of my Octosphere implementation, I felt that the seams were very clearly noticable and would not do for what I planned for the project in the future and so I decided to implement a different kind of sphere generation that would give me even better distribution. While the icosphere would definitely be an improvement, I had in my mind the sphere type which Red Blob Games used in their blog post, one that had a very different implementation...
+<h4> The Fibonacci Sphere (Of Nightmares) </h4> 
+COMING SOON (There is a lot to write about this one and I need to focus on other things for a bit 🙂)
