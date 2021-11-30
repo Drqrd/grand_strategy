@@ -45,4 +45,25 @@ Definitely an improvement, but still worse when compared to the distribution on 
   <img src= "Readme Additions/Octosphere.PNG"> <br>
   My personal implementation of the Octosphere
 </p> <br>
-Probably one of my favorite to personally implement as I took a different approach than in Sebastian's aforementioned video! By structuring the vertices array as a jagged array, I was able to simplify the code and improve readability (see OctahedronSphere class in MeshGenerator.cs). A summary on the method was
+Probably one of my favorite to personally implement as I took a different approach than in Sebastian's aforementioned video! By structuring the vertices array as a jagged array, I was able to simplify the code and improve readability (see OctahedronSphere class in MeshGenerator.cs). <br>
+<p align="center">
+  <img src= "Readme Additions/Octosphere Demonstration.PNG"> <br>
+  Extremely Professional Visual Aide
+</p> <br>
+<br>
+A short summary of how the structuring helped me generate the mesh, by having the jagged array mimic the positions of vertices in the octohedron, I am able to flatten the array int 1D as is required by Unity. (https://docs.unity3d.com/ScriptReference/Mesh.SetVertices.html) Setting triangles for the mesh also benefits from this structure as determining vertices for triangles is easy using the number of rows. <br>
+<br>
+<p align="center">
+  <img src= "Readme Additions/Octosphere Triangulation.PNG" width=50%> <br>
+  Coding Snippet of Triangulation <br>
+  The conditional statement of (localUp.y > 0f) was necessary as when negative, the triangles were being rendered inverted. (Love triangulation...)
+</p> <br>
+As I've touched on some ideas that I have not explained but had to learn seperate from the materials I have already linked, here are some links that I hope help some people like they did for me. :grin: <br>
+<br>
+Unity meshes: https://docs.unity3d.com/Manual/AnatomyofaMesh.html <br>
+Brief explanation of vertices, triangles and their orientations: https://youtu.be/ucuOVL7c5Hw?t=182 <br>
+Winding order, determining front face of triangle: https://cmichel.io/understanding-front-faces-winding-order-and-normals <br>
+<br>
+Now while I am proud of my Octosphere implementation, I felt that the seams were very clearly noticable and would not do for what I planned for the project in the future, so I decided I needed pursue a different kind of sphere generation that would give me even better distribution. While the icosphere would definitely be an improvement I had in my mind the sphere type which Red Blob Games used in their blog post...
+<h4> The Fibonacci Sphere </h4> 
+COMING SOON (There is a lot to write about this one and I need to focus on other things for a bit)
