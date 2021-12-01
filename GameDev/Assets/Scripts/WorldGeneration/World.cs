@@ -95,11 +95,15 @@ public class World : MonoBehaviour
     private void Start()
     {
         BuildMesh();
-        BuildMaps();
 
-        // If the display is the last value, make prev - 1, otherwise + 1
-        previousMapDisplay = (int)mapDisplay == System.Enum.GetValues(typeof(MapDisplay)).Length ? (MapDisplay)((int)mapDisplay + 1) : (MapDisplay)((int)mapDisplay - 1);
-        previousBoundaryDisplay = (int)boundaryDisplay == System.Enum.GetValues(typeof(BoundaryDisplay)).Length ? (BoundaryDisplay)((int)mapDisplay + 1) : (BoundaryDisplay)((int)mapDisplay - 1);
+        if (sphereType != SphereType.Octahedron)
+        {
+            BuildMaps();
+
+            // If the display is the last value, make prev - 1, otherwise + 1
+            previousMapDisplay = (int)mapDisplay == System.Enum.GetValues(typeof(MapDisplay)).Length ? (MapDisplay)((int)mapDisplay + 1) : (MapDisplay)((int)mapDisplay - 1);
+            previousBoundaryDisplay = (int)boundaryDisplay == System.Enum.GetValues(typeof(BoundaryDisplay)).Length ? (BoundaryDisplay)((int)mapDisplay + 1) : (BoundaryDisplay)((int)mapDisplay - 1);
+        }
     }
 
     private void Update()
@@ -506,6 +510,7 @@ public class World : MonoBehaviour
 
                 if (sharedBoundariesMap.ContainsKey(edge)) { sharedBoundariesMap[edge].Add(new int[] { i, j }); }
                 else
+
                 {
                     sharedBoundariesMap.Add(edge, new List<int[]>());
                     sharedBoundariesMap[edge].Add(new int[] { i, j });
@@ -516,6 +521,7 @@ public class World : MonoBehaviour
         // Assign appropriate edges
         for (int i = 0; i < sharedBoundariesMap.Count; i++)
         {
+            // data[0] is plate index, data[1] is the boundary edge
             List<int[]> data = sharedBoundariesMap.ElementAt(i).Value;
             BoundaryEdge edge = sharedBoundariesMap.ElementAt(i).Key;
 

@@ -91,12 +91,38 @@ namespace MapGenerator
             neighborsLine.transform.parent = parent;
 
             LineRenderer[] neighborsLineObj = new LineRenderer[plates[index].BoundaryNeighborsInd.Length];
-            for (int j = 0; j < plates[index].BoundaryNeighborsInd.Length; j++)
+            for (int j = 0; j < plates[index].BoundaryVertices.Length; j++)
             {
+
                 GameObject nlo = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/Line"));
                 nlo.transform.parent = neighborsLine.transform;
 
                 neighborsLineObj[j] = nlo.GetComponent<LineRenderer>();
+
+                neighborsLineObj[j].positionCount = 2;
+                Vector3[] positions;
+                if (j < plates[index].BoundaryVertices.Length - 1)
+                {
+                    positions = new Vector3[] { plates[index].BoundaryVertices[j],
+                                                plates[index].BoundaryVertices[j + 1] };
+                }
+                else
+                {
+                    positions = new Vector3[] { plates[index].BoundaryVertices[j - 1],
+                                                plates[index].BoundaryVertices[0] };
+                }
+                neighborsLineObj[j].SetPositions(positions);
+                Color col = Random.ColorHSV();
+                neighborsLineObj[j].startColor = col;
+                neighborsLineObj[j].endColor = col;
+            }
+
+            if (index == 0)
+            {
+                for (int i = 0; i < plates[2].BoundaryNeighborsInd.Length; i++)
+                {
+                    Debug.Log(plates[2].BoundaryNeighborsInd[i]);
+                }
             }
 
             plates[index].NeighborsBoundary = neighborsLineObj;

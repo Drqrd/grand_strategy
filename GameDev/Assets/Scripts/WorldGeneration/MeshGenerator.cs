@@ -126,7 +126,7 @@ namespace MeshGenerator
                 }
             }
 
-            // Triangle
+            // Trianglulation
             int triIndex = 0;
             for(int row = 0; row < tempVertices.Length - 1; row++)
             {
