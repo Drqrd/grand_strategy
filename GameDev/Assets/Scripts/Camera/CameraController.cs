@@ -8,10 +8,10 @@ public class CameraController : MonoBehaviour
     [SerializeField] KeyCode up, down, left, right;
 
     [Header("Parameters")]
-    [SerializeField] [Range(20f, 40f )] private float moveSpeed;
-    [SerializeField] [Range(20f, 40f)] private float zoomStrength;
+    [SerializeField] [Range(20f, 40f)] private float moveSpeed;
+    [SerializeField] [Range(.1f, 10f)] private float zoomStrength;
     [SerializeField] [Range(10f, 20f)] private float moveDamp;
-    [SerializeField] [Range(10f, 20f)] private float zoomDamp;
+    [SerializeField] [Range(1f, 5f)] private float zoomDamp;
 
     // Consts for constraints
     private const float maxViewAngle = 40f;
@@ -21,11 +21,17 @@ public class CameraController : MonoBehaviour
 
     // Vars for lerping
     private Vector3 prevPos;
-    private float   toZoom;
+
+    // Scroll lerping
+    private float toZoom;
+    private float lastScrollDirection;
+    private float scroll;
+    private float zoomTime;
 
     private void Awake()
     {
         prevPos = transform.position;
+        toZoom = prevPos.magnitude;
     }
 
     private void Update()
@@ -58,9 +64,9 @@ public class CameraController : MonoBehaviour
     private Vector2 GetMovementInput()
     {
         Vector2 v = Vector2.zero;
-        if (Input.GetKey(up))    { v += Vector2.up; }
-        if (Input.GetKey(down))  { v += Vector2.down; }
-        if (Input.GetKey(left))  { v += Vector2.left; }
+        if (Input.GetKey(up)) { v += Vector2.up; }
+        if (Input.GetKey(down)) { v += Vector2.down; }
+        if (Input.GetKey(left)) { v += Vector2.left; }
         if (Input.GetKey(right)) { v += Vector2.right; }
 
         return v;
@@ -80,19 +86,6 @@ public class CameraController : MonoBehaviour
     // Zoom function
     private void Zoom()
     {
-        float scrollInput = ClampScroll(Input.GetAxisRaw("Mouse ScrollWheel"));
-        Vector3 zoom = (focus.position - transform.position).normalized * scrollInput * zoomStrength * Time.deltaTime * 2f;
-        transform.position += zoom;
 
-    }
-
-    // Clamps distance from focus by maxDistFromFocus and minDistFromFocus
-    private float ClampScroll(float input)
-    {
-        float distFromFocus = Vector3.Distance(transform.position, focus.position);
-        float threshold = distFromFocus - input;
-        if (threshold > maxDistFromFocus || threshold < minDistFromFocus) { input = 0; }
-
-        return input;
     }
 }
