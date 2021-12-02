@@ -51,7 +51,7 @@ Probably one of my favorite to personally implement as I took a different approa
   Extremely Professional Visual Aide
 </p> <br>
 <br>
-A short summary of how the structuring helped me generate the mesh, by having the jagged array mimic the positions of vertices in the octohedron, I am able to flatten the array int 1D as is required by Unity. (https://docs.unity3d.com/ScriptReference/Mesh.SetVertices.html) Setting triangles for the mesh also benefits from this structure as determining vertices for triangles is easy using the number of rows. <br>
+A short summary of how the structuring helped me generate the mesh, by having the jagged array mimic the positions of vertices in the octohedron, I am able to flatten the array into 1D as is required by Unity. (https://docs.unity3d.com/ScriptReference/Mesh.SetVertices.html) Setting triangles for the mesh also benefits from this structure as determining vertices for triangles is easy using the number of rows. <br>
 <br>
 <p align="center">
   <img src= "Readme Additions/Octosphere Triangulation.PNG" width=50%> <br>
@@ -66,4 +66,4 @@ Winding order, determining front face of triangle: https://cmichel.io/understand
 <br>
 Now while I am proud of my Octosphere implementation, I felt that the seams were very clearly noticable and would not do for what I planned for the project in the future and so I decided to implement a different kind of sphere generation that would give me even better distribution. While the icosphere would definitely be an improvement, I had in my mind the sphere type which Red Blob Games used in their blog post, one that had a very different implementation...
 <h4> The Fibonacci Sphere (Of Nightmares) </h4> 
-COMING SOON (There is a lot to write about this one and I need to focus on other things for a bit 🙂)
+COMING SOON (There is a lot to write about this one and I need to focus on development 🙂)
