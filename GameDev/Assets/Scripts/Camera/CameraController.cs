@@ -8,17 +8,27 @@ public class CameraController : MonoBehaviour
     [SerializeField] KeyCode up, down, left, right;
 
     [Header("Parameters")]
-    [SerializeField] [Range(1f, 10f)] private float moveSpeed;
-    [SerializeField] [Range(.1f, 10f)] private float zoomSensitivity;
-    [SerializeField] [Range(1f, 5f)] private float zoomDamp;
+    [SerializeField] [Range(1f, 5f)]      private float moveSpeed;
+    [SerializeField] [Range(.1f, 10f)]    private float zoomSensitivity;
+    [SerializeField] [Range(1f, 5f)]      private float zoomDamp;
+    [SerializeField] [Range(0.01f, 0.1f)] private float mouseDamp;
 
     // Consts for constraints
-    private const float maxViewAngle = 40f;
-    private const float minViewAngle = -40f;
+    private const float maxViewAngle     = 40f;
+    private const float minViewAngle     = -40f;
     private const float maxDistFromFocus = 5f;
     private const float minDistFromFocus = 2f;
 
-    private const float maxKeyboardSpeed = 10f;
+    private const float maxKeyboardDrift = 0.5f;
+    private const float maxMouseSpeed    = 5f;
+
+    private float falloff;
+
+    // Keyboard lerping
+    Vector2 kInputVector = Vector2.zero;
+
+    // Mouse lerping
+    Vector2 savedMousePos;
 
     // Scroll lerping
     private float prevZoomDist;
@@ -27,6 +37,10 @@ public class CameraController : MonoBehaviour
 
     private void Awake()
     {
+        kInputVector = Vector3.zero;
+        savedMousePos = transform.position;
+        
+
         prevZoomDist = transform.position.magnitude;
         nextZoomDist = transform.position.magnitude;
     }
@@ -48,36 +62,52 @@ public class CameraController : MonoBehaviour
     private void KeyboardMove()
     {
         // If receiving input, assign
-        Vector2 inputVector = GetKeyboardInput();
+        kInputVector += GetKeyboardInput();
 
-        if (inputVector.magnitude != 0f) 
+        if (kInputVector.magnitude > 0f) 
         {
-            float x = inputVector.x != 0 ? 1f * Mathf.Sign(inputVector.x) : 0f;
-            float y = inputVector.y != 0 ? 1f * Mathf.Sign(inputVector.y) : 0f;
+            float x = kInputVector.x != 0 ? Time.deltaTime * Mathf.Sign(kInputVector.x) : 0f;
+            float y = kInputVector.y != 0 ? Time.deltaTime * Mathf.Sign(kInputVector.y) : 0f;
 
             Vector2 subtractVector = new Vector2(x, y);
 
-            if (GetKeyboardInput().magnitude == 0f) { inputVector -= subtractVector; }
+            // Make sure subtractVector never over subrtracts from the inputVector
+            if (GetKeyboardInput().magnitude == 0f) 
+            {
+                subtractVector.x = Mathf.Sign(kInputVector.x - subtractVector.x) != Mathf.Sign(kInputVector.x) ? kInputVector.x : subtractVector.x;
+                subtractVector.y = Mathf.Sign(kInputVector.y - subtractVector.y) != Mathf.Sign(kInputVector.y) ? kInputVector.y : subtractVector.y;
+                kInputVector -= subtractVector; 
+            }
 
             // Clamp movement
-            float xx = Mathf.Clamp(inputVector.x, -maxKeyboardSpeed, maxKeyboardSpeed);
-            float yy = Mathf.Clamp(inputVector.y, -maxKeyboardSpeed, maxKeyboardSpeed);
+            float xx = Mathf.Clamp(kInputVector.x, -maxKeyboardDrift, maxKeyboardDrift);
+            float yy = Mathf.Clamp(kInputVector.y, -maxKeyboardDrift, maxKeyboardDrift);
 
             // Clamps to 0 if would go past the viewAngle constraints
-            inputVector = ClampKeyboardMovement(new Vector2(xx,yy));
+            kInputVector = ClampMovement(new Vector2(xx,yy));
 
             Vector3 inputAxis = Vector3.zero;
-            if (inputVector.x != 0f) { inputAxis += inputVector.x > 0f ? -transform.up : transform.up; }
-            if (inputVector.y != 0f) { inputAxis += inputVector.y > 0f ? transform.right : -transform.right; }
+            if (kInputVector.x != 0f) { inputAxis += kInputVector.x > 0f ? -transform.up : transform.up; }
+            if (kInputVector.y != 0f) { inputAxis += kInputVector.y > 0f ? transform.right : -transform.right; }
+
+            Debug.Log(kInputVector.magnitude);
 
             Vector3 nextPosition = Quaternion.Euler(inputAxis) * transform.position;
-            transform.position = Vector3.Lerp(transform.position, nextPosition, moveSpeed * Time.deltaTime * 20f);
+
+            // Gets angle between and lerps
+            float angleBetween = Vector3.Angle(transform.position, nextPosition);
+
+            angleBetween *= moveSpeed / 10f;
+
+            // Decrease falloff as kInputVector decreases
+            falloff = kInputVector.magnitude > 1f ? 1f : kInputVector.magnitude;
+
+            if (GetKeyboardInput().magnitude == 0f) { angleBetween *= falloff; }
+
+            float lerpedAngle = Mathf.LerpAngle(angleBetween, 0f, Time.deltaTime);
+
+            transform.RotateAround(focus.position, inputAxis, lerpedAngle);
         }
-    }
-
-    private void MouseMove()
-    {
-
     }
 
     // Gets movement from WASD and mouse
@@ -93,7 +123,7 @@ public class CameraController : MonoBehaviour
     }
 
     // Clamps the movement by maxViewAngle and minViewAngle
-    private Vector2 ClampKeyboardMovement(Vector2 inputVector)
+    private Vector2 ClampMovement(Vector2 inputVector)
     {
         float rot = transform.rotation.eulerAngles.x;
         float trueRotation = rot > 180f ? rot - 360f : rot;
@@ -101,6 +131,20 @@ public class CameraController : MonoBehaviour
         if (val > maxViewAngle || val < minViewAngle) { inputVector.y = 0f; }
 
         return inputVector;
+    }
+
+    private void MouseMove()
+    {
+        Vector2 inputVector = Input.GetMouseButton(0) ? -MouseInput : Vector2.zero;
+
+        if (Input.GetMouseButtonDown(0)) { savedMousePos = transform.position; }
+
+        float inertia = Mathf.Lerp(inputVector.magnitude, 0f, mouseDamp * Time.deltaTime);
+
+        float x = Mathf.Clamp(inputVector.x, -maxMouseSpeed, maxMouseSpeed);
+        float y = Mathf.Clamp(inputVector.y, -maxMouseSpeed, maxMouseSpeed);
+
+        inputVector = ClampMovement(new Vector2(x, y));
     }
 
     // Zoom function
