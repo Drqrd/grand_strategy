@@ -90,7 +90,7 @@ namespace MapGenerator
             GameObject neighborsLine = new GameObject("Neighbors");
             neighborsLine.transform.parent = parent;
 
-            LineRenderer[] neighborsLineObj = new LineRenderer[plates[index].BoundaryNeighborsInd.Length];
+            LineRenderer[] neighborsLineObj = new LineRenderer[plates[index].BoundaryVertices.Length];
             for (int j = 0; j < plates[index].BoundaryVertices.Length; j++)
             {
 
@@ -115,14 +115,6 @@ namespace MapGenerator
                 Color col = Random.ColorHSV();
                 neighborsLineObj[j].startColor = col;
                 neighborsLineObj[j].endColor = col;
-            }
-
-            if (index == 0)
-            {
-                for (int i = 0; i < plates[2].BoundaryNeighborsInd.Length; i++)
-                {
-                    Debug.Log(plates[2].BoundaryNeighborsInd[i]);
-                }
             }
 
             plates[index].NeighborsBoundary = neighborsLineObj;

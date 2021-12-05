@@ -12,9 +12,9 @@ public class TectonicPlate
     public Vector3[] Vertices { get; private set; }
     public int[] Triangles { get; private set; }
     public Vector3 Direction { get; private set; }
+    public float Speed { get; private set; }
     public Vector3 Center { get; private set; }
     public Color[] Colors { get; private set; }
-    public Vector3[] Neighbors { get; private set; }
     public Mesh SharedMesh { get; private set; }
     public Vector3[] BoundaryVertices { get; private set; }
     public int[][] BoundaryEdges { get; private set; }
@@ -23,7 +23,10 @@ public class TectonicPlate
     // Public set
     public LineRenderer Boundary { get; set; }
     public LineRenderer[] NeighborsBoundary { get; set; }
-    public int[] BoundaryNeighborsInd { get; set; }    // Size of boundary edges, labels the edge with corresponding neighbor
+
+    // For speed
+    private const float minSpeed = 0.1f;
+    private const float maxSpeed = 2.0f;
 
     // Mapping parts
     private float height, moisture, temperature;
@@ -41,6 +44,9 @@ public class TectonicPlate
         // Random assign of direction
         Direction = Vector3.Lerp(Center, (GetRandomDirection() + Center), .15f);
 
+        // Random assign speed
+        Speed = GetRandomSpeed();
+
         // Random assign if continental or oceanic
         IsContinental = Random.Range(0f, 1f) > 0.5f ? true : false;
 
@@ -55,8 +61,6 @@ public class TectonicPlate
 
             FindBoundaryEdges();
             FindBoundaryVertices();
-
-            BoundaryNeighborsInd = new int[BoundaryEdges.Length];
         }
     }
 
@@ -69,6 +73,11 @@ public class TectonicPlate
 
         Quaternion rotation = Quaternion.AngleAxis(Random.Range(0f, 360f), Center);
         return rotation * tangent;
+    }
+
+    private float GetRandomSpeed()
+    {
+        return Random.Range(minSpeed, maxSpeed);
     }
 
     private void FindBoundaryVertices()
@@ -129,6 +138,8 @@ public class TectonicPlate
 
         BoundaryEdges = edges.ToArray();
     }
+
+    
 
     /*------------------------------------------------------------------------------------*/
     

@@ -21,19 +21,6 @@ namespace IDict
             return hc;
         }
     }
-
-    public class BoundaryEdgeCompareOverride : IEqualityComparer<World.BoundaryEdge>
-    {
-        public bool Equals(World.BoundaryEdge a, World.BoundaryEdge b)
-        {
-            bool nrm = (a.Edge == b.Edge && a.InverseEdge == b.InverseEdge);
-            bool inv = (a.Edge == b.InverseEdge && a.InverseEdge == b.Edge);
-            if (nrm || inv) { return true; }
-            else { return false; }
-        }
-
-        public int GetHashCode(World.BoundaryEdge edge) { return base.GetHashCode(); }
-    }
 }
 
 
