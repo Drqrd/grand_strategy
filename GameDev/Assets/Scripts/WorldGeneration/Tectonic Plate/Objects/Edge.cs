@@ -1,24 +1,8 @@
 using UnityEngine;
 
+
 namespace TectonicPlateObjects
 {
-    // Triangle Object for flood fill
-    public class Triangle
-    {
-        public int PlateCenter { get; set; }
-        public int[] Triangles { get; private set; }
-        public Vector3[] Vertices { get; private set; }
-        public Vector3 TriangleCenter { get; private set; }
-        public Triangle(int[] triangles, Vector3[] vertices, Vector3 triangleCenter)
-        {
-            Triangles = triangles;
-            Vertices = vertices;
-            TriangleCenter = triangleCenter;
-
-            PlateCenter = -1;
-        }
-    }
-
     // Edge for boundary stuff
     public class Edge
     {
@@ -59,14 +43,14 @@ namespace TectonicPlateObjects
 
             return (int)Mathf.Round(hc);
         }
-        public static bool operator == (Edge v1, Edge v2)
+        public static bool operator ==(Edge v1, Edge v2)
         {
             if (v1.edge[0] == v2.edge[0] && v1.edge[1] == v2.edge[1]) { return true; }
             if (v1.edge[0] == v2.invEdge[0] && v1.edge[1] == v2.invEdge[1]) { return true; }
             return false;
         }
 
-        public static bool operator != (Edge v1, Edge v2)
+        public static bool operator !=(Edge v1, Edge v2)
         {
             if (v1.edge[0] == v2.edge[0] && v1.edge[1] == v2.edge[1]) { return false; }
             if (v1.edge[0] == v2.invEdge[0] && v1.edge[1] == v2.invEdge[1]) { return false; }
@@ -74,3 +58,5 @@ namespace TectonicPlateObjects
         }
     }
 }
+
+

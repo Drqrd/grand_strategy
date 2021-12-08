@@ -60,10 +60,12 @@ public class World : MonoBehaviour
     [SerializeField] private PlateDetermination plateDeterminationType;
     [SerializeField] [Range(1, 65534)] private int resolution = 1;
     [SerializeField] private bool convertToSphere = false;
-    [SerializeField] private bool smoothMapSurface = true;
     [SerializeField] private bool displayVertices = false;
     [SerializeField] private bool displayPlateCenters = false;
     [SerializeField] private bool displayPlateDirections = false;
+
+    [Header("Sphere Transformation Parameters")]
+    [SerializeField] private bool smoothMapSurface = true;
 
     [Header("Fibonacci Exclusive Parameters")]
     [SerializeField] [Range(0f, 1f)] private float jitter = 0;
