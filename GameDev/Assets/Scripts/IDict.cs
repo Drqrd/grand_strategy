@@ -23,28 +23,6 @@ namespace IDict
             return hc;
         }
     }
-
-    public class TectonicPlateEdgeCompareOverride : IEqualityComparer<TectonicPlate.Edge>
-    {
-        public bool Equals(TectonicPlate.Edge v1, TectonicPlate.Edge v2)
-        {
-            return (v1.edge == v2.edge || v1.edge == v2.invEdge);
-        }
-
-        public int GetHashCode(TectonicPlate.Edge e)
-        {
-            float hc = e.edge.Length;
-
-            foreach(Vector3 val in e.edge)
-            {
-                hc = unchecked(hc * 314159 + val.x);
-                hc = unchecked(hc * 314159 + val.y);
-                hc = unchecked(hc * 314159 + val.z);
-            }
-
-            return (int)Mathf.Round(hc);
-        }
-    }
 }
 
 

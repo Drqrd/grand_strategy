@@ -4,7 +4,8 @@ using System.Linq;
 using UnityEngine;
 using MeshGenerator;
 using MapGenerator;
-using IDict;
+
+using static WorldGeneration.TP;
 
 // TODO:
 //  - Create a get seed function to input into the map generators
@@ -145,8 +146,16 @@ public class World : MonoBehaviour
 
     private void BuildTectonicPlates()
     {
-        plateCenters = TectonicPlate.GeneratePlateCenters(this);
-        plates = TectonicPlate.GeneratePlates(plateCenters, this);
+        plateCenters = GeneratePlateCenters(this);
+        plates = GeneratePlates(plateCenters, this);
+
+        int ind = 0;
+        foreach (TectonicPlate plate in plates)
+        {
+            ind += plate.BoundaryEdges.Length;
+        }
+        Debug.Log(ind);
+
         BuildTectonicPlateMap();
     }
 
