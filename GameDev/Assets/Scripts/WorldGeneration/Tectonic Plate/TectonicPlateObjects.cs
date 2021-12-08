@@ -59,21 +59,18 @@ namespace TectonicPlateObjects
 
             return (int)Mathf.Round(hc);
         }
-
-        /*
-        public static bool operator ==(Edge v1, Edge v2)
+        public static bool operator == (Edge v1, Edge v2)
         {
             if (v1.edge[0] == v2.edge[0] && v1.edge[1] == v2.edge[1]) { return true; }
             if (v1.edge[0] == v2.invEdge[0] && v1.edge[1] == v2.invEdge[1]) { return true; }
             return false;
         }
 
-        public static bool operator !=(Edge v1, Edge v2)
+        public static bool operator != (Edge v1, Edge v2)
         {
             if (v1.edge[0] == v2.edge[0] && v1.edge[1] == v2.edge[1]) { return false; }
             if (v1.edge[0] == v2.invEdge[0] && v1.edge[1] == v2.invEdge[1]) { return false; }
             return true;
         }
-         */
     }
 }

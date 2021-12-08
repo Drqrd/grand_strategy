@@ -17,7 +17,7 @@ namespace WorldGeneration
 
             centers.Add(Random.onUnitSphere);
 
-            float minDist = world.distBetweenCenters[(int)world.plateSize];
+            float minDist = world.DistBetweenCenters[(int)world._PlateSize];
             bool addToCenters;
             int MAX_TRIES = 999, tries = 0;
 
@@ -51,32 +51,32 @@ namespace WorldGeneration
             return centers.ToArray();
         }
 
-        public static TectonicPlate[] GeneratePlates(Vector3[] plateCenters, World world)
+        public static TectonicPlate[] GeneratePlates(World world)
         {
             // Initialization
-            TectonicPlate[] plates = new TectonicPlate[plateCenters.Length];
-            List<int>[] plateTriangles = new List<int>[plateCenters.Length];
-            List<Vector3>[] plateVertices = new List<Vector3>[plateCenters.Length];
+            TectonicPlate[] plates = new TectonicPlate[world.PlateCenters.Length];
+            List<int>[] plateTriangles = new List<int>[world.PlateCenters.Length];
+            List<Vector3>[] plateVertices = new List<Vector3>[world.PlateCenters.Length];
 
-            for (int i = 0; i < plateCenters.Length; i++)
+            for (int i = 0; i < world.PlateCenters.Length; i++)
             {
                 plateTriangles[i] = new List<int>();
                 plateVertices[i] = new List<Vector3>();
             }
 
-            if (world.plateDeterminationType == World.PlateDetermination.ClosestCenter)
+            if (world.PlateDeterminationType == World.PlateDetermination.ClosestCenter)
             {
                 GetCenterClosestCenter(plateTriangles, plateVertices, out plateTriangles, out plateVertices, world);
             }
-            else if (world.plateDeterminationType == World.PlateDetermination.FloodFill)
+            else if (world.PlateDeterminationType == World.PlateDetermination.FloodFill)
             {
                 GetCenterFloodFill(plateTriangles, plateVertices, out plateTriangles, out plateVertices, world);
             }
 
             // Build plates
-            for (int i = 0; i < plateCenters.Length; i++)
+            for (int i = 0; i < world.PlateCenters.Length; i++)
             {
-                plates[i] = new TectonicPlate(plateCenters[i], plateVertices[i].ToArray(), plateTriangles[i].ToArray());
+                plates[i] = new TectonicPlate(world.PlateCenters[i], plateVertices[i].ToArray(), plateTriangles[i].ToArray());
             }
 
 
@@ -85,22 +85,68 @@ namespace WorldGeneration
                 // Do colors
                 // Percent on gradient
                 float onGradient = IMath.FloorFloat(Random.Range(0f, 1f), 0.1f);
-                Color color = plate.IsContinental ? world.continental.Evaluate(onGradient) : world.oceanic.Evaluate(onGradient);
+                Color color = plate.IsContinental ? world.Continental.Evaluate(onGradient) : world.Oceanic.Evaluate(onGradient);
                 plate.SetColors(color);
             }
 
-            // Get all unique edges
-            Edge[] edges = FindEdges(plates);
-
-            foreach (Edge edge in edges)
-            {
-                Debug.Log(edge.edgeOf[0] + ", " + edge.edgeOf[1]);
-            }
-
-            Debug.Log(edges.Length);
-
             return plates;
         }
+
+        // Find neighbors : get distinct list of edges...
+        public static Edge[] GetBoundaryEdges(World world)
+        {
+            TectonicPlate[] plates = world.Plates;
+            List<Edge> edges = new List<Edge>();
+
+            for (int a = 0; a < plates.Length; a++)
+            {
+                for (int b = 0; b < plates[a].BoundaryEdges.Length; b++)
+                {
+                    int[] bE = plates[a].BoundaryEdges[b];
+                    Edge e = new Edge(plates[a].Vertices[bE[0]], plates[a].Vertices[bE[1]], a);
+
+                    edges.Add(e);
+                }
+            }
+
+            // return edges.Distinct(new TectonicPlateEdgeCompareOverride()).ToList().ToArray();
+
+            List<Edge> trueEdges = new List<Edge>();
+
+            for (int a = 0; a < edges.Count; a++)
+            {
+                Edge currEdge = edges[a];
+                for (int b = a + 1; b < edges.Count; b++)
+                {
+                    if (currEdge == edges[b])
+                    {
+                        currEdge.edgeOf[1] = edges[b].edgeOf[0];
+                        trueEdges.Add(currEdge);
+                        break;
+                    }
+                }
+            }
+
+            return trueEdges.ToArray();
+        }
+
+        public static int GetUniqueEdges(Edge[] edges)
+        {
+            int uniqueEdges = 1;
+            int[] curr = edges[0].edgeOf;
+            for (int a = 1; a < edges.Length; a++)
+            {
+                if (edges[a].edgeOf[0] != curr[0] || edges[a].edgeOf[1] != curr[1]) 
+                { 
+                    curr = edges[a].edgeOf; 
+                    uniqueEdges += 1; 
+                }
+            }
+
+            return uniqueEdges;
+        }
+
+
 
         /*------------------------------------------------------------------------------------*/
 
@@ -109,20 +155,20 @@ namespace WorldGeneration
         private static void GetCenterClosestCenter(List<int>[] plateTriangles, List<Vector3>[] plateVertices, out List<int>[] pt, out List<Vector3>[] pv, World world)
         {
             // For each vertex in each meshfilter...
-            for (int i = 0; i < world.sphere.meshFilters.Length; i++)
+            for (int i = 0; i < world.Sphere.meshFilters.Length; i++)
             {
-                int[] t = world.sphere.meshFilters[i].mesh.triangles;
-                Vector3[] v = world.sphere.meshFilters[i].mesh.vertices;
+                int[] t = world.Sphere.meshFilters[i].mesh.triangles;
+                Vector3[] v = world.Sphere.meshFilters[i].mesh.vertices;
                 for (int j = 0; j < t.Length; j += 3)
                 {
                     Vector3 centroid = IMath.TriangleCentroid(v[t[j + 0]], v[t[j + 1]], v[t[j + 2]]);
-                    float dist = IMath.DistanceBetweenPoints(centroid, world.plateCenters[0]);
+                    float dist = IMath.DistanceBetweenPoints(centroid, world.PlateCenters[0]);
                     int distInd = 0;
 
                     // Find the closest plate center
-                    for (int k = 1; k < world.plateCenters.Length; k++)
+                    for (int k = 1; k < world.PlateCenters.Length; k++)
                     {
-                        float newDist = IMath.DistanceBetweenPoints(centroid, world.plateCenters[k]);
+                        float newDist = IMath.DistanceBetweenPoints(centroid, world.PlateCenters[k]);
                         if (dist > newDist)
                         {
                             dist = newDist;
@@ -139,7 +185,7 @@ namespace WorldGeneration
             }
 
             // Do triangles
-            for (int i = 0; i < world.plateCenters.Length; i++)
+            for (int i = 0; i < world.PlateCenters.Length; i++)
             {
                 for (int j = 0; j < plateVertices[i].Count; j++)
                 {
@@ -148,7 +194,7 @@ namespace WorldGeneration
             }
 
             // Squash vertices
-            if (world.smoothMapSurface)
+            if (world.SmoothMapSurface)
             {
                 for (int i = 0; i < plateVertices.Length; i++)
                 {
@@ -162,12 +208,12 @@ namespace WorldGeneration
 
         private static void GetCenterFloodFill(List<int>[] plateTriangles, List<Vector3>[] plateVertices, out List<int>[] pt, out List<Vector3>[] pv, World world)
         {
-            Vector3[][] v = new Vector3[world.sphere.meshFilters.Length][];
-            int[][] t = new int[world.sphere.meshFilters.Length][];
-            for (int i = 0; i < world.sphere.meshFilters.Length; i++)
+            Vector3[][] v = new Vector3[world.Sphere.meshFilters.Length][];
+            int[][] t = new int[world.Sphere.meshFilters.Length][];
+            for (int i = 0; i < world.Sphere.meshFilters.Length; i++)
             {
-                v[i] = world.sphere.meshFilters[i].mesh.vertices;
-                t[i] = world.sphere.meshFilters[i].mesh.triangles;
+                v[i] = world.Sphere.meshFilters[i].mesh.vertices;
+                t[i] = world.Sphere.meshFilters[i].mesh.triangles;
             }
 
             // Loop through all triangles and create a triangle object with relevant information
@@ -186,7 +232,7 @@ namespace WorldGeneration
             int ind = 0;
             List<Triangle> tempCenters = new List<Triangle>();
             // Set triangle centers as random triangles in the triangles list
-            while (ind < world.plateCenters.Length && ind < triangles.Count)
+            while (ind < world.PlateCenters.Length && ind < triangles.Count)
             {
                 tempCenters.Add(triangles[Random.Range(0, triangles.Count - 1)]);
                 if (tempCenters.Count != tempCenters.Distinct().Count()) { tempCenters.RemoveAt(tempCenters.Count - 1); }
@@ -194,12 +240,12 @@ namespace WorldGeneration
             }
 
             // Resize
-            world.plateCenters = new Vector3[tempCenters.Count];
+            world.PlateCenters = new Vector3[tempCenters.Count];
 
             // Proper plate centers
             for (int i = 0; i < tempCenters.Count; i++)
             {
-                world.plateCenters[i] = tempCenters[i].TriangleCenter;
+                world.PlateCenters[i] = tempCenters[i].TriangleCenter;
                 tempCenters[i].PlateCenter = i;
             }
 
@@ -208,13 +254,13 @@ namespace WorldGeneration
             // - Iterate through from closest to farthest, from first to last center and assign to center if the val is -1
 
             // closest to farthest map
-            SortedList<float, int>[] distanceMap = new SortedList<float, int>[world.plateCenters.Length];
-            for (int i = 0; i < world.plateCenters.Length; i++)
+            SortedList<float, int>[] distanceMap = new SortedList<float, int>[world.PlateCenters.Length];
+            for (int i = 0; i < world.PlateCenters.Length; i++)
             {
                 distanceMap[i] = new SortedList<float, int>();
                 for (int j = 0; j < triangles.Count; j++)
                 {
-                    float dist = IMath.DistanceBetweenPoints(world.plateCenters[i], triangles[j].TriangleCenter);
+                    float dist = IMath.DistanceBetweenPoints(world.PlateCenters[i], triangles[j].TriangleCenter);
                     // If dist key already exists, adjust until its right behind
                     while (distanceMap[i].ContainsKey(dist)) { dist += .00001f; }
                     distanceMap[i].Add(dist, j);
@@ -224,7 +270,7 @@ namespace WorldGeneration
             // iterate through each plate center by way of distance map, and if it hasnt been touched yet, assign it to the plate
             for (int i = 0; i < triangles.Count; i++)
             {
-                for (int j = 0; j < world.plateCenters.Length; j++)
+                for (int j = 0; j < world.PlateCenters.Length; j++)
                 {
                     if (triangles[distanceMap[j].Values[i]].PlateCenter == -1)
                     {
@@ -246,7 +292,7 @@ namespace WorldGeneration
             }
 
             // Squash vertices
-            if (world.smoothMapSurface)
+            if (world.SmoothMapSurface)
             {
                 for (int i = 0; i < plateVertices.Length; i++)
                 {
@@ -259,45 +305,8 @@ namespace WorldGeneration
             pv = plateVertices;
         }
 
-        // Find neighbors : get distinct list of edges...
-        private static Edge[] FindEdges(TectonicPlate[] plates)
-        {
-            List<Edge> edges = new List<Edge>();
-
-            for (int a = 0; a < plates.Length; a++)
-            {
-                for (int b = 0; b < plates[a].BoundaryEdges.Length; b++)
-                {
-                    int[] bE = plates[a].BoundaryEdges[b];
-                    Edge e = new Edge(plates[a].Vertices[bE[0]], plates[a].Vertices[bE[1]], a);
-
-                    edges.Add(e);
-                }
-            }
-
-            // return edges.Distinct(new TectonicPlateEdgeCompareOverride()).ToList().ToArray();
-
-            List<Edge> trueEdges = new List<Edge>();
-
-            for (int a = 0; a < edges.Count; a++)
-            {
-                Edge currEdge = edges[a];
-                for (int b = a; b < edges.Count; b++)
-                {
-                    if (currEdge == edges[b])
-                    {
-                        currEdge.edgeOf[1] = edges[b].edgeOf[0];
-                        trueEdges.Add(currEdge);
-                        continue;
-                    }
-                }
-            }
-
-            return trueEdges.ToArray();
-        }
-
         // Each triangle has their own set of vertices, the triangles should share vertices with neighboring triangles
-        // to smooth the surface of the sphere
+        // to smooth the surface of the Sphere
         // Approach: Loop through each vertex element, find matching vertices, get their indices into a list and delete afterwards
         private static void CondenseVerticesAndTriangles(List<Vector3> v, List<int> t, out List<Vector3> vertices, out List<int> triangles)
         {

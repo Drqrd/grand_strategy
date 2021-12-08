@@ -22,4 +22,13 @@ public static class IMath
     { 
         return Mathf.Floor(f / to) * to;
     }
+
+    public static bool ColorApproximately(Color one, Color two, float threshold = 0.1f)
+    {
+        float r = Mathf.Pow(Mathf.Abs(one.r - two.r), 2f);
+        float g = Mathf.Pow(Mathf.Abs(one.g - two.g), 2f);
+        float b = Mathf.Pow(Mathf.Abs(one.b - two.b), 2f);
+        if (Mathf.Sqrt(r+g+b) < threshold) { return true; }
+        else { return false; }
+    }
 }

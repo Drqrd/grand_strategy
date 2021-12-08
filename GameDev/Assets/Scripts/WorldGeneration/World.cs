@@ -5,6 +5,7 @@ using UnityEngine;
 using MeshGenerator;
 using MapGenerator;
 
+using TectonicPlateObjects;
 using static WorldGeneration.TP;
 
 // TODO:
@@ -21,8 +22,6 @@ public class World : MonoBehaviour
         Large,
         Enormous
     };
-
-    public float[] distBetweenCenters = new float[] { .2f, .5f, .7f, .9f, 1.2f };
 
     public enum SphereType
     {
@@ -49,19 +48,19 @@ public class World : MonoBehaviour
 
     public enum BoundaryDisplay
     {
-        All,
-        Neighbors,
+        Default,
+        FaultLines,
         Weighted
     }
 
     [SerializeField] private SphereType sphereType;
 
     [Header("General Parameters")]
-    [SerializeField] public PlateSize plateSize;
-    [SerializeField] public PlateDetermination plateDeterminationType;
+    [SerializeField] private PlateSize plateSize;
+    [SerializeField] private PlateDetermination plateDeterminationType;
     [SerializeField] [Range(1, 65534)] private int resolution = 1;
     [SerializeField] private bool convertToSphere = false;
-    [SerializeField] public bool smoothMapSurface = true;
+    [SerializeField] private bool smoothMapSurface = true;
     [SerializeField] private bool displayVertices = false;
     [SerializeField] private bool displayPlateCenters = false;
     [SerializeField] private bool displayPlateDirections = false;
@@ -78,16 +77,30 @@ public class World : MonoBehaviour
     private BoundaryDisplay previousBoundaryDisplay;
 
     [Header("Gradients")]
-    [SerializeField] public Gradient continental;
-    [SerializeField] public Gradient oceanic;
+    [SerializeField] private Gradient continental;
+    [SerializeField] private Gradient oceanic;
 
-    public Vector3[] plateCenters;
-    public TectonicPlate[] plates;
-    public CustomMesh sphere;
     private HeightMap heightMap;
     private TectonicPlateMap plateMap;
     private MoistureMap moistureMap;
     private TemperatureMap temperatureMap;
+
+    private float[] distBetweenCenters = new float[] { .2f, .5f, .7f, .9f, 1.2f };
+
+    // Public properties from parameters
+    public PlateSize _PlateSize { get { return plateSize; } }
+    public PlateDetermination PlateDeterminationType { get { return plateDeterminationType; } }
+    public BoundaryDisplay _BoundaryDisplay { get { return boundaryDisplay; } }
+    public bool SmoothMapSurface { get { return smoothMapSurface; } }
+    public Gradient Continental { get { return continental; } }
+    public Gradient Oceanic { get { return oceanic; } }
+    public float[] DistBetweenCenters { get { return distBetweenCenters; } }
+
+    // Pure properties
+    public Vector3[] PlateCenters { get; set; }
+    public TectonicPlate[] Plates { get; private set; }
+    public CustomMesh Sphere { get; private set; }
+    public TectonicPlateBoundaries PlateBoundaries { get; private set; }
 
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
 
@@ -109,7 +122,7 @@ public class World : MonoBehaviour
     private void Update()
     {
         if (mapDisplay != previousMapDisplay) { ChangeMapDisplay(); }
-        if (boundaryDisplay != previousBoundaryDisplay && mapDisplay == MapDisplay.Plates) { ChangeBoundaryDisplay(); }
+            if (boundaryDisplay != previousBoundaryDisplay && mapDisplay == MapDisplay.Plates) { ChangeBoundaryDisplay(); }
     }
 
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -119,20 +132,20 @@ public class World : MonoBehaviour
         switch (sphereType)
         {
             case SphereType.Octahedron:
-                sphere = new OctahedronSphere(transform, resolution, convertToSphere);
+                Sphere = new OctahedronSphere(transform, resolution, convertToSphere);
                 break;
             case SphereType.Cube:
                 break;
             case SphereType.Fibonacci:
-                sphere = new FibonacciSphere(transform, resolution, jitter, alterFibonacciLattice);
+                Sphere = new FibonacciSphere(transform, resolution, jitter, alterFibonacciLattice);
                 break;
             default:
-                sphere = null;
+                Sphere = null;
                 break;
         }
-        if (sphere != null)
+        if (Sphere != null)
         {
-            sphere.Build();
+            Sphere.Build();
         }
     }
 
@@ -146,40 +159,37 @@ public class World : MonoBehaviour
 
     private void BuildTectonicPlates()
     {
-        plateCenters = GeneratePlateCenters(this);
-        plates = GeneratePlates(plateCenters, this);
+        
+        PlateCenters = GeneratePlateCenters(this);
+        Plates = GeneratePlates(this);
+        Edge[] edges = GetBoundaryEdges(this);
 
-        int ind = 0;
-        foreach (TectonicPlate plate in plates)
-        {
-            ind += plate.BoundaryEdges.Length;
-        }
-        Debug.Log(ind);
+        PlateBoundaries = new TectonicPlateBoundaries(edges, GetUniqueEdges(edges));
 
         BuildTectonicPlateMap();
     }
 
     private void BuildTectonicPlateMap()
     {
-        plateMap = new TectonicPlateMap(transform, plates, boundaryDisplay);
+        plateMap = new TectonicPlateMap(this);
         plateMap.Build();
     }
 
     private void BuildHeightMap()
     {
-        heightMap = new HeightMap(transform, sphere.meshFilters);
+        heightMap = new HeightMap(this);
         heightMap.Build();
     }
 
     private void BuildMoistureMap()
     {
-        moistureMap = new MoistureMap(transform, sphere.meshFilters);
+        moistureMap = new MoistureMap(this);
         moistureMap.Build();
     }
 
     private void BuildTemperatureMap()
     {
-        temperatureMap = new TemperatureMap(transform, sphere.meshFilters);
+        temperatureMap = new TemperatureMap(this);
         temperatureMap.Build();
     }
 
@@ -198,14 +208,30 @@ public class World : MonoBehaviour
     private void ChangeBoundaryDisplay()
     {
         previousBoundaryDisplay = boundaryDisplay;
-        Transform plateRef = transform.Find(MapDisplay.Plates.ToString());
-        foreach (Transform plate in plateRef)
+        Transform boundaryRef = transform.Find(MapDisplay.Plates.ToString()).GetChild(0);
+
+        foreach (Transform boundary in boundaryRef)
         {
-            Transform boundaryRef = plate.Find("Boundary");
-            foreach (Transform boundary in boundaryRef)
+            switch (boundaryDisplay)
             {
-                if (boundary.name.Contains(boundaryDisplay.ToString())) { boundary.gameObject.SetActive(true); }
-                else { boundary.gameObject.SetActive(false); }
+                case BoundaryDisplay.Default:
+                    foreach(LineRenderer line in plateMap.Lines)
+                    {
+                        line.startColor = PlateBoundaries.DefaultColor;
+                        line.endColor = PlateBoundaries.DefaultColor;
+                    }
+                    break;
+                case BoundaryDisplay.FaultLines:
+                    for (int a = 0; a < plateMap.Lines.Length; a++)
+                    {
+                        plateMap.Lines[a].startColor = PlateBoundaries.FaultColors[a];
+                        plateMap.Lines[a].endColor = PlateBoundaries.FaultColors[a];
+                    }
+                    break;
+                case BoundaryDisplay.Weighted:
+                    break;
+                default:
+                    break;
             }
         }
     }
@@ -216,26 +242,99 @@ public class World : MonoBehaviour
     {
         if (Application.isPlaying)
         {
-            if (mapDisplay == MapDisplay.Plates && plates != null)
+            if (mapDisplay == MapDisplay.Plates && Plates != null)
             {
                 Gizmos.color = Color.red;
-                for (int i = 0; i < plates.Length; i++)
+                for (int i = 0; i < Plates.Length; i++)
                 {
-                    if (displayPlateDirections) { Gizmos.DrawLine(plates[i].Center, plates[i].Direction); }
-                    if (displayPlateCenters) { Gizmos.DrawSphere(plates[i].Center, 0.01f); }
+                    if (displayPlateDirections) { Gizmos.DrawLine(Plates[i].Center, Plates[i].Direction); }
+                    if (displayPlateCenters) { Gizmos.DrawSphere(Plates[i].Center, 0.01f); }
                 }
             }
 
             if (displayVertices)
             {
-                for (int i = 0; i < sphere.meshFilters.Length; i++)
+                for (int i = 0; i < Sphere.meshFilters.Length; i++)
                 {
-                    foreach (Vector3 v in sphere.meshFilters[i].sharedMesh.vertices)
+                    foreach (Vector3 v in Sphere.meshFilters[i].sharedMesh.vertices)
                     {
                         Gizmos.DrawSphere(v, 0.01f);
                     }
                 }
             }
+        }
+    }
+
+    /* ------------------------------------------------------------------------------------------------------------------------------------------- */
+
+    // For the boundaries
+    public class TectonicPlateBoundaries
+    {
+        // Boundary Properties
+        public Edge[] Edges { get; private set; }
+        public Color DefaultColor { get; private set; }
+        public Color[] FaultColors { get; private set; }
+        public Color[] WeightedFaultColors { get; private set; }
+
+        // Constructors
+        public TectonicPlateBoundaries(Edge[] Edges, int uniqueEdges)
+        {
+            this.Edges = Edges;
+            this.DefaultColor = Color.red;
+            this.FaultColors = new Color[Edges.Length];
+            this.WeightedFaultColors = new Color[Edges.Length];
+
+            GenerateColors(uniqueEdges);
+        }
+
+        private void GenerateColors(int uniqueEdges)
+        {
+            Color[] uniqueColors = new Color[uniqueEdges];
+
+            for (int a = 0; a < uniqueEdges; a++)
+            {
+                // Generate a random color
+                uniqueColors[a] = Random.ColorHSV();
+
+                // Make sure the colors are different from previous colors
+                for(int b = 0; b < a; b++)
+                {
+                    // If color is the same...
+                    if (IMath.ColorApproximately(uniqueColors[a], uniqueColors[b]))
+                    {
+                        // Generate a new random color
+                        uniqueColors[a] = Random.ColorHSV();
+                        // Compare again
+                        b = 0;
+                    }
+                }
+            }
+
+            // Assign the colors
+            int ind = 0;
+            int[] curr = Edges[0].edgeOf;
+            FaultColors[0] = uniqueColors[ind];
+            for(int a = 1; a < FaultColors.Length; a++)
+            {
+                if (Edges[a].edgeOf[0] != curr[0] || Edges[a].edgeOf[1] != curr[1])
+                {
+                    curr = Edges[a].edgeOf;
+                    ind += 1;
+                }
+                FaultColors[a] = uniqueColors[ind];
+            }
+        }
+
+        public void SetFaultColors(Color[] FaultColors)
+        {
+            if (FaultColors.Length == this.FaultColors.Length) { this.FaultColors = FaultColors; }
+            else { Debug.LogError("INVALID SET."); }
+        }
+
+        public void SetWeightedFaultColors(Color[] WeightedFaultColors)
+        {
+            if (WeightedFaultColors.Length == this.WeightedFaultColors.Length) { this.WeightedFaultColors = WeightedFaultColors; }
+            else { Debug.LogError("INVALID SET."); }
         }
     }
 }

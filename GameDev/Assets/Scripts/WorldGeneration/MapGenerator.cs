@@ -1,17 +1,19 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+using TectonicPlateObjects;
+
 namespace MapGenerator
 {
-    public abstract class NoiseMap
+    public abstract class Map
     {
-        protected Transform parent;
+        protected World world;
         protected MeshFilter[] meshFilters;
 
-        public NoiseMap(Transform parent, MeshFilter[] meshFilters)
+        public Map(World world)
         {
-            this.parent = parent;
-            this.meshFilters = meshFilters;
+            this.world = world;
+            this.meshFilters = world.Sphere.meshFilters;
         }
 
         public abstract void Build();
@@ -26,105 +28,87 @@ namespace MapGenerator
     // Approach:
     // - For continents vs oceans, get random distribution of points a set distance from one another.
     // - Decrement height from the continent centers, which will be considered mountains
-    public class TectonicPlateMap : NoiseMap
+    public class TectonicPlateMap : Map
     {
-        private TectonicPlate[] plates;
-        private World.BoundaryDisplay boundaryDisplay;
+        public LineRenderer[] Lines { get; private set; }
 
-        public TectonicPlateMap(Transform parent, TectonicPlate[] plates, World.BoundaryDisplay boundaryDisplay, MeshFilter[] meshFilters = null ) : base(parent, meshFilters)
+        public TectonicPlateMap(World world) : base(world)
         {
-            this.parent = parent;
-            this.plates = plates;
-            this.boundaryDisplay = boundaryDisplay;
+            this.world = world;
 
-            this.meshFilters = new MeshFilter[plates.Length];
+            meshFilters = new MeshFilter[world.PlateCenters.Length];
         }
 
         public override void Build()
         {
             GameObject parentObj = new GameObject(World.MapDisplay.Plates.ToString());
-            parentObj.transform.parent = parent;
+            parentObj.transform.parent = world.transform;
 
-            for(int i = 0; i < plates.Length; i++)
+            // Boundary Stuff
+            GameObject boundariesObj = new GameObject("Boundaries");
+            boundariesObj.transform.parent = parentObj.transform;
+            BuildBoundaries(boundariesObj.transform);
+
+            for (int i = 0; i < world.Plates.Length; i++)
             {
                 GameObject obj = new GameObject("Plate " + i);
                 obj.transform.parent = parentObj.transform;
 
                 meshFilters[i] = obj.AddComponent<MeshFilter>();
-                meshFilters[i].sharedMesh = plates[i].SharedMesh;
+                meshFilters[i].sharedMesh = world.Plates[i].SharedMesh;
                 obj.AddComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/Surface");
-
-                BuildBoundaries(obj.transform, i);
             }
         }
 
-        private void BuildBoundaries(Transform parent, int i)
+        private void BuildBoundaries(Transform parent)
         {
-            // Parent obj
-            GameObject boundary = new GameObject("Boundary");
-            boundary.transform.parent = parent;
-
-            BuildBoundaryAll(boundary.transform, i, boundaryDisplay == World.BoundaryDisplay.All);
-            BuildBoundaryNeighbors(boundary.transform, i, boundaryDisplay == World.BoundaryDisplay.Neighbors);
+            BuildLineObjects(parent);
+            GenerateWeightedBoundaryColors();
         }
 
-        private void BuildBoundaryAll(Transform parent, int index, bool isActive)
+        private void BuildLineObjects(Transform parent)
         {
-            // All boundary
-            GameObject lineObj = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/Line"));
-            lineObj.name = "All";
-            lineObj.transform.parent = parent;
-
-            plates[index].Boundary = lineObj.GetComponent<LineRenderer>();
-
-            plates[index].Boundary.positionCount = plates[index].BoundaryVertices.Length;
-            plates[index].Boundary.SetPositions(plates[index].BoundaryVertices);
-
-            // Disable if Start() says so
-            lineObj.SetActive(isActive);
-        }
-
-        private void BuildBoundaryNeighbors(Transform parent, int index, bool isActive)
-        {
-            // Neighbors boundary
-            GameObject neighborsLine = new GameObject("Neighbors");
-            neighborsLine.transform.parent = parent;
-
-            LineRenderer[] neighborsLineObj = new LineRenderer[plates[index].BoundaryVertices.Length];
-            for (int j = 0; j < plates[index].BoundaryVertices.Length; j++)
+            List<LineRenderer> _lines = new List<LineRenderer>();
+            for (int a = 0; a < world.PlateBoundaries.Edges.Length; a++)
             {
+                GameObject lineObj = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/Line"));
+                lineObj.name = "Line " + a;
+                lineObj.transform.parent = parent;
 
-                GameObject nlo = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/Line"));
-                nlo.transform.parent = neighborsLine.transform;
+                LineRenderer line = lineObj.GetComponent<LineRenderer>();
 
-                neighborsLineObj[j] = nlo.GetComponent<LineRenderer>();
+                Vector3[] vertices = new Vector3[100];
 
-                neighborsLineObj[j].positionCount = 2;
-                Vector3[] positions;
-                if (j < plates[index].BoundaryVertices.Length - 1)
+                // Get all relavent values
+                Edge edge = world.PlateBoundaries.Edges[a];
+                vertices[0] = edge.edge[0].normalized;
+                vertices[99] = edge.edge[1].normalized;
+
+                for(int b = 1; b < vertices.Length - 1; b++)
                 {
-                    positions = new Vector3[] { plates[index].BoundaryVertices[j],
-                                                plates[index].BoundaryVertices[j + 1] };
+                    vertices[b] = Vector3.Lerp(vertices[0], vertices[99], b / 100).normalized;
                 }
-                else
-                {
-                    positions = new Vector3[] { plates[index].BoundaryVertices[j - 1],
-                                                plates[index].BoundaryVertices[0] };
-                }
-                neighborsLineObj[j].SetPositions(positions);
-                Color col = Random.ColorHSV();
-                neighborsLineObj[j].startColor = col;
-                neighborsLineObj[j].endColor = col;
+
+                line.positionCount = 100;
+                line.SetPositions(vertices);
+
+                line.startColor = world.PlateBoundaries.DefaultColor;
+                line.endColor = world.PlateBoundaries.DefaultColor;
+
+                _lines.Add(line);
             }
 
-            plates[index].NeighborsBoundary = neighborsLineObj;
+            Lines = _lines.ToArray();
+            _lines.Clear();
+        }
 
-            // Disable if Start() says so
-            neighborsLine.SetActive(isActive);
+        private void GenerateWeightedBoundaryColors()
+        {
+
         }
     }
 
-    public class HeightMap : NoiseMap
+    public class HeightMap : Map
     {
         private Vector3[][] globalVertices;
         private int[][] globalTriangles;
@@ -136,11 +120,9 @@ namespace MapGenerator
         private float startHeight = HLZS.averageHeight;
         private float maxHeight = HLZS.maxHeight;
 
-        public HeightMap(Transform parent, MeshFilter[] meshFilters) : base(parent, meshFilters)
+        public HeightMap(World world) : base(world)
         {
-            this.parent = parent;
-            this.meshFilters = meshFilters;
-
+            this.world = world;
             // Global verts, triangles and map
             globalVertices = new Vector3[meshFilters.Length][];
             globalTriangles = new int[meshFilters.Length][];
@@ -159,7 +141,7 @@ namespace MapGenerator
         public override void Build()
         {
             GameObject obj = new GameObject(World.MapDisplay.HeightMap.ToString());
-            obj.transform.parent = parent;
+            obj.transform.parent = world.transform;
         }
 
         
@@ -193,18 +175,17 @@ namespace MapGenerator
         */
     }
     
-    public class MoistureMap : NoiseMap
+    public class MoistureMap : Map
     {
-        public MoistureMap(Transform parent, MeshFilter[] meshFilters) : base(parent, meshFilters)
+        public MoistureMap(World world) : base(world)
         {
-            this.parent = parent;
-            this.meshFilters = meshFilters;
+            this.world = world;
         }
 
         public override void Build()
         {
             GameObject obj = new GameObject(World.MapDisplay.MoistureMap.ToString());
-            obj.transform.parent = parent;
+            obj.transform.parent = world.transform;
         }
 
         private void GenerateColors()
@@ -222,18 +203,17 @@ namespace MapGenerator
         }
     }
 
-    public class TemperatureMap : NoiseMap
+    public class TemperatureMap : Map
     {
-        public TemperatureMap(Transform parent, MeshFilter[] meshFilters) : base(parent, meshFilters)
+        public TemperatureMap(World world) : base(world)
         {
-            this.parent = parent;
-            this.meshFilters = meshFilters;
+            this.world = world;
         }
 
         public override void Build()
         {
             GameObject obj = new GameObject(World.MapDisplay.TemperatureMap.ToString());
-            obj.transform.parent = parent;
+            obj.transform.parent = world.transform;
         }
     }
 }
