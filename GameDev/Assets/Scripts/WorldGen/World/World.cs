@@ -114,7 +114,7 @@ public class World : MonoBehaviour
     public Vector3[] PlateCenters { get; set; }
     public Plate[] Plates { get; private set; }
     public CustomMesh Sphere { get; private set; }
-    public TectonicPlateBoundaries PlateBoundaries { get; private set; }
+    public Boundaries PlateBoundaries { get; private set; }
 
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
 
@@ -178,7 +178,7 @@ public class World : MonoBehaviour
         Plates = GeneratePlates(this);
         Edge[] edges = GetBoundaryEdges(this);
 
-        PlateBoundaries = new TectonicPlateBoundaries(this, edges, GetUniqueEdges(edges));
+        PlateBoundaries = new Boundaries(this, edges, GetUniqueEdges(edges));
         PlateBoundaries.SetEdgeWeights(GetEdgeWeights(this));
         PlateBoundaries.SetWeightedFaultColors();
 

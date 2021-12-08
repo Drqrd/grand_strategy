@@ -1,9 +1,9 @@
 using UnityEngine;
 using WorldGeneration.TectonicPlate.Objects;
 
-namespace WorldGeneration.Objects
+namespace WorldGeneration.TectonicPlate.Objects
 {
-    public class TectonicPlateBoundaries
+    public class Boundaries
     {
         // Boundary Properties
         private World world;
@@ -14,7 +14,7 @@ namespace WorldGeneration.Objects
         public Color[] WeightedFaultColors { get; private set; }
 
         // Constructors
-        public TectonicPlateBoundaries(World world, Edge[] Edges, int uniqueEdges)
+        public Boundaries(World world, Edge[] Edges, int uniqueEdges)
         {
             this.world = world;
             this.Edges = Edges;

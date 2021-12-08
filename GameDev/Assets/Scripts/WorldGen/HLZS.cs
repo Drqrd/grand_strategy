@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 /* Holdridge Life Zone System
@@ -14,25 +12,29 @@ using UnityEngine;
 * B = Altitudinal
 * 
 */
-public class HLZS
+namespace WorldGeneration
 {
-    public enum LifeZone { RainForest, WetForest, MoistForest, DryForest, VeryDryForest,
-        RainTundra, WetTundra, MoistTundra, DryTundra, DryScrub, DesertScrub,
-        Steppe, ThornSteppe, ThornWoodland, Desert }
-
-    public static float maxHeight = 8000f;
-    public static float averageHeight = 2800f;
-    public static float minHeight = 0f;
-
-    private float[] elevationTime = new float[] { 0.0f, 0.27f, 0.55f, 0.82f, 1.0f }; // 2750 m max
-    private float[] latitudeTime = new float[] { 0.0f, 0.12f, 0.25f, 0.5f, .73f, 1.0f }; // 90 deg max
-
-    Color topRight = new Color(30f / 255f, 128f / 255f, 200f / 255f);
-    Color topLeft = new Color(125f / 255f, 125f / 255f, 125f / 255f);
-    Color botRight = new Color(0f / 255f, 180f / 255f, 80f / 255f);
-    Color botLeft = new Color(255f / 255f, 255f / 255f, 100f / 255f);
-
-    private void Start()
+    public struct HLZS
     {
+        public enum LifeZone
+        {
+            RainForest, WetForest, MoistForest, DryForest, VeryDryForest,
+            RainTundra, WetTundra, MoistTundra, DryTundra, DryScrub, DesertScrub,
+            Steppe, ThornSteppe, ThornWoodland, Desert
+        }
+
+        public static float MAX_HEIGHT = 8000f;
+        public static float AVG_HEIGHT = 2800f;
+        public static float MIN_HEIGHT = 0f;
+
+        private static float[] elevationTime = new float[] { 0.0f, 0.27f, 0.55f, 0.82f, 1.0f }; // 2750 m max
+        private static float[] latitudeTime = new float[] { 0.0f, 0.12f, 0.25f, 0.5f, .73f, 1.0f }; // 90 deg max
+
+        private static Color topRight = new Color(30f / 255f, 128f / 255f, 200f / 255f);
+        private static Color topLeft = new Color(125f / 255f, 125f / 255f, 125f / 255f);
+        private static Color botRight = new Color(0f / 255f, 180f / 255f, 80f / 255f);
+        private static Color botLeft = new Color(255f / 255f, 255f / 255f, 100f / 255f);
     }
 }
+
+

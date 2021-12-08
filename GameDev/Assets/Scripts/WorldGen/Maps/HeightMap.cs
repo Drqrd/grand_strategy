@@ -1,4 +1,5 @@
 using UnityEngine;
+using static WorldGeneration.HLZS;
 
 namespace WorldGeneration.Maps
 {
@@ -10,9 +11,11 @@ namespace WorldGeneration.Maps
         private float[][] map;
 
         // Height parameters (For coloring the map)
-        private float minHeight = HLZS.minHeight;
-        private float startHeight = HLZS.averageHeight;
-        private float maxHeight = HLZS.maxHeight;
+        private float min = MIN_HEIGHT;
+        private float avg = AVG_HEIGHT;
+        private float max = MAX_HEIGHT;
+
+        public float[][] Map { get { return map; } }
 
         public HeightMap(World world) : base(world)
         {
