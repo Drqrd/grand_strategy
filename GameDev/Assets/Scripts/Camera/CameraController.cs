@@ -17,7 +17,7 @@ public class CameraController : MonoBehaviour
     private const float maxViewAngle     = 40f;
     private const float minViewAngle     = -40f;
     private const float maxDistFromFocus = 5f;
-    private const float minDistFromFocus = 2f;
+    private const float minDistFromFocus = 1.5f;
 
     private const float maxKeyboardDrift = 0.5f;
     private const float verticalMouseSensitivity = 0.9f;

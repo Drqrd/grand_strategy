@@ -1,12 +1,11 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
-using MeshGenerator;
-using MapGenerator;
 
-using TectonicPlateObjects;
-using static WorldGeneration.TP;
+using WorldGeneration.Meshes;
+using WorldGeneration.Maps;
+using WorldGeneration.Objects;
+using WorldGeneration.TectonicPlate.Objects;
+
+using static WorldGeneration.Functions;
 
 // TODO:
 //  - Create a get seed function to input into the map generators
@@ -28,6 +27,13 @@ public class World : MonoBehaviour
         Octahedron,
         Cube,
         Fibonacci
+    }
+
+    public enum CellType
+    {
+        Triangle,
+        Circumcenter,
+        Centroid
     }
 
     public enum MapDisplay
@@ -60,15 +66,13 @@ public class World : MonoBehaviour
     [SerializeField] private PlateDetermination plateDeterminationType;
     [SerializeField] [Range(1, 65534)] private int resolution = 1;
     [SerializeField] private bool convertToSphere = false;
-    [SerializeField] private bool displayVertices = false;
-    [SerializeField] private bool displayPlateCenters = false;
-    [SerializeField] private bool displayPlateDirections = false;
 
     [Header("Sphere Transformation Parameters")]
     [SerializeField] private bool smoothMapSurface = true;
 
     [Header("Fibonacci Exclusive Parameters")]
     [SerializeField] [Range(0f, 1f)] private float jitter = 0;
+    [SerializeField] private CellType cellType = CellType.Triangle;
     [SerializeField] private bool alterFibonacciLattice = true;
 
     [Header("Display")]
@@ -78,9 +82,16 @@ public class World : MonoBehaviour
     [SerializeField] private BoundaryDisplay boundaryDisplay;
     private BoundaryDisplay previousBoundaryDisplay;
 
+    [SerializeField] private bool displayVertices = false;
+    [SerializeField] private bool displayPlateCenters = false;
+    [SerializeField] private bool displayPlateDirections = false;
+    [SerializeField] private bool displayEdgeCenters = false;
+    [SerializeField] private bool displayEdgeDirections = false;
+
     [Header("Gradients")]
     [SerializeField] private Gradient continental;
     [SerializeField] private Gradient oceanic;
+    [SerializeField] private Gradient weightedBoundaryGradient;
 
     private HeightMap heightMap;
     private TectonicPlateMap plateMap;
@@ -96,11 +107,12 @@ public class World : MonoBehaviour
     public bool SmoothMapSurface { get { return smoothMapSurface; } }
     public Gradient Continental { get { return continental; } }
     public Gradient Oceanic { get { return oceanic; } }
+    public Gradient WeightedBoundaryGradient { get { return weightedBoundaryGradient; } }
     public float[] DistBetweenCenters { get { return distBetweenCenters; } }
 
     // Pure properties
     public Vector3[] PlateCenters { get; set; }
-    public TectonicPlate[] Plates { get; private set; }
+    public Plate[] Plates { get; private set; }
     public CustomMesh Sphere { get; private set; }
     public TectonicPlateBoundaries PlateBoundaries { get; private set; }
 
@@ -124,7 +136,7 @@ public class World : MonoBehaviour
     private void Update()
     {
         if (mapDisplay != previousMapDisplay) { ChangeMapDisplay(); }
-            if (boundaryDisplay != previousBoundaryDisplay && mapDisplay == MapDisplay.Plates) { ChangeBoundaryDisplay(); }
+        if (boundaryDisplay != previousBoundaryDisplay && mapDisplay == MapDisplay.Plates) { ChangeBoundaryDisplay(); }
     }
 
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -166,7 +178,9 @@ public class World : MonoBehaviour
         Plates = GeneratePlates(this);
         Edge[] edges = GetBoundaryEdges(this);
 
-        PlateBoundaries = new TectonicPlateBoundaries(edges, GetUniqueEdges(edges));
+        PlateBoundaries = new TectonicPlateBoundaries(this, edges, GetUniqueEdges(edges));
+        PlateBoundaries.SetEdgeWeights(GetEdgeWeights(this));
+        PlateBoundaries.SetWeightedFaultColors();
 
         BuildTectonicPlateMap();
     }
@@ -231,6 +245,11 @@ public class World : MonoBehaviour
                     }
                     break;
                 case BoundaryDisplay.Weighted:
+                    for (int a = 0; a < plateMap.Lines.Length;a++)
+                    {
+                        plateMap.Lines[a].startColor = PlateBoundaries.WeightedFaultColors[a];
+                        plateMap.Lines[a].endColor = PlateBoundaries.WeightedFaultColors[a];
+                    }
                     break;
                 default:
                     break;
@@ -252,6 +271,15 @@ public class World : MonoBehaviour
                     if (displayPlateDirections) { Gizmos.DrawLine(Plates[i].Center, Plates[i].Direction); }
                     if (displayPlateCenters) { Gizmos.DrawSphere(Plates[i].Center, 0.01f); }
                 }
+
+                if (_BoundaryDisplay == BoundaryDisplay.Weighted)
+                {
+                    for (int i = 0; i < PlateBoundaries.Edges.Length; i++)
+                    {
+                        if (displayEdgeDirections) { Gizmos.DrawLine(PlateBoundaries.Edges[i].center, PlateBoundaries.Edges[i].direction); }
+                        if (displayEdgeCenters) { Gizmos.DrawSphere(PlateBoundaries.Edges[i].center, 0.01f); }
+                    }
+                }
             }
 
             if (displayVertices)
@@ -264,79 +292,6 @@ public class World : MonoBehaviour
                     }
                 }
             }
-        }
-    }
-
-    /* ------------------------------------------------------------------------------------------------------------------------------------------- */
-
-    // For the boundaries
-    public class TectonicPlateBoundaries
-    {
-        // Boundary Properties
-        public Edge[] Edges { get; private set; }
-        public Color DefaultColor { get; private set; }
-        public Color[] FaultColors { get; private set; }
-        public Color[] WeightedFaultColors { get; private set; }
-
-        // Constructors
-        public TectonicPlateBoundaries(Edge[] Edges, int uniqueEdges)
-        {
-            this.Edges = Edges;
-            this.DefaultColor = Color.red;
-            this.FaultColors = new Color[Edges.Length];
-            this.WeightedFaultColors = new Color[Edges.Length];
-
-            GenerateColors(uniqueEdges);
-        }
-
-        private void GenerateColors(int uniqueEdges)
-        {
-            Color[] uniqueColors = new Color[uniqueEdges];
-
-            for (int a = 0; a < uniqueEdges; a++)
-            {
-                // Generate a random color
-                uniqueColors[a] = Random.ColorHSV();
-
-                // Make sure the colors are different from previous colors
-                for(int b = 0; b < a; b++)
-                {
-                    // If color is the same...
-                    if (IMath.ColorApproximately(uniqueColors[a], uniqueColors[b]))
-                    {
-                        // Generate a new random color
-                        uniqueColors[a] = Random.ColorHSV();
-                        // Compare again
-                        b = 0;
-                    }
-                }
-            }
-
-            // Assign the colors
-            int ind = 0;
-            int[] curr = Edges[0].edgeOf;
-            FaultColors[0] = uniqueColors[ind];
-            for(int a = 1; a < FaultColors.Length; a++)
-            {
-                if (Edges[a].edgeOf[0] != curr[0] || Edges[a].edgeOf[1] != curr[1])
-                {
-                    curr = Edges[a].edgeOf;
-                    ind += 1;
-                }
-                FaultColors[a] = uniqueColors[ind];
-            }
-        }
-
-        public void SetFaultColors(Color[] FaultColors)
-        {
-            if (FaultColors.Length == this.FaultColors.Length) { this.FaultColors = FaultColors; }
-            else { Debug.LogError("INVALID SET."); }
-        }
-
-        public void SetWeightedFaultColors(Color[] WeightedFaultColors)
-        {
-            if (WeightedFaultColors.Length == this.WeightedFaultColors.Length) { this.WeightedFaultColors = WeightedFaultColors; }
-            else { Debug.LogError("INVALID SET."); }
         }
     }
 }

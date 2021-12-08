@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
-using TectonicPlateObjects;
+using WorldGeneration.Objects;
+using WorldGeneration.TectonicPlate.Objects;
 using System.Linq;
 
 namespace WorldGeneration
 {
-    public static class TP
+    public struct Functions
     {
         /* Late Public Constructor Functions */
         /* --- Listed by order of use ---*/
@@ -51,10 +52,10 @@ namespace WorldGeneration
             return centers.ToArray();
         }
 
-        public static TectonicPlate[] GeneratePlates(World world)
+        public static Plate[] GeneratePlates(World world)
         {
             // Initialization
-            TectonicPlate[] plates = new TectonicPlate[world.PlateCenters.Length];
+            Plate[] plates = new Plate[world.PlateCenters.Length];
             List<int>[] plateTriangles = new List<int>[world.PlateCenters.Length];
             List<Vector3>[] plateVertices = new List<Vector3>[world.PlateCenters.Length];
 
@@ -76,11 +77,11 @@ namespace WorldGeneration
             // Build plates
             for (int i = 0; i < world.PlateCenters.Length; i++)
             {
-                plates[i] = new TectonicPlate(world.PlateCenters[i], plateVertices[i].ToArray(), plateTriangles[i].ToArray());
+                plates[i] = new Plate(world.PlateCenters[i], plateVertices[i].ToArray(), plateTriangles[i].ToArray());
             }
 
 
-            foreach (TectonicPlate plate in plates)
+            foreach (Plate plate in plates)
             {
                 // Do colors
                 // Percent on gradient
@@ -95,7 +96,7 @@ namespace WorldGeneration
         // Find neighbors : get distinct list of edges...
         public static Edge[] GetBoundaryEdges(World world)
         {
-            TectonicPlate[] plates = world.Plates;
+            Plate[] plates = world.Plates;
             List<Edge> edges = new List<Edge>();
 
             for (int a = 0; a < plates.Length; a++)
@@ -191,6 +192,44 @@ namespace WorldGeneration
             return uniqueEdges;
         }
 
+        public static float[] GetEdgeWeights(World world)
+        {
+            Edge[] edges = world.PlateBoundaries.Edges;
+            Plate[] plates = world.Plates;
+            float[] weights = new float[edges.Length];
+
+            for (int a = 0; a < edges.Length; a++)
+            {
+                Vector3 dirA = plates[edges[a].edgeOf[0]].Direction - plates[edges[a].edgeOf[0]].Center * plates[edges[a].edgeOf[0]].Speed;
+                Vector3 dirB = plates[edges[a].edgeOf[1]].Direction - plates[edges[a].edgeOf[1]].Center * plates[edges[a].edgeOf[1]].Speed;
+                
+                weights[a] = (dirA - dirB).magnitude;
+                edges[a].SetDirectionSign((int)Mathf.Sign(weights[a]));
+            }
+
+            // Normalize values
+            float max = weights[0], min = weights[0];
+            for (int a = 1; a < edges.Length; a++)
+            {
+                max = weights[a] > max ? weights[a] : max;
+                min = weights[a] < min ? weights[a] : min;
+            }
+
+            for(int a = 0; a < weights.Length; a++)
+            {
+                weights[a] /= (max + min);
+            }
+
+            max = weights[0];
+            min = weights[0];
+            for (int a = 1; a < edges.Length; a++)
+            {
+                max = weights[a] > max ? weights[a] : max;
+                min = weights[a] < min ? weights[a] : min;
+            }
+
+            return weights;
+        }
 
 
         /*------------------------------------------------------------------------------------*/

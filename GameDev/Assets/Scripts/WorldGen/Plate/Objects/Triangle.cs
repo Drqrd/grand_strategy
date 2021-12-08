@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TectonicPlateObjects
+namespace WorldGeneration.TectonicPlate.Objects
 {
     // Triangle Object for flood fill
     public class Triangle

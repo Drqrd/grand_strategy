@@ -1,0 +1,513 @@
+Using pre-set license
+Built from '2020.3/release' branch; Version is '2020.3.7f1 (dd97f2c94397) revision 14522354'; Using compiler version '192528614'; Build Type 'Release'
+OS: 'Windows 10 Home; OS build 19043.1348; Version 2009; 64bit' Language: 'en' Physical Memory: 16251 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1, IsPro: 0
+
+ COMMAND LINE ARGUMENTS:
+D:\Installs\Unity\Unity Editors\2020.3.7f1\Editor\Unity.exe
+-adb2
+-batchMode
+-noUpm
+-name
+AssetImportWorker2
+-projectPath
+D:/GitHub/Repositories/grand_strategy/GameDev
+-logFile
+Logs/AssetImportWorker2.log
+-srvPort
+54727
+Successfully changed project path to: D:/GitHub/Repositories/grand_strategy/GameDev
+D:/GitHub/Repositories/grand_strategy/GameDev
+Using Asset Import Pipeline V2.
+Refreshing native plugins compatible for Editor in 19.82 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 2020.3.7f1 (dd97f2c94397)
+[Subsystems] Discovering subsystems at path D:/Installs/Unity/Unity Editors/2020.3.7f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path D:/GitHub/Repositories/grand_strategy/GameDev/Assets
+GfxDevice: creating device client; threaded=0
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.1]
+    Renderer: NVIDIA GeForce GTX 1660 Ti (ID=0x2191)
+    Vendor:   
+    VRAM:     5991 MB
+    Driver:   27.21.14.6133
+Initialize mono
+Mono path[0] = 'D:/Installs/Unity/Unity Editors/2020.3.7f1/Editor/Data/Managed'
+Mono path[1] = 'D:/Installs/Unity/Unity Editors/2020.3.7f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit'
+Mono config path = 'D:/Installs/Unity/Unity Editors/2020.3.7f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56764
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: D:/Installs/Unity/Unity Editors/2020.3.7f1/Editor/Data/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
+Register platform support module: D:/Installs/Unity/Unity Editors/2020.3.7f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.002003 seconds.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Refreshing native plugins compatible for Editor in 21.17 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Mono: successfully reloaded assembly
+- Completed reload, in  0.970 seconds
+Platform modules already initialized, skipping
+Registering precompiled user dll's ...
+Registered in 0.000823 seconds.
+Begin MonoManager ReloadAssembly
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Refreshing native plugins compatible for Editor in 0.19 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Mono: successfully reloaded assembly
+- Completed reload, in  0.719 seconds
+Platform modules already initialized, skipping
+========================================================================
+Worker process is ready to serve import requests
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.15 seconds
+Refreshing native plugins compatible for Editor in 0.29 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 1103 Unused Serialized files (Serialized files now loaded: 0)
+System memory in use before: 58.7 MB.
+System memory in use after: 58.7 MB.
+
+Unloading 10 unused Assets to reduce memory usage. Loaded Objects now: 1546.
+Total: 1.905300 ms (FindLiveObjects: 0.151800 ms CreateObjectMapping: 0.064300 ms MarkObjects: 1.591200 ms  DeleteObjects: 0.096200 ms)
+
+========================================================================
+Received Import Request.
+  path: Assets/Scripts/WorldGen/Mesh
+  artifactKey: Guid(0b25179be469f414eab1612cde92c145) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Mesh using Guid(0b25179be469f414eab1612cde92c145) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '20419a41bbe1ad4631138ac4627c80ad') in 0.026943 seconds
+  Import took 0.048079 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.001524 seconds.
+  path: Assets/Scripts/WorldGen/Maps
+  artifactKey: Guid(04a08449dc18f944b8cbbd3f1db0bbc3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps using Guid(04a08449dc18f944b8cbbd3f1db0bbc3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'a44e7114e45bf2d560458c311a757bc8') in 0.043370 seconds
+  Import took 0.051099 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 3.718126 seconds.
+  path: Assets/Scripts/WorldGen/Maps/Map.cs
+  artifactKey: Guid(4c7e178362baeb94195c0673715e6298) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/Map.cs using Guid(4c7e178362baeb94195c0673715e6298) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '79932702c722161e72fd4ae099c9a344') in 0.169854 seconds
+  Import took 0.177585 seconds .
+
+========================================================================
+Received Prepare
+Registering precompiled user dll's ...
+Registered in 0.000765 seconds.
+Begin MonoManager ReloadAssembly
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Refreshing native plugins compatible for Editor in 0.30 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Mono: successfully reloaded assembly
+- Completed reload, in  0.680 seconds
+Platform modules already initialized, skipping
+Refreshing native plugins compatible for Editor in 0.37 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 1097 Unused Serialized files (Serialized files now loaded: 0)
+System memory in use before: 58.4 MB.
+System memory in use after: 58.5 MB.
+
+Unloading 6 unused Assets to reduce memory usage. Loaded Objects now: 1550.
+Total: 2.224900 ms (FindLiveObjects: 0.171900 ms CreateObjectMapping: 0.084600 ms MarkObjects: 1.842900 ms  DeleteObjects: 0.124000 ms)
+
+========================================================================
+Received Import Request.
+  Time since last request: 6.941046 seconds.
+  path: Assets/Scripts/WorldGen/Maps/TectonicPlateMap.cs
+  artifactKey: Guid(943d8a1cd103d614691b88abe5d1ef1a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/TectonicPlateMap.cs using Guid(943d8a1cd103d614691b88abe5d1ef1a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '2ff511d2b5d70d899d1850302702943b') in 0.005178 seconds
+  Import took 0.014401 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 4.622727 seconds.
+  path: Assets/Scripts/WorldGen/Maps/HeightMap.cs
+  artifactKey: Guid(0ee4ee37bebbe3d4a966f9f307eab3b5) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/HeightMap.cs using Guid(0ee4ee37bebbe3d4a966f9f307eab3b5) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'caa9efacdaa7ca695fefe8d9f431aed5') in 0.003910 seconds
+  Import took 0.030709 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 4.778382 seconds.
+  path: Assets/Scripts/WorldGen/Maps/MoistureMap.cs
+  artifactKey: Guid(73b015b9bb8396e47b1e030ed4dc5d1b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/MoistureMap.cs using Guid(73b015b9bb8396e47b1e030ed4dc5d1b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '66d007d821cb4f1ad1ed0cc1a77f8e26') in 0.003522 seconds
+  Import took 0.015394 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 34.655269 seconds.
+  path: Assets/Scripts/WorldGen/Maps/TectonicPlateMap.cs
+  artifactKey: Guid(943d8a1cd103d614691b88abe5d1ef1a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/TectonicPlateMap.cs using Guid(943d8a1cd103d614691b88abe5d1ef1a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '0b41fbd1925ba1f17ab00e4c8bf380a3') in 0.003716 seconds
+  Import took 0.011186 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.001778 seconds.
+  path: Assets/Scripts/WorldGen/Maps/TectonicPlateMap.cs
+  artifactKey: Guid(943d8a1cd103d614691b88abe5d1ef1a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/TectonicPlateMap.cs using Guid(943d8a1cd103d614691b88abe5d1ef1a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '0b41fbd1925ba1f17ab00e4c8bf380a3') in 0.003678 seconds
+  Import took 0.011261 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 76.697506 seconds.
+  path: Assets/Scripts/WorldGen/Maps/Map.cs
+  artifactKey: Guid(4c7e178362baeb94195c0673715e6298) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/Map.cs using Guid(4c7e178362baeb94195c0673715e6298) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '352f06412ac9bae9ac07a13d2f972812') in 0.004749 seconds
+  Import took 0.012332 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.001941 seconds.
+  path: Assets/Scripts/WorldGen/Maps/Map.cs
+  artifactKey: Guid(4c7e178362baeb94195c0673715e6298) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/Map.cs using Guid(4c7e178362baeb94195c0673715e6298) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '352f06412ac9bae9ac07a13d2f972812') in 0.012266 seconds
+  Import took 0.018323 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.774646 seconds.
+  path: Assets/Scripts/WorldGen/Maps/MapGenerator.cs
+  artifactKey: Guid(25c5991e6ae29a64789cac92a77e5cf1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/MapGenerator.cs using Guid(25c5991e6ae29a64789cac92a77e5cf1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'b00c9efad70172d0dbcaa0947f12891e') in 0.003223 seconds
+  Import took 0.009708 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.021400 seconds.
+  path: Assets/Scripts/WorldGen/Maps/MapGenerator.cs
+  artifactKey: Guid(25c5991e6ae29a64789cac92a77e5cf1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/MapGenerator.cs using Guid(25c5991e6ae29a64789cac92a77e5cf1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'b00c9efad70172d0dbcaa0947f12891e') in 0.003319 seconds
+  Import took 0.010153 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 87.219892 seconds.
+  path: Assets/Scripts/WorldGen/Maps/MapGenerator.cs
+  artifactKey: Guid(25c5991e6ae29a64789cac92a77e5cf1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/MapGenerator.cs using Guid(25c5991e6ae29a64789cac92a77e5cf1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'a8b1dbee5b5a83f3a4c6a94d0cd66319') in 0.003028 seconds
+  Import took 0.009520 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 28.843010 seconds.
+  path: Assets/Scripts/WorldGen/Maps/HeightMap.cs
+  artifactKey: Guid(0ee4ee37bebbe3d4a966f9f307eab3b5) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/HeightMap.cs using Guid(0ee4ee37bebbe3d4a966f9f307eab3b5) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '4b89c615c06b342de8f73c6cec477261') in 0.003166 seconds
+  Import took 0.009629 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.003931 seconds.
+  path: Assets/Scripts/WorldGen/Maps/HeightMap.cs
+  artifactKey: Guid(0ee4ee37bebbe3d4a966f9f307eab3b5) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/HeightMap.cs using Guid(0ee4ee37bebbe3d4a966f9f307eab3b5) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '4b89c615c06b342de8f73c6cec477261') in 0.003415 seconds
+  Import took 0.009066 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 16.416529 seconds.
+  path: Assets/Scripts/WorldGen/Maps/MoistureMap.cs
+  artifactKey: Guid(73b015b9bb8396e47b1e030ed4dc5d1b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/MoistureMap.cs using Guid(73b015b9bb8396e47b1e030ed4dc5d1b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '197bcf69e052ffac63570643965cf0c0') in 0.004133 seconds
+  Import took 0.013022 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 1.833271 seconds.
+  path: Assets/Scripts/WorldGen/Maps/TectonicPlateMap.cs
+  artifactKey: Guid(943d8a1cd103d614691b88abe5d1ef1a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/TectonicPlateMap.cs using Guid(943d8a1cd103d614691b88abe5d1ef1a) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'ecba72e43c94eb6665e7955d355ab1ca') in 0.002812 seconds
+  Import took 0.008169 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 2.079464 seconds.
+  path: Assets/Scripts/WorldGen/Maps/MapGenerator.cs
+  artifactKey: Guid(25c5991e6ae29a64789cac92a77e5cf1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/MapGenerator.cs using Guid(25c5991e6ae29a64789cac92a77e5cf1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '251c69777e5f72f66cf7cb2468a64058') in 0.003133 seconds
+  Import took 0.105506 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 22.006101 seconds.
+  path: Assets/Scripts/WorldGen/Maps/TemperatureMap.cs
+  artifactKey: Guid(1d43cdfcbb2fdb94d839cec8fe9ec975) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/TemperatureMap.cs using Guid(1d43cdfcbb2fdb94d839cec8fe9ec975) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '3070af9d2c62b4c7d3601169b82ec9b0') in 0.003161 seconds
+  Import took 0.011471 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 71.723171 seconds.
+  path: Assets/Scripts/WorldGen/Maps/TemperatureMap.cs
+  artifactKey: Guid(1d43cdfcbb2fdb94d839cec8fe9ec975) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/TemperatureMap.cs using Guid(1d43cdfcbb2fdb94d839cec8fe9ec975) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'b70da8aeb2f6c61dfa3916117dd16930') in 0.003042 seconds
+  Import took 0.010229 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 6.490415 seconds.
+  path: Assets/Scripts/WorldGen/Tectonic Plate/Objects/Edge.cs
+  artifactKey: Guid(9e27d7e7378b5ec4eba2a4ddcf1b4acb) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Tectonic Plate/Objects/Edge.cs using Guid(9e27d7e7378b5ec4eba2a4ddcf1b4acb) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '6348cee64e53c28fe35a25eada1c8c93') in 0.002580 seconds
+  Import took 0.009561 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 7.755327 seconds.
+  path: Assets/Scripts/WorldGen/Tectonic Plate/Objects/Edge.cs
+  artifactKey: Guid(9e27d7e7378b5ec4eba2a4ddcf1b4acb) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Tectonic Plate/Objects/Edge.cs using Guid(9e27d7e7378b5ec4eba2a4ddcf1b4acb) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '0c40aaeabaa0377d3f5b27607bc04fd5') in 0.003533 seconds
+  Import took 0.010984 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.782523 seconds.
+  path: Assets/Scripts/WorldGen/Tectonic Plate/Objects/Triangle.cs
+  artifactKey: Guid(0ae67336ad3bc2c45b979d84f53697eb) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Tectonic Plate/Objects/Triangle.cs using Guid(0ae67336ad3bc2c45b979d84f53697eb) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '283a1e8056dc7b7016b01e48d6ee4c1a') in 0.003039 seconds
+  Import took 0.054374 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 4.757516 seconds.
+  path: Assets/Scripts/WorldGen/Tectonic Plate/Objects/Triangle.cs
+  artifactKey: Guid(0ae67336ad3bc2c45b979d84f53697eb) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Tectonic Plate/Objects/Triangle.cs using Guid(0ae67336ad3bc2c45b979d84f53697eb) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'c26bcb402f899fa9cea68a205e0a3e8f') in 0.006246 seconds
+  Import took 0.012223 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 12.819907 seconds.
+  path: Assets/Scripts/WorldGen/Tectonic Plate/TectonicPlate.cs
+  artifactKey: Guid(d71fe72b624da5141b3b6edcda03459d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Tectonic Plate/TectonicPlate.cs using Guid(d71fe72b624da5141b3b6edcda03459d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '916e80cbba357f87261053fb029e1cd4') in 0.096130 seconds
+  Import took 0.103494 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 6.059341 seconds.
+  path: Assets/Scripts/WorldGen/World/WorldGeneration.cs
+  artifactKey: Guid(4bbf8f41a3c9fa8479af507afaf94ead) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/World/WorldGeneration.cs using Guid(4bbf8f41a3c9fa8479af507afaf94ead) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '7fc14bc1c65fee8aad2d3f2a9a5ce963') in 0.003140 seconds
+  Import took 0.010164 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.002411 seconds.
+  path: Assets/Scripts/WorldGen/World/WorldGeneration.cs
+  artifactKey: Guid(4bbf8f41a3c9fa8479af507afaf94ead) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/World/WorldGeneration.cs using Guid(4bbf8f41a3c9fa8479af507afaf94ead) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '7fc14bc1c65fee8aad2d3f2a9a5ce963') in 0.004067 seconds
+  Import took 0.009749 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 62.282854 seconds.
+  path: Assets/Scripts/WorldGen/Tectonic Plate/Objects/Edge.cs
+  artifactKey: Guid(9e27d7e7378b5ec4eba2a4ddcf1b4acb) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Tectonic Plate/Objects/Edge.cs using Guid(9e27d7e7378b5ec4eba2a4ddcf1b4acb) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '7f0964c6a3ffd5de6f0a8eb5fbac0159') in 0.003133 seconds
+  Import took 0.009839 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 9.584156 seconds.
+  path: Assets/Scripts/WorldGen/Tectonic Plate/Objects/Triangle.cs
+  artifactKey: Guid(0ae67336ad3bc2c45b979d84f53697eb) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Tectonic Plate/Objects/Triangle.cs using Guid(0ae67336ad3bc2c45b979d84f53697eb) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '849d940a600ad7f299df8651bfdaedcd') in 0.004329 seconds
+  Import took 0.011490 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 58.056008 seconds.
+  path: Assets/Scripts/WorldGen/World/World.cs
+  artifactKey: Guid(aff7782eb4b7a8f439f991708e333aa3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/World/World.cs using Guid(aff7782eb4b7a8f439f991708e333aa3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'acaf6611f48fa35ac78cda03d1107f67') in 0.003015 seconds
+  Import took 0.008667 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.290959 seconds.
+  path: Assets/Scripts/WorldGen/World/Boundaries.cs
+  artifactKey: Guid(6ecc8d12f0b4557479f12f8b17efccc3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/World/Boundaries.cs using Guid(6ecc8d12f0b4557479f12f8b17efccc3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'a32be1059eaa3820ef1d4d3131555e3d') in 0.003101 seconds
+  Import took 0.010501 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 13.381998 seconds.
+  path: Assets/Scripts/WorldGen/World/Boundaries.cs
+  artifactKey: Guid(6ecc8d12f0b4557479f12f8b17efccc3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/World/Boundaries.cs using Guid(6ecc8d12f0b4557479f12f8b17efccc3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '3a0bc30fa20e11acd092302e33f726bd') in 0.003503 seconds
+  Import took 0.011592 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 97.709064 seconds.
+  path: Assets/Scripts/WorldGen
+  artifactKey: Guid(15e13c31f47063e43976b630f01528d3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen using Guid(15e13c31f47063e43976b630f01528d3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '87b0ced08b9b9447d7034348081737b5') in 0.004158 seconds
+  Import took 0.079994 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 3.193504 seconds.
+  path: Assets/Scripts/WorldGen/Plate
+  artifactKey: Guid(3dc728130e1861d4bb2fdd5d250acf73) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Plate using Guid(3dc728130e1861d4bb2fdd5d250acf73) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'cb9393e31138b861bcafd053ed458208') in 0.003020 seconds
+  Import took 0.009032 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 4.074037 seconds.
+  path: Assets/Scripts/WorldGen/Plate/Plate.cs
+  artifactKey: Guid(d71fe72b624da5141b3b6edcda03459d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Plate/Plate.cs using Guid(d71fe72b624da5141b3b6edcda03459d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '1ca9b4838dfdbfda75e6142b83e9c4be') in 0.003591 seconds
+  Import took 0.010995 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 171.836102 seconds.
+  path: Assets/Scripts/WorldGen/Plate/Plate.cs
+  artifactKey: Guid(d71fe72b624da5141b3b6edcda03459d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Plate/Plate.cs using Guid(d71fe72b624da5141b3b6edcda03459d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'f95c6ea4a7bf075154044f228d209042') in 0.003563 seconds
+  Import took 0.017762 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 20.933250 seconds.
+  path: Assets/Scripts/WorldGen/Mesh/CustomMesh.cs
+  artifactKey: Guid(9308ef6194019bb4f9e6103d1a9ce5ae) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Mesh/CustomMesh.cs using Guid(9308ef6194019bb4f9e6103d1a9ce5ae) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'ba1c577be4788a9f7ae801f4f998099d') in 0.003966 seconds
+  Import took 0.011637 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.003521 seconds.
+  path: Assets/Scripts/WorldGen/Mesh/CustomMesh.cs
+  artifactKey: Guid(9308ef6194019bb4f9e6103d1a9ce5ae) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Mesh/CustomMesh.cs using Guid(9308ef6194019bb4f9e6103d1a9ce5ae) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'ba1c577be4788a9f7ae801f4f998099d') in 0.003287 seconds
+  Import took 0.009342 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 6.505359 seconds.
+  path: Assets/Scripts/WorldGen/Mesh/FibonacciSphere.cs
+  artifactKey: Guid(390aae48636dc13488b5b8f981c91600) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Mesh/FibonacciSphere.cs using Guid(390aae48636dc13488b5b8f981c91600) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '5d5a7eae5158803dc6a8918f237d4858') in 0.004016 seconds
+  Import took 0.011983 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.004025 seconds.
+  path: Assets/Scripts/WorldGen/Mesh/FibonacciSphere.cs
+  artifactKey: Guid(390aae48636dc13488b5b8f981c91600) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Mesh/FibonacciSphere.cs using Guid(390aae48636dc13488b5b8f981c91600) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '5d5a7eae5158803dc6a8918f237d4858') in 0.003235 seconds
+  Import took 0.009402 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 44.448060 seconds.
+  path: Assets/Scripts/WorldGen/Mesh/FibonacciSphere.cs
+  artifactKey: Guid(390aae48636dc13488b5b8f981c91600) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Mesh/FibonacciSphere.cs using Guid(390aae48636dc13488b5b8f981c91600) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '841a0e5d6a5b9e2809c1ec8fbf19387d') in 0.004703 seconds
+  Import took 0.011127 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 6.127933 seconds.
+  path: Assets/Scripts/WorldGen/Mesh/OctahedronSphere.cs
+  artifactKey: Guid(8a6629b2562a2b9468a58a0ad3e16dd5) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Mesh/OctahedronSphere.cs using Guid(8a6629b2562a2b9468a58a0ad3e16dd5) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '549d2ad30b0ff69e23cc28f2be13a205') in 0.003041 seconds
+  Import took 0.010679 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 31.203888 seconds.
+  path: Assets/Scripts/WorldGen/Mesh/OctahedronSphere.cs
+  artifactKey: Guid(8a6629b2562a2b9468a58a0ad3e16dd5) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Mesh/OctahedronSphere.cs using Guid(8a6629b2562a2b9468a58a0ad3e16dd5) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'a25233dd915ef617ed35e00a4a47cf9e') in 0.003631 seconds
+  Import took 0.010026 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 29.065675 seconds.
+  path: Assets/Scripts/WorldGen/Mesh/CustomMesh.cs
+  artifactKey: Guid(9308ef6194019bb4f9e6103d1a9ce5ae) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Mesh/CustomMesh.cs using Guid(9308ef6194019bb4f9e6103d1a9ce5ae) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '3edef30f5564bdd9b5db88ebd02c8e1b') in 0.003762 seconds
+  Import took 0.010530 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 90.841784 seconds.
+  path: Assets/Scripts/WorldGen/Mesh/MeshGenerator.cs
+  artifactKey: Guid(da17c36402eb3d443be6434979e07a6d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Mesh/MeshGenerator.cs using Guid(da17c36402eb3d443be6434979e07a6d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '000d25bb1804982b49eb158359ba8e02') in 0.010226 seconds
+  Import took 0.244239 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 7.487590 seconds.
+  path: Assets/Scripts/WorldGen/Mesh/CubeSphere.cs
+  artifactKey: Guid(2da235d6791fe174c8460d79e9dd88e9) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Mesh/CubeSphere.cs using Guid(2da235d6791fe174c8460d79e9dd88e9) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '8f385d90523b53c9adfd3ea80330e3cc') in 0.003592 seconds
+  Import took 0.012774 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 97.056484 seconds.
+  path: Assets/Scripts/WorldGen/Mesh/CubeSphere.cs
+  artifactKey: Guid(2da235d6791fe174c8460d79e9dd88e9) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Mesh/CubeSphere.cs using Guid(2da235d6791fe174c8460d79e9dd88e9) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'e4b7e5fc194a648e55ee9cd06b37fd5b') in 0.003331 seconds
+  Import took 0.011817 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.003204 seconds.
+  path: Assets/Scripts/WorldGen/Mesh/CubeSphere.cs
+  artifactKey: Guid(2da235d6791fe174c8460d79e9dd88e9) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Mesh/CubeSphere.cs using Guid(2da235d6791fe174c8460d79e9dd88e9) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'e4b7e5fc194a648e55ee9cd06b37fd5b') in 0.005931 seconds
+  Import took 0.013703 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 10.207171 seconds.
+  path: Assets/Scripts/WorldGen/Maps/MapGenerator.cs
+  artifactKey: Guid(25c5991e6ae29a64789cac92a77e5cf1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/MapGenerator.cs using Guid(25c5991e6ae29a64789cac92a77e5cf1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '00dd7fe447f145563c2fedbf7f1657f5') in 0.003538 seconds
+  Import took 0.009678 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.003010 seconds.
+  path: Assets/Scripts/WorldGen/Maps/MapGenerator.cs
+  artifactKey: Guid(25c5991e6ae29a64789cac92a77e5cf1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/WorldGen/Maps/MapGenerator.cs using Guid(25c5991e6ae29a64789cac92a77e5cf1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '00dd7fe447f145563c2fedbf7f1657f5') in 0.003289 seconds
+  Import took 0.009645 seconds .
+
+========================================================================
+Received Prepare
+Registering precompiled user dll's ...
+Registered in 0.000778 seconds.
+Begin MonoManager ReloadAssembly
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Refreshing native plugins compatible for Editor in 0.18 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Mono: successfully reloaded assembly
+- Completed reload, in  0.723 seconds
+Platform modules already initialized, skipping
+Refreshing native plugins compatible for Editor in 0.19 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 1103 Unused Serialized files (Serialized files now loaded: 0)
+System memory in use before: 58.6 MB.
+System memory in use after: 58.7 MB.
+
+Unloading 8 unused Assets to reduce memory usage. Loaded Objects now: 1559.
+Total: 2.517200 ms (FindLiveObjects: 0.190000 ms CreateObjectMapping: 0.057200 ms MarkObjects: 2.143600 ms  DeleteObjects: 0.124500 ms)
+
