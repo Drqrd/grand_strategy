@@ -11,13 +11,7 @@ Shader "Custom/LineShader"
         LOD 200
 
         CGPROGRAM
-        /*
-        // Physically based Standard lighting model, and enable shadows on all light types
-        #pragma surface surf Standard fullforwardshadows
-
-        // Use shader model 3.0 target, to get nicer looking lighting
-        #pragma target 3.0
-
+        #pragma surface surf NoLighting noambient
         struct Input
         {
             float4 color : COLOR0;
@@ -25,8 +19,7 @@ Shader "Custom/LineShader"
 
         half _Glossiness;
         half _Metallic;
-        */
-        #pragma surface surf NoLighting
+
         fixed4 LightingNoLighting(SurfaceOutput s, fixed3 lightDir, fixed atten)
         {
             fixed4 c;

@@ -121,11 +121,56 @@ namespace WorldGeneration
                     if (currEdge == edges[b])
                     {
                         currEdge.edgeOf[1] = edges[b].edgeOf[0];
+
+                        // Sort by edgeOf[0]
+                        if (currEdge.edgeOf[0] > currEdge.edgeOf[1])
+                        {
+                            int temp = currEdge.edgeOf[0];
+                            currEdge.edgeOf[0] = currEdge.edgeOf[1];
+                            currEdge.edgeOf[1] = temp;
+                        }
+
                         trueEdges.Add(currEdge);
                         break;
                     }
                 }
             }
+
+            // Sort by edgeOf[1]
+            List<List<Edge>> edgeMap = new List<List<Edge>>();
+            edgeMap.Add(new List<Edge>());
+            int ind = 0;
+            int prevInd = trueEdges[0].edgeOf[0];
+            // Seperate edges based on index 0
+            foreach (Edge edge in trueEdges)
+            {
+                if (edge.edgeOf[0] != prevInd)
+                {
+                    ind += 1;
+                    edgeMap.Add(new List<Edge>());
+                    prevInd = edge.edgeOf[0];
+                }
+
+                edgeMap[ind].Add(edge);
+            }
+            // Sort edges based on index 1
+            foreach(List<Edge> edgeList in edgeMap)
+            {
+                edgeList.Sort(SortAscendingByIndexOne);    
+            }
+
+            trueEdges.Clear();
+            // Compress to 1d
+            foreach(List<Edge> edgeList in edgeMap)
+            {
+                foreach(Edge edge in edgeList)
+                {
+                    trueEdges.Add(edge);
+                }
+            }
+
+            // Clear data
+            edgeMap.Clear();
 
             return trueEdges.ToArray();
         }
@@ -325,6 +370,17 @@ namespace WorldGeneration
             }
 
             triangles = t;
+        }
+
+        // Edge custom sorting function
+        private static int SortAscendingByIndexOne(Edge a, Edge b)
+        {
+            int aa = a.edgeOf[1];
+            int bb = b.edgeOf[1];
+
+            if (aa > bb) { return 1; }
+            else if (aa == bb) { return 0; }
+            else { return -1; }
         }
     }   
 }
