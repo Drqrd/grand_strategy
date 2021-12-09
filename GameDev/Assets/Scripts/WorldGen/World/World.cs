@@ -79,10 +79,12 @@ public class World : MonoBehaviour
     [SerializeField] private MapDisplay mapDisplay;
     private MapDisplay previousMapDisplay;
 
+    [SerializeField] private bool displayVertices = false;
+
+    [Header("Plate Exclusive Display")]
     [SerializeField] private BoundaryDisplay boundaryDisplay;
     private BoundaryDisplay previousBoundaryDisplay;
 
-    [SerializeField] private bool displayVertices = false;
     [SerializeField] private bool displayPlateCenters = false;
     [SerializeField] private bool displayPlateDirections = false;
     [SerializeField] private bool displayEdgeCenters = false;

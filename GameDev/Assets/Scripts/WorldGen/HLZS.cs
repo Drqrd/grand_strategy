@@ -34,6 +34,27 @@ namespace WorldGeneration
         private static Color topLeft = new Color(125f / 255f, 125f / 255f, 125f / 255f);
         private static Color botRight = new Color(0f / 255f, 180f / 255f, 80f / 255f);
         private static Color botLeft = new Color(255f / 255f, 255f / 255f, 100f / 255f);
+
+        public static float ScaleSurfaceToSpace(float input)
+        {
+            if (input < 0f) 
+            {
+                Debug.LogError("ERROR INPUT MUST BE NEGATIVE."); 
+                return -1; 
+            }
+            else { return input / MAX_HEIGHT; }
+        }
+
+        public static float ScaleSpaceToSurface(float input)
+        {
+            if (input < 0f || input > 8000f)
+            {
+                Debug.LogError("ERROR INPUT MUST BE < 0 or > 8000.");
+                return -1;
+            }
+            else { return input * MAX_HEIGHT; }
+        }
+
     }
 }
 

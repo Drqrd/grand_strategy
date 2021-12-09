@@ -10,20 +10,40 @@ namespace WorldGeneration.Maps
 
         private float[][] map;
 
-        // Height parameters (For coloring the map)
-        private float min = MIN_HEIGHT;
-        private float avg = AVG_HEIGHT;
-        private float max = MAX_HEIGHT;
-
         public float[][] Map { get { return map; } }
 
         public HeightMap(World world) : base(world)
         {
             this.world = world;
+
+            meshFilters = new MeshFilter[world.PlateCenters.Length];
+
             // Global verts, triangles and map
             globalVertices = new Vector3[meshFilters.Length][];
             globalTriangles = new int[meshFilters.Length][];
-            map = new float[globalVertices.Length][];
+            map = new float[meshFilters.Length][];
+        }
+
+        public override void Build()
+        {
+            GameObject parentObj = new GameObject(World.MapDisplay.HeightMap.ToString());
+            parentObj.transform.parent = world.transform;
+
+            for (int i = 0; i < world.Plates.Length; i++)
+            {
+                GameObject obj = new GameObject("Plate " + i);
+                obj.transform.parent = parentObj.transform;
+
+                meshFilters[i] = obj.AddComponent<MeshFilter>();
+                meshFilters[i].sharedMesh = world.Plates[i].SharedMesh;
+                obj.AddComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/WorldGen/Map");
+            }
+
+            CreateGlobalReferences();
+        }
+
+        private void CreateGlobalReferences()
+        {
             for (int i = 0; i < meshFilters.Length; i++)
             {
                 globalVertices[i] = new Vector3[meshFilters[i].sharedMesh.vertexCount];
@@ -33,12 +53,6 @@ namespace WorldGeneration.Maps
 
                 map[i] = new float[globalVertices[i].Length];
             }
-        }
-
-        public override void Build()
-        {
-            GameObject obj = new GameObject(World.MapDisplay.HeightMap.ToString());
-            obj.transform.parent = world.transform;
         }
 
 

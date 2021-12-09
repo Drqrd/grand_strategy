@@ -35,7 +35,7 @@ namespace WorldGeneration.Maps
 
                 meshFilters[i] = obj.AddComponent<MeshFilter>();
                 meshFilters[i].sharedMesh = world.Plates[i].SharedMesh;
-                obj.AddComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/Surface");
+                obj.AddComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/WorldGen/Surface");
             }
         }
 

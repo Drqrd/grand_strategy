@@ -12,7 +12,6 @@ namespace WorldGeneration.Maps
         public Map(World world)
         {
             this.world = world;
-            this.meshFilters = world.Sphere.meshFilters;
         }
 
         public abstract void Build();
