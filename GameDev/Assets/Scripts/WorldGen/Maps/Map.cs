@@ -7,7 +7,6 @@ namespace WorldGeneration.Maps
     public abstract class Map
     {
         protected World world;
-        protected MeshFilter[] meshFilters;
 
         public Map(World world)
         {

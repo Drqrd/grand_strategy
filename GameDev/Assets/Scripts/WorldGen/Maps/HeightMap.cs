@@ -3,14 +3,18 @@ using static WorldGeneration.HLZS;
 
 namespace WorldGeneration.Maps
 {
+    // All values for height are stored as surface and converted to space to avoid rounding errors.
     public class HeightMap : Map
     {
+        private MeshFilter[] meshFilters;
+
         private Vector3[][] globalVertices;
-        private int[][] globalTriangles;
 
-        private float[][] map;
+        private float[][] surfaceMap;
+        private float[][] spaceMap;
 
-        public float[][] Map { get { return map; } }
+        public float[][] SurfaceMap { get { return surfaceMap; } }
+        public float[][] SpaceMap { get { return spaceMap; } }
 
         public HeightMap(World world) : base(world)
         {
@@ -18,10 +22,9 @@ namespace WorldGeneration.Maps
 
             meshFilters = new MeshFilter[world.PlateCenters.Length];
 
-            // Global verts, triangles and map
             globalVertices = new Vector3[meshFilters.Length][];
-            globalTriangles = new int[meshFilters.Length][];
-            map = new float[meshFilters.Length][];
+            surfaceMap = new float[meshFilters.Length][];
+            spaceMap = new float[meshFilters.Length][];
         }
 
         public override void Build()
@@ -40,6 +43,7 @@ namespace WorldGeneration.Maps
             }
 
             CreateGlobalReferences();
+            CalculateHeight();
         }
 
         private void CreateGlobalReferences()
@@ -47,43 +51,64 @@ namespace WorldGeneration.Maps
             for (int i = 0; i < meshFilters.Length; i++)
             {
                 globalVertices[i] = new Vector3[meshFilters[i].sharedMesh.vertexCount];
-                globalTriangles[i] = new int[meshFilters[i].sharedMesh.triangles.Length];
                 globalVertices[i] = meshFilters[i].sharedMesh.vertices;
-                globalTriangles[i] = meshFilters[i].sharedMesh.triangles;
 
-                map[i] = new float[globalVertices[i].Length];
+                surfaceMap[i] = new float[globalVertices[i].Length];
+                spaceMap[i] = new float[globalVertices[i].Length];
             }
         }
 
-
-
-        // Approach: From the continent center, steadily decrease the average height of the vertex until it hits ocean level.
-        //           Variation through sampling
-        // 
-        // Pseudocode:
-        // - for each vertex
-        // -    for each continent center, find closest continent center to vertex
-        // -    with distance from continent center, apply height falloff + sample
-
-
-        /*
-        private void AddHeight()
+        private void CalculateHeight()
         {
             for (int a = 0; a < meshFilters.Length; a++)
             {
-                Vector3[] vertices = meshFilters[a].sharedMesh.vertices;
+                surfaceMap[a] = new float[globalVertices[a].Length];
 
-                for (int i = 0; i < vertices.Length; i++)
+                for (int i = 0; i < globalVertices[a].Length; i++)
                 {
-                    vertices[i] *= ((Sample(vertices[i]) * .1f + 1f));
+                    surfaceMap[a][i] = Mathf.Clamp(Sample(globalVertices[a][i]), -1f, 1f);
                 }
-
-                meshFilters[a].sharedMesh.vertices = vertices;
-                meshFilters[a].sharedMesh.RecalculateNormals();
-                meshFilters[a].sharedMesh.Optimize();
             }
+
+            float min = surfaceMap[0][0], max = surfaceMap[0][0];
+            for (int a = 0; a < surfaceMap.Length; a++)
+            {
+                for (int b = 0; b < surfaceMap[a].Length; b++)
+                {
+                    max = surfaceMap[a][b] > max ? surfaceMap[a][b] : max;
+                    min = surfaceMap[a][b] < min ? surfaceMap[a][b] : min;
+                }
+            }
+
+            for (int a = 0; a < surfaceMap.Length; a++)
+            {
+                for (int b = 0; b < surfaceMap[a].Length; b++)
+                {
+
+                }
+            }
+
         }
-        */
+
+        public static float ScaleSurfaceToSpace(float input)
+        {
+            if (input < 0f)
+            {
+                Debug.LogError("ERROR INPUT MUST BE NEGATIVE.");
+                return -1;
+            }
+            else { return input / MAX_HEIGHT; }
+        }
+
+        public static float ScaleSpaceToSurface(float input)
+        {
+            if (input < 0f || input > 8000f)
+            {
+                Debug.LogError("ERROR INPUT MUST BE < 0 or > 8000.");
+                return -1;
+            }
+            else { return input * MAX_HEIGHT; }
+        }
     }
 }
 

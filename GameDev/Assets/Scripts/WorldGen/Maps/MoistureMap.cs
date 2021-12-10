@@ -4,6 +4,8 @@ namespace WorldGeneration.Maps
 {
     public class MoistureMap : Map
     {
+        private MeshFilter[] meshFilters;
+
         public MoistureMap(World world) : base(world)
         {
             this.world = world;

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
-using IDict;
+
+using WorldGeneration.TectonicPlate.Objects;
 
 // TODO: Reorder boundary Vertices
 namespace WorldGeneration.Objects
@@ -11,22 +11,20 @@ namespace WorldGeneration.Objects
         // Private set
         public Vector3[] Vertices { get; private set; }
         public int[] Triangles { get; private set; }
+        public Vector3 Center { get; private set; }
         public Vector3 Direction { get; private set; }
         public float Speed { get; private set; }
-        public Vector3 Center { get; private set; }
+
         public Color[] Colors { get; private set; }
         public Mesh SharedMesh { get; private set; }
-        public Vector3[] BoundaryVertices { get; private set; }
-        public int[][] BoundaryEdges { get; private set; }
         public bool IsContinental { get; private set; }
 
-        // Public set
-        public LineRenderer Boundary { get; set; }
-        public LineRenderer[] NeighborsBoundary { get; set; }
+        // Object References
+        public FaultLine[] FaultLines { get; set; }
 
-        // For speed
-        private const float minSpeed = 0.01f;
-        private const float maxSpeed = 2.0f;
+        // Constants
+        private const float MIN_SPEED = 0.01f;
+        private const float MAX_SPEED = 2.0f;
 
         // Constructor
         public Plate(Vector3 center, Vector3[] vertices = null, int[] triangles = null, Color[] colors = null)
@@ -55,9 +53,6 @@ namespace WorldGeneration.Objects
                 if (colors != null) { SharedMesh.colors = Colors; }
                 SharedMesh.RecalculateNormals();
                 SharedMesh.Optimize();
-
-                FindBoundaryEdges();
-                FindBoundaryVertices();
             }
         }
 
@@ -72,68 +67,9 @@ namespace WorldGeneration.Objects
             return rotation * tangent;
         }
 
-        private float GetRandomSpeed()
+        private static float GetRandomSpeed()
         {
-            return Random.Range(minSpeed, maxSpeed);
-        }
-
-        private void FindBoundaryVertices()
-        {
-            List<Vector3> verts = new List<Vector3>();
-            for (int i = 0; i < BoundaryEdges.Length; i++)
-            {
-                verts.Add(Vertices[BoundaryEdges[i][0]]);
-            }
-
-            BoundaryVertices = verts.Distinct().ToArray();
-        }
-
-        private void FindBoundaryEdges()
-        {
-            List<int[]> edges = new List<int[]>();
-            Dictionary<int[], int> mp = new Dictionary<int[], int>(new IntArrCompareOverride());
-            for (int i = 0; i < Triangles.Length; i += 3)
-            {
-                int[][] es = new int[][] { new int[] { Triangles[i + 0], Triangles[i + 1] },
-                                       new int[] { Triangles[i + 1], Triangles[i + 2] },
-                                       new int[] { Triangles[i + 2], Triangles[i + 0] } };
-
-                int[][] esInv = new int[][] { new int[] { Triangles[i + 1], Triangles[i + 0] },
-                                          new int[] { Triangles[i + 2], Triangles[i + 1] },
-                                          new int[] { Triangles[i + 0], Triangles[i + 2] } };
-
-                for (int j = 0; j < es.Length; j++)
-                {
-                    if (mp.ContainsKey(es[j])) { mp[es[j]] += 1; }
-                    else if (mp.ContainsKey(esInv[j])) { mp[esInv[j]] += 1; }
-                    else { mp.Add(es[j], 1); }
-                }
-            }
-
-            // Add
-            foreach (KeyValuePair<int[], int> entry in mp)
-            {
-                uint num = uint.Parse(string.Join("", entry.Value));
-                if (num == 1) { edges.Add(entry.Key); }
-            }
-
-            // Reorder edges so that they connect
-            for (int i = 0; i < edges.Count - 1; i++)
-            {
-
-                for (int j = i + 2; j < edges.Count; j++)
-                {
-                    if (edges[j][0] == edges[i][1])
-                    {
-                        int[] tempEdge = edges[j];
-                        edges[j] = edges[i + 1];
-                        edges[i + 1] = tempEdge;
-                        continue;
-                    }
-                }
-            }
-
-            BoundaryEdges = edges.ToArray();
+            return Random.Range(MIN_SPEED, MAX_SPEED);
         }
 
         /*------------------------------------------------------------------------------------*/
