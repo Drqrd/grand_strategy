@@ -169,7 +169,7 @@ MonoBehaviour:
   sphereType: 2
   plateSize: 1
   plateDeterminationType: 1
-  resolution: 10000
+  resolution: 100
   convertToSphere: 1
   smoothMapSurface: 1
   jitter: 1
