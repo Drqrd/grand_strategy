@@ -6,6 +6,10 @@ namespace WorldGeneration.TectonicPlate.Objects
     // Edge for boundary stuff
     public class Edge
     {
+        // Indices of the vertices of each edge
+        public int[] vertexIndices0 { get; set; }
+        public int[] vertexIndices1 { get; set; }
+
         public Vector3[] edge { get; private set; }
         public Vector3[] invEdge { get; private set; }
 
@@ -13,10 +17,12 @@ namespace WorldGeneration.TectonicPlate.Objects
         // Describes the index of the plate the edge is a part of, should always be 2 long
         public int[] edgeOf { get; set; }
 
-        public Edge(Vector3 v1, Vector3 v2, int i = -1)
+        public Edge(Vector3 v1, Vector3 v2, int[] vertexIndices, int i = -1)
         {
             edge = new Vector3[] { v1, v2 };
             invEdge = new Vector3[] { v2, v1 };
+
+            vertexIndices0 = vertexIndices;
 
             // -1 placeholder value
             edgeOf = new int[2] { -1, -1 };

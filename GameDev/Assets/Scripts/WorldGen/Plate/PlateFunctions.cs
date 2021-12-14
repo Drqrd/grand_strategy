@@ -88,7 +88,7 @@ namespace WorldGeneration.TectonicPlate
                 // Do colors
                 // Percent on gradient
                 float onGradient = IMath.FloorFloat(Random.Range(0f, 1f), 0.1f);
-                Color color = plate.IsContinental ? world.Continental.Evaluate(onGradient) : world.Oceanic.Evaluate(onGradient);
+                Color color = plate.PlateType == Plate.TectonicPlateType.Continental ? world.Continental.Evaluate(onGradient) : world.Oceanic.Evaluate(onGradient);
                 plate.SetColors(color);
             }
 
@@ -125,7 +125,7 @@ namespace WorldGeneration.TectonicPlate
                 for (int b = 0; b < boundaryEdges[a].Length; b++)
                 {
                     int[] bE = boundaryEdges[a][b];
-                    Edge e = new Edge(plates[a].Vertices[bE[0]], plates[a].Vertices[bE[1]], a);
+                    Edge e = new Edge(plates[a].Points[bE[0]].Pos, plates[a].Points[bE[1]].Pos, bE, a);
 
                     edges.Add(e);
                 }
@@ -141,13 +141,17 @@ namespace WorldGeneration.TectonicPlate
                     if (currEdge == edges[b])
                     {
                         currEdge.edgeOf[1] = edges[b].edgeOf[0];
-
+                        currEdge.vertexIndices1 = edges[b].vertexIndices0;
                         // Sort by edgeOf[0]
                         if (currEdge.edgeOf[0] > currEdge.edgeOf[1])
                         {
                             int temp = currEdge.edgeOf[0];
                             currEdge.edgeOf[0] = currEdge.edgeOf[1];
                             currEdge.edgeOf[1] = temp;
+
+                            int[] tempI = currEdge.vertexIndices0;
+                            currEdge.vertexIndices0 = currEdge.vertexIndices1;
+                            currEdge.vertexIndices1 = tempI;
                         }
 
                         trueEdges.Add(currEdge);
@@ -237,7 +241,7 @@ namespace WorldGeneration.TectonicPlate
                 foreach(FaultLine faultLine in plate.FaultLines)
                 {
                     // world reference for plates
-                    faultLine.DeterminePlateType(world);
+                    faultLine.DetermineFaultLineType(world);
                 }
             }
 

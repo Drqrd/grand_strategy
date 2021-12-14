@@ -8,8 +8,14 @@ namespace WorldGeneration.Objects
 {
     public class Plate
     {
+        public enum TectonicPlateType
+        {
+            Oceanic,
+            Continental
+        }
+
         // Private set
-        public Vector3[] Vertices { get; private set; }
+        public Point[] Points { get; private set; }         // Vertices with neighbors
         public int[] Triangles { get; private set; }
         public Vector3 Center { get; private set; }
         public Vector3 Direction { get; private set; }
@@ -17,7 +23,7 @@ namespace WorldGeneration.Objects
 
         public Color[] Colors { get; private set; }
         public Mesh SharedMesh { get; private set; }
-        public bool IsContinental { get; private set; }
+        public TectonicPlateType PlateType { get; private set; }
 
         // Object References
         public FaultLine[] FaultLines { get; set; }
@@ -30,7 +36,8 @@ namespace WorldGeneration.Objects
         public Plate(Vector3 center, Vector3[] vertices = null, int[] triangles = null, Color[] colors = null)
         {
             Center = center;
-            Vertices = vertices;
+            Points = new Point[vertices.Length];
+            for (int a = 0; a < Points.Length; a++) { Points[a] = new Point(vertices[a]); }
             Triangles = triangles;
             if (colors != null) { Colors = colors; }
 
@@ -43,12 +50,12 @@ namespace WorldGeneration.Objects
             Speed = GetRandomSpeed();
 
             // Random assign if continental or oceanic
-            IsContinental = Random.Range(0f, 1f) > 0.5f ? true : false;
+            PlateType = Random.Range(0f, 1f) > 0.5f ? TectonicPlateType.Continental : TectonicPlateType.Oceanic;
 
             // Build mesh if vertices and triangles arent null
-            if (Vertices != null && Triangles != null)
+            if (vertices != null && Triangles != null)
             {
-                SharedMesh.vertices = Vertices;
+                SharedMesh.vertices = vertices;
                 SharedMesh.triangles = Triangles;
                 if (colors != null) { SharedMesh.colors = Colors; }
                 SharedMesh.RecalculateNormals();
@@ -80,10 +87,15 @@ namespace WorldGeneration.Objects
         public void SetColors(Color color)
         {
             List<Color> colors = new List<Color>();
-            for (int i = 0; i < Vertices.Length; i++) { colors.Add(color); }
+            for (int i = 0; i < Points.Length; i++) { colors.Add(color); }
             Colors = colors.ToArray();
 
             SharedMesh.colors = Colors;
+        }
+
+        public void FindNearestNeighbors()
+        {
+
         }
     }
 }

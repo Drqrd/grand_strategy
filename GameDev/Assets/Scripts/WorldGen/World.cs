@@ -174,7 +174,6 @@ public class World : MonoBehaviour
         
         PlateCenters = GeneratePlateCenters(this);
         Plates = GeneratePlates(this);
-
         GenerateFaultLines(this);
 
         BuildTectonicPlateMap();
@@ -190,6 +189,7 @@ public class World : MonoBehaviour
     {
         heightMap = new HeightMap(this);
         heightMap.Build();
+        
     }
 
     private void BuildMoistureMap()
