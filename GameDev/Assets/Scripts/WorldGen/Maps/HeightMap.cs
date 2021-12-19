@@ -1,10 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
+
 using WorldGeneration.Objects;
 using WorldGeneration.TectonicPlate.Objects;
+using WorldGeneration.TectonicPlate.KDTree;
+
 using static WorldGeneration.HLZS;
-
-
 
 namespace WorldGeneration.Maps
 {
@@ -51,7 +53,7 @@ namespace WorldGeneration.Maps
                 spaceMap[i] = new float[globalVertices[i].Length];
                 colors[i] = new Color[globalVertices[i].Length];
 
-                for (int j = 0; j < surfaceMap[i].Length; i++)
+                for (int j = 0; j < surfaceMap[i].Length; j++)
                 {
                     surfaceMap[i][j] = NULL_VAL;
                     spaceMap[i][j] = NULL_VAL;
@@ -83,7 +85,8 @@ namespace WorldGeneration.Maps
             }
 
             EvaluateFaultLines();
-            FloodSampleSurfaceHeights();
+            FindPointNeighbors();
+            // FloodSampleSurfaceHeights();
             CalculateSpaceHeights();
             EvaluateColors(world.HeightMapGradient);
 
@@ -91,6 +94,16 @@ namespace WorldGeneration.Maps
             for (int i = 0; i < world.Plates.Length; i++)
             {
                 meshFilters[i].sharedMesh.colors = colors[i];
+            }
+        }
+
+        private void FindPointNeighbors()
+        {
+            foreach (Plate plate in world.Plates)
+            {
+                List<Point> points = plate.Points.ToList();
+
+                Node node = KDTree(points);
             }
         }
 
@@ -230,7 +243,7 @@ namespace WorldGeneration.Maps
             for (int a = 0; a < fl.VertexIndices0.Length; a++)
             {
                 surfaceMap[fl.FaultOf[0]][fl.VertexIndices0[a]] = val;
-                surfaceMap[fl.FaultOf[1]][fl.VertexIndices0[a]] = val;
+                surfaceMap[fl.FaultOf[1]][fl.VertexIndices1[a]] = val;
             }
         }
 

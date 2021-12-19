@@ -13,7 +13,7 @@ namespace WorldGeneration.TectonicPlate
         /* Late Public Constructor Functions */
         /* --- Listed by order of use ---*/
 
-        // Generation of plates with plate centers, meant to be called by World
+        // Generation of plate centers
         public static Vector3[] GeneratePlateCenters(World world)
         {
             List<Vector3> centers = new List<Vector3>();
@@ -54,6 +54,7 @@ namespace WorldGeneration.TectonicPlate
             return centers.ToArray();
         }
 
+        // Generates the actual plates
         public static Plate[] GeneratePlates(World world)
         {
             // Initialization
@@ -517,6 +518,9 @@ namespace WorldGeneration.TectonicPlate
 
             triangles = t;
         }
+
+
+        /*------------------------------------------------------------------------------------*/
     }
 }
 
