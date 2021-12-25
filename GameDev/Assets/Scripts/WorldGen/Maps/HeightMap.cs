@@ -103,7 +103,17 @@ namespace WorldGeneration.Maps
             {
                 List<Point> points = plate.Points.ToList();
 
-                Node node = KDTree(points);
+                for (int a = 0; a < points.Count; a++)
+                {
+                    List<Point> refPoints = points.Where(x => x != points[a]).ToList();
+
+                }
+
+                Point closestPoint = null;
+                float closestDist = Mathf.Infinity;
+
+                Node kdTree = KD.BuildTree(points);
+                Point[] closestPoints;
             }
         }
 
