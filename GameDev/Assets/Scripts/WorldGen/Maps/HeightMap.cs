@@ -4,7 +4,6 @@ using System.Linq;
 
 using WorldGeneration.Objects;
 using WorldGeneration.TectonicPlate.Objects;
-using WorldGeneration.TectonicPlate.KDTree;
 
 using static WorldGeneration.HLZS;
 
@@ -85,7 +84,6 @@ namespace WorldGeneration.Maps
             }
 
             EvaluateFaultLines();
-            FindPointNeighbors();
             // FloodSampleSurfaceHeights();
             CalculateSpaceHeights();
             EvaluateColors(world.HeightMapGradient);
@@ -94,26 +92,6 @@ namespace WorldGeneration.Maps
             for (int i = 0; i < world.Plates.Length; i++)
             {
                 meshFilters[i].sharedMesh.colors = colors[i];
-            }
-        }
-
-        private void FindPointNeighbors()
-        {
-            foreach (Plate plate in world.Plates)
-            {
-                List<Point> points = plate.Points.ToList();
-
-                for (int a = 0; a < points.Count; a++)
-                {
-                    List<Point> refPoints = points.Where(x => x != points[a]).ToList();
-
-                }
-
-                Point closestPoint = null;
-                float closestDist = Mathf.Infinity;
-
-                Node kdTree = KD.BuildTree(points);
-                Point[] closestPoints;
             }
         }
 

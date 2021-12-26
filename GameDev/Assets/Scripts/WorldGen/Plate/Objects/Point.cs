@@ -17,7 +17,7 @@ namespace WorldGeneration.TectonicPlate.Objects
 
         public void SetNearestNeighbors(Point[] points)
         {
-
+            Neighbors = points;
         }
     }
 }

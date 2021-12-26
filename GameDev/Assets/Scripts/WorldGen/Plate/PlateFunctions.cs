@@ -10,6 +10,10 @@ namespace WorldGeneration.TectonicPlate
 {
     public struct Functions
     {
+        // How many neighbor each point has
+        private const int NEIGHBOR_NUM = 3;
+
+
         /* Late Public Constructor Functions */
         /* --- Listed by order of use ---*/
 
@@ -91,6 +95,9 @@ namespace WorldGeneration.TectonicPlate
                 float onGradient = IMath.FloorFloat(Random.Range(0f, 1f), 0.1f);
                 Color color = plate.PlateType == Plate.TectonicPlateType.Continental ? world.Continental.Evaluate(onGradient) : world.Oceanic.Evaluate(onGradient);
                 plate.SetColors(color);
+
+                // Get nearest neighbors of points
+                SetPointNeighbors(plate);
             }
 
             return plates;
@@ -521,6 +528,66 @@ namespace WorldGeneration.TectonicPlate
 
 
         /*------------------------------------------------------------------------------------*/
+
+        private static void SetPointNeighbors(Plate plate)
+        {
+            Point[] points = plate.Points;
+
+            List<KeyValuePair<float, int>>[] distanceMap = new List<KeyValuePair<float, int>>[points.Length];
+
+            for(int a = 0; a < distanceMap.Length; a++) { distanceMap[a] = new List<KeyValuePair<float, int>>(); }
+
+            // Map distances
+            for (int a = 0; a < points.Length; a++)
+            {
+                for (int b = a + 1; b < points.Length; b++)
+                {
+                    float dist = SquareDistance(points[a].Pos, points[b].Pos);
+                    distanceMap[a].Add(new KeyValuePair<float, int>(dist, b));
+                    distanceMap[b].Add(new KeyValuePair<float, int>(dist, a));
+                }
+            }
+
+            foreach(List<KeyValuePair<float,int>> d in distanceMap)
+            {
+                d.Sort(new DuplicateKeyComparer());
+            }
+
+            // Set nearest neighbors
+            for(int a = 0; a < points.Length; a++)
+            {
+                Point[] neighbors = new Point[NEIGHBOR_NUM];
+
+                for(int b = 0; b < NEIGHBOR_NUM; b++)
+                {
+                    if (b < distanceMap[a].Count)
+                    {
+                        neighbors[b] = plate.Points[distanceMap[a][b].Value];
+                    }
+                }
+
+                plate.Points[a].SetNearestNeighbors(neighbors);
+            }
+        }
+
+        public class DuplicateKeyComparer : IComparer<KeyValuePair<float,int>>
+        {
+            public int Compare(KeyValuePair<float,int> a, KeyValuePair<float,int> b)
+            {
+                if (a.Key < b.Key) { return -1; }
+                else if (a.Key > b.Key) { return 1; }
+                else
+                {
+                    if (a.Value < b.Value) { return -1; }
+                    return 1;
+                }
+            }
+        }
+
+        public static float SquareDistance(Vector3 a, Vector3 b)
+        {
+            return Mathf.Pow(a.x - b.x, 2f) + Mathf.Pow(a.y - b.y, 2f) + Mathf.Pow(a.z - b.z, 2f);
+        }
     }
 }
 
