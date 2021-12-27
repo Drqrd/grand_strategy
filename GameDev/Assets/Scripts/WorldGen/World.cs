@@ -108,6 +108,7 @@ public class World : MonoBehaviour
     public Gradient Oceanic { get { return oceanic; } }
     public Gradient HeightMapGradient { get { return heightMapGradient; } }
     public float[] DistBetweenCenters { get { return distBetweenCenters; } }
+    public int Resolution { get { return resolution; } }
 
     // Pure properties
     public Vector3[] PlateCenters { get; set; }

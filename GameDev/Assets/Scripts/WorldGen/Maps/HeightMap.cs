@@ -12,19 +12,17 @@ namespace WorldGeneration.Maps
     // All values for height are stored as surface and converted to space to avoid rounding errors.
     public class HeightMap : Map
     {
-        private const float NULL_VAL = 8001f;
+        private const float NULL_VAL = -1f;
 
         private MeshFilter[] meshFilters;
 
         private Vector3[][] globalVertices;
         private int[][] globalTriangles;
 
-        private float[][] surfaceMap;
-        private float[][] spaceMap;
+        private Point[][] map;
         private Color[][] colors;
 
-        public float[][] SurfaceMap { get { return surfaceMap; } }
-        public float[][] SpaceMap { get { return spaceMap; } }
+        public Point[][] Map { get { return map; } }
         public Color[][] Colors { get { return colors; } }
 
         public HeightMap(World world) : base(world)
@@ -35,8 +33,7 @@ namespace WorldGeneration.Maps
 
             globalVertices = new Vector3[meshFilters.Length][];
             globalTriangles = new int[meshFilters.Length][];
-            surfaceMap = new float[meshFilters.Length][];
-            spaceMap = new float[meshFilters.Length][];
+            map = new Point[meshFilters.Length][];
             colors = new Color[meshFilters.Length][];
 
             for (int i = 0; i < meshFilters.Length; i++)
@@ -48,15 +45,15 @@ namespace WorldGeneration.Maps
                 globalTriangles[i] = world.Plates[i].SharedMesh.triangles;
 
                 // Initialize
-                surfaceMap[i] = new float[globalVertices[i].Length];
-                spaceMap[i] = new float[globalVertices[i].Length];
+                map[i] = new Point[globalVertices[i].Length];
                 colors[i] = new Color[globalVertices[i].Length];
 
-                for (int j = 0; j < surfaceMap[i].Length; j++)
+                for (int j = 0; j < map[i].Length; j++)
                 {
-                    surfaceMap[i][j] = NULL_VAL;
-                    spaceMap[i][j] = NULL_VAL;
-
+                    map[i][j] = world.Plates[i].Points[j];
+                    map[i][j].Height.Surface = NULL_VAL;
+                    map[i][j].Height.Space = NULL_VAL;
+                    map[i][j].Height.NeighborRefValue = NULL_VAL;
                 }
             }
         }
@@ -85,7 +82,7 @@ namespace WorldGeneration.Maps
 
             EvaluateFaultLines();
             // FloodSampleSurfaceHeights();
-            CalculateSpaceHeights();
+            // CalculateSpaceHeights();
             EvaluateColors(world.HeightMapGradient);
 
             // Set the colors
@@ -99,55 +96,66 @@ namespace WorldGeneration.Maps
         {
             Queue<Point> floodQueue = new Queue<Point>();
 
-            for (int a = 0; a < surfaceMap.Length; a++)
+            // Enqueue the fault lines
+            for (int a = 0; a < map.Length; a++)
             {
-                for (int b = 0; b < surfaceMap[a].Length; b++)
+                for(int b = 0; b < map[a].Length; b++)
                 {
-                    if (surfaceMap[a][b] != NULL_VAL) { floodQueue.Enqueue(world.Plates[a].Points[b]); }
+                    if (map[a][b].Height.Surface != NULL_VAL) { floodQueue.Enqueue(map[a][b]); }
                 }
             }
-            
-            // Start dequeueing, if there are any neighbors that are not assigned yet, enqueue
-            // If enqueued obj is already assigned, do nothing
-            while (floodQueue.Count > 0)
-            {
-                // Flooding
-                Point v = floodQueue.Dequeue();
+
+            // Flood enqueues neighbors
+            while (floodQueue.Count > 1) 
+            { 
+                Point point = floodQueue.Dequeue();
+                float falloff = CalculateFalloff() * Random.Range(0.75f,1f);
+
+                // if is null_val, will always have a reference value
+                if (point.Height.Surface == NULL_VAL) 
+                {
+                    point.Height.Surface = point.Height.NeighborRefValue - falloff > MIN_HEIGHT ? point.Height.NeighborRefValue - falloff : MIN_HEIGHT; 
+                }
+
+                foreach (Point neighbor in point.Neighbors) 
+                {
+                    if (neighbor.Height.NeighborRefValue != NULL_VAL) 
+                    {
+                        floodQueue.Enqueue(neighbor);
+                        neighbor.Height.NeighborRefValue = point.Height.Surface;
+                    }
+                }        
             }
+        }
+
+        private float CalculateFalloff()
+        {
+            if (world.Resolution < 100) { return (float)world.Resolution / 1.5f; }
+            else if (world.Resolution < 1000) { return Mathf.Sqrt(world.Resolution); }
+            else if (world.Resolution < 10000) { return Mathf.Pow(world.Resolution, .4f); }
+            else if (world.Resolution < 100000) { return Mathf.Pow(world.Resolution, 1f / 3f); }
+            else { return Mathf.Pow(world.Resolution, .25f); }
         }
 
         private void CalculateSpaceHeights()
         {
-            // Sample
-            /*
-            for (int a = 0; a < meshFilters.Length; a++)
-            {
-                surfaceMap[a] = new float[globalVertices[a].Length];
-
-                for (int i = 0; i < globalVertices[a].Length; i++)
-                {
-                    surfaceMap[a][i] = Mathf.Clamp(Sample(globalVertices[a][i]), -1f, 1f);
-                }
-            }
-            */
-
             // Get max / min
-            float min = spaceMap[0][0], max = spaceMap[0][0];
-            for (int a = 0; a < spaceMap.Length; a++)
+            float min = map[0][0].Height.Space, max = map[0][0].Height.Space;
+            for (int a = 0; a < map.Length; a++)
             {
-                for (int b = 0; b < spaceMap[a].Length; b++)
+                for (int b = 0; b < map[a].Length; b++)
                 {
-                    max = surfaceMap[a][b] > max ? surfaceMap[a][b] : max;
-                    min = surfaceMap[a][b] < min ? surfaceMap[a][b] : min;
+                    max = map[a][b].Height.Surface > max ? map[a][b].Height.Surface : max;
+                    min = map[a][b].Height.Surface < min ? map[a][b].Height.Surface : min;
                 }
             }
 
             // Normalize 0 - 1
-            for (int a = 0; a < surfaceMap.Length; a++)
+            for (int a = 0; a < map.Length; a++)
             {
-                for (int b = 0; b < surfaceMap[a].Length; b++)
+                for (int b = 0; b < map[a].Length; b++)
                 {
-                    spaceMap[a][b] = (surfaceMap[a][b] - min) / (max - min);
+                    map[a][b].Height.Space = (map[a][b].Height.Surface - min) / (max - min);
                 }
             }
         }
@@ -160,16 +168,6 @@ namespace WorldGeneration.Maps
                 return -1;
             }
             else { return input / MAX_HEIGHT; }
-        }
-
-        public static float ScaleSpaceToSurface(float input)
-        {
-            if (input < 0f || input > 8000f)
-            {
-                Debug.LogError("ERROR INPUT MUST BE < 0 or > 8000.");
-                return -1;
-            }
-            else { return input * MAX_HEIGHT; }
         }
 
         public void EvaluateFaultLines()
@@ -230,19 +228,19 @@ namespace WorldGeneration.Maps
             FaultLine fl = world.Plates[plateInd].FaultLines[faultInd];
             for (int a = 0; a < fl.VertexIndices0.Length; a++)
             {
-                surfaceMap[fl.FaultOf[0]][fl.VertexIndices0[a]] = val;
-                surfaceMap[fl.FaultOf[1]][fl.VertexIndices1[a]] = val;
+                map[fl.FaultOf[0]][fl.VertexIndices0[a]].Height.Surface = val;
+                map[fl.FaultOf[1]][fl.VertexIndices1[a]].Height.Surface = val;
             }
         }
 
 
         public void EvaluateColors(Gradient gradient)
         {
-            for (int a = 0; a < surfaceMap.Length; a++)
+            for (int a = 0; a < map.Length; a++)
             {
-                for (int b = 0; b < surfaceMap[a].Length; b++)
+                for (int b = 0; b < map[a].Length; b++)
                 {
-                    colors[a][b] = gradient.Evaluate(surfaceMap[a][b]);
+                    colors[a][b] = gradient.Evaluate(map[a][b].Height.Surface);
                 }
             }
         }
