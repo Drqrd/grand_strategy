@@ -11,7 +11,7 @@ namespace WorldGeneration.TectonicPlate
     public struct Functions
     {
         // How many neighbor each point has
-        private const int NEIGHBOR_NUM = 3;
+        private const int NEIGHBOR_NUM = 4;
 
 
         /* Late Public Constructor Functions */
@@ -65,13 +65,13 @@ namespace WorldGeneration.TectonicPlate
             Plate[] plates = new Plate[world.PlateCenters.Length];
             List<int>[] plateTriangles = new List<int>[world.PlateCenters.Length];
             List<Vector3>[] plateVertices = new List<Vector3>[world.PlateCenters.Length];
-            List<int[]>[] globalVertices = new List<int[]>[world.PlateCenters.Length];
+            List<int>[] globalVertices = new List<int>[world.PlateCenters.Length];
 
             for (int i = 0; i < world.PlateCenters.Length; i++)
             {
                 plateTriangles[i] = new List<int>();
                 plateVertices[i] = new List<Vector3>();
-                globalVertices[i] = new List<int[]>();
+                globalVertices[i] = new List<int>();
             }
 
             if (world.PlateDeterminationType == World.PlateDetermination.ClosestCenter)
@@ -344,7 +344,7 @@ namespace WorldGeneration.TectonicPlate
                     plateTriangles[i].Add(j);
                 }
             }
-
+            /*
             // Squash vertices
             if (world.SmoothMapSurface)
             {
@@ -353,12 +353,12 @@ namespace WorldGeneration.TectonicPlate
                     CondenseVerticesAndTriangles(plateVertices[i], plateTriangles[i], out plateVertices[i], out plateTriangles[i]);
                 }
             }
-
+            */
             pt = plateTriangles;
             pv = plateVertices;
         }
 
-        private static void GetCenterFloodFill(List<int>[] plateTriangles, List<Vector3>[] plateVertices, List<int[]>[] globalVertices, out List<int>[] pt, out List<Vector3>[] pv, out List<int[]>[] pg,  World world)
+        private static void GetCenterFloodFill(List<int>[] plateTriangles, List<Vector3>[] plateVertices, List<int>[] globalVertices, out List<int>[] pt, out List<Vector3>[] pv, out List<int>[] pg,  World world)
         {
             Vector3[][] v = new Vector3[world.Sphere.meshFilters.Length][];
             int[][] t = new int[world.Sphere.meshFilters.Length][];
@@ -377,12 +377,8 @@ namespace WorldGeneration.TectonicPlate
                 {
                     int[] tri = new int[] { t[i][j + 0], t[i][j + 1], t[i][j + 2] };
                     Vector3[] ver = new Vector3[] { v[i][tri[0]], v[i][tri[1]], v[i][tri[2]] };
-                    int[][] vertexIndices = new int[][] 
-                    {
-                        new int[2] { i, tri[0] },
-                        new int[2] { i, tri[1] },
-                        new int[2] { i, tri[2] }
-                    }; 
+                    // Global indices
+                    int[] vertexIndices = new int[] { tri[0], tri[1], tri[2] };
                     Vector3 triCenter = IMath.TriangleCentroid(ver[0], ver[1], ver[2]);
                     triangles.Add(new Triangle(tri, ver, vertexIndices, triCenter));
                 }
@@ -443,7 +439,7 @@ namespace WorldGeneration.TectonicPlate
             {
                 int[] tri = triangles[i].Triangles;
                 Vector3[] ver = triangles[i].Vertices;
-                int[][] vis = triangles[i].VertexIndices;
+                int[] vis = triangles[i].VertexIndices;
                 for (int j = 0; j < tri.Length; j++)
                 {
                     plateTriangles[triangles[i].PlateCenter].Add(tri[j]);
@@ -457,7 +453,7 @@ namespace WorldGeneration.TectonicPlate
             {
                 for (int i = 0; i < plateVertices.Length; i++)
                 {
-                    CondenseVerticesAndTriangles(plateVertices[i], plateTriangles[i], out plateVertices[i], out plateTriangles[i]);
+                    CondenseVerticesAndTriangles(plateVertices[i], plateTriangles[i], globalVertices[i], out plateVertices[i], out plateTriangles[i], out globalVertices[i]);
                 }
             }
 
@@ -465,7 +461,6 @@ namespace WorldGeneration.TectonicPlate
             pt = plateTriangles;
             pv = plateVertices;
             pg = globalVertices;
-
         }
 
         // Finds the boundary edges for a given plate
@@ -520,10 +515,11 @@ namespace WorldGeneration.TectonicPlate
         // Each triangle has their own set of vertices, the triangles should share vertices with neighboring triangles
         // to smooth the surface of the Sphere
         // Approach: Loop through each vertex element, find matching vertices, get their indices into a list and delete afterwards
-        private static void CondenseVerticesAndTriangles(List<Vector3> v, List<int> t, out List<Vector3> vertices, out List<int> triangles)
+        private static void CondenseVerticesAndTriangles(List<Vector3> v, List<int> t, List<int> g, out List<Vector3> vertices, out List<int> triangles, out List<int> globals)
         {
             // Get distinct members of v
             vertices = v.Distinct().ToList();
+            globals = g.Distinct().ToList();
             for (int i = 0; i < vertices.Count; i++)
             {
                 // For each vertex, if they match the current comparison vertex, change the triangle to the proper index
@@ -532,6 +528,7 @@ namespace WorldGeneration.TectonicPlate
                     if (vertices[i] == v[j])
                     {
                         t[j] = i;
+                        
                     }
                 }
             }

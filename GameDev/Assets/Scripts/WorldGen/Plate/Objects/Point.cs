@@ -10,7 +10,7 @@ namespace WorldGeneration.TectonicPlate.Objects
         public Vector3 Pos { get; private set; }
         public Point[] Neighbors { get; private set; }
         public _Height Height { get; set; }
-        public int[] GlobalPosition { get; private set; }
+        public int GlobalPosition { get; private set; }
 
         public class _Height
         {
@@ -19,11 +19,11 @@ namespace WorldGeneration.TectonicPlate.Objects
             public float NeighborRefValue { get; set; }
         }
 
-        public Point(Vector3 Pos, int meshFilter, int vertexPosition)
+        public Point(Vector3 Pos, int vertexPosition)
         {
             this.Pos = Pos;
 
-            this.GlobalPosition = new int[2] { meshFilter, vertexPosition };
+            this.GlobalPosition = vertexPosition;
 
             // Height stuff
             Height = new _Height();

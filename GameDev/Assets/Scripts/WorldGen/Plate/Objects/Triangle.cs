@@ -8,9 +8,9 @@ namespace WorldGeneration.TectonicPlate.Objects
         public int PlateCenter { get; set; }
         public int[] Triangles { get; private set; }
         public Vector3[] Vertices { get; private set; }
-        public int[][] VertexIndices { get; private set; }
+        public int[] VertexIndices { get; private set; }
         public Vector3 TriangleCenter { get; private set; }
-        public Triangle(int[] triangles, Vector3[] vertices, int[][] vertexIndices, Vector3 triangleCenter)
+        public Triangle(int[] triangles, Vector3[] vertices, int[] vertexIndices, Vector3 triangleCenter)
         {
             Triangles = triangles;
             Vertices = vertices;
