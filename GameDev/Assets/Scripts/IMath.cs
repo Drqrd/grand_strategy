@@ -31,4 +31,11 @@ public static class IMath
         if (Mathf.Sqrt(r+g+b) < threshold) { return true; }
         else { return false; }
     }
+    
+    public static float SumOf(float[] arr)
+    {
+        float total = 0;
+        foreach(float val in arr) { total += val; }
+        return total;
+    }
 }

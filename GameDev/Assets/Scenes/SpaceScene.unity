@@ -172,7 +172,7 @@ MonoBehaviour:
   resolution: 10000
   convertToSphere: 1
   smoothMapSurface: 1
-  jitter: 1
+  jitter: 0
   alterFibonacciLattice: 0
   mapDisplay: 0
   displayVertices: 0

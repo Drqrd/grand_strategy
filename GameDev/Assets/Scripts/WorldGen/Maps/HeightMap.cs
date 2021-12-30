@@ -14,7 +14,10 @@ namespace WorldGeneration.Maps
     public class HeightMap : Map
     {
         private const float NULL_VAL = -1f;
-        private float FALLOFF;
+        public const int NEIGHBOR_NUM = 3;
+        private float variation = AVG_HEIGHT / 2f;
+        private const int BLEND_DEPTH = 4;
+
 
         private MeshFilter[] meshFilters;
 
@@ -27,8 +30,6 @@ namespace WorldGeneration.Maps
         public HeightMap(World world) : base(world)
         {
             this.world = world;
-            this.FALLOFF = MAX_HEIGHT / Mathf.Pow(Mathf.Log10(world.Resolution), 2.5f);
-            Debug.Log(FALLOFF);
 
             meshFilters = new MeshFilter[world.Sphere.meshFilters.Length];
             map = new Point[meshFilters.Length][];
@@ -51,18 +52,10 @@ namespace WorldGeneration.Maps
                     map[0][gPos] = p;
                     map[0][gPos].Height.Surface = NULL_VAL;
                     map[0][gPos].Height.Space = NULL_VAL;
-                    map[0][gPos].Height.NeighborRefValue = NULL_VAL;
                 }
             }
 
-            for (int a = 0; a < map[0].Length; a++)
-            {
-                if (map[0][a] == null)
-                {
-                    Debug.Log(a);
-                }
-            }
-
+            SetPointNeighbors();
         }
 
         public override void Build()
@@ -79,12 +72,23 @@ namespace WorldGeneration.Maps
             meshFilters[0].sharedMesh.triangles = world.Sphere.meshFilters[0].sharedMesh.triangles;
 
             meshFilters[0].sharedMesh.RecalculateNormals();
-            meshFilters[0].sharedMesh.Optimize();
+            // meshFilters[0].sharedMesh.Optimize(); Messes with triangulation
 
             obj.AddComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/WorldGen/Map");
             
             EvaluateFaultLines();
-            FloodSampleSurfaceHeights();
+
+            List<Point> faultLinePoints = new List<Point>();
+            for(int a = 0; a < map.Length; a++)
+            {
+                for (int b = 0; b < map[a].Length; b++)
+                {
+                    if(map[a][b].Height.Surface != NULL_VAL) { faultLinePoints.Add(map[a][b]); }
+                }
+            }
+
+            SampleSurfaceHeights();
+            foreach(Point point in faultLinePoints) { Blend(point, 0); }
             CalculateSpaceHeights();
             EvaluateColors(world.HeightMapGradient);
 
@@ -92,38 +96,36 @@ namespace WorldGeneration.Maps
             meshFilters[0].sharedMesh.colors = colors[0];
         }
 
-        private void FloodSampleSurfaceHeights()
+        private void SampleSurfaceHeights()
         {
-            List<Point> flood = new List<Point>();
-
-            // Enqueue the fault lines
-            for (int a = 0; a < map.Length; a++)
+            for(int a = 0; a < map.Length; a++)
             {
-                for(int b = 0; b < map[a].Length; b++)
+                for (int b = 0; b < map[a].Length; b++)
                 {
-                    if (map[a][b].Height.Surface != NULL_VAL) { flood.Add(map[a][b]); }
+                    map[a][b].Height.Surface = GetHeight(world.Plates[map[a][b].PlateId].PlateType) * (Sample(map[a][b].Pos) * 2f);
                 }
             }
-            // Flood enqueues neighbors
-            while (flood.Count > 1) 
+        }
+        private float GetHeight(Plate.TectonicPlateType plateType)
+        {
+            return plateType == Plate.TectonicPlateType.Continental ? AVG_HEIGHT * 1.5f : AVG_HEIGHT / 3f;
+        }
+
+        // Recursive blend function
+        private void Blend(Point point, int depth)
+        {
+            if (depth < BLEND_DEPTH)
             {
-                int index = Random.Range(0, flood.Count - 1);
-                Point point = flood[index];
-                flood.RemoveAt(index);
-
-                float falloff = FALLOFF * Sample(point.Pos);
-
-                point.Height.Surface = point.Height.NeighborRefValue - falloff > MIN_HEIGHT ? point.Height.NeighborRefValue - falloff : MIN_HEIGHT;
-
-                // if neighbors have null_val for reference height, set the reference height and enqueue neighbor,
+                float avg = point.Height.Surface;
+                // Blend the neighbors, get avg
                 foreach (Point neighbor in point.Neighbors) 
                 {
-                    if (neighbor.Height.NeighborRefValue == NULL_VAL) 
-                    {
-                        neighbor.Height.NeighborRefValue = point.Height.Surface;
-                        flood.Add(neighbor);
-                    }
+                    avg += neighbor.Height.Surface;
+                    Blend(neighbor, depth + 1); 
                 }
+                // Blend current point 
+                avg /= point.Neighbors.Length + 1;
+                point.Height.Surface = avg;
             }
         }
 
@@ -201,7 +203,7 @@ namespace WorldGeneration.Maps
             switch (index)
             {
                 case 2:
-                    f = MAX_HEIGHT;
+                    f = MAX_HEIGHT/ 1.25f;
                     break;
                 case 1:
                     f = MAX_HEIGHT / 1.5f;
@@ -231,7 +233,6 @@ namespace WorldGeneration.Maps
             {
                 int pos = world.Plates[plateInd].Points[inds[a]].GlobalPosition;
                 map[0][pos].Height.Surface = val;
-                map[0][pos].Height.NeighborRefValue = val;
             }
         }
 
@@ -244,6 +245,67 @@ namespace WorldGeneration.Maps
                     colors[a][b] = gradient.Evaluate(map[a][b].Height.Space);
                 }
             }
+        }
+
+
+        private void SetPointNeighbors()
+        {
+            Point[] points = map[0];
+
+            List<KeyValuePair<float, int>>[] distanceMap = new List<KeyValuePair<float, int>>[points.Length];
+
+            for (int a = 0; a < distanceMap.Length; a++) { distanceMap[a] = new List<KeyValuePair<float, int>>(); }
+
+            // Map distances
+            for (int a = 0; a < points.Length; a++)
+            {
+                for (int b = a + 1; b < points.Length; b++)
+                {
+                    float dist = SquareDistance(points[a].Pos, points[b].Pos);
+                    distanceMap[a].Add(new KeyValuePair<float, int>(dist, b));
+                    distanceMap[b].Add(new KeyValuePair<float, int>(dist, a));
+                }
+            }
+
+            foreach (List<KeyValuePair<float, int>> d in distanceMap)
+            {
+                d.Sort(new DuplicateKeyComparer());
+            }
+
+            // Set nearest neighbors
+            for (int a = 0; a < points.Length; a++)
+            {
+                Point[] neighbors = new Point[NEIGHBOR_NUM];
+
+                for (int b = 0; b < NEIGHBOR_NUM; b++)
+                {
+                    if (b < distanceMap[a].Count)
+                    {
+                        neighbors[b] = points[distanceMap[a][b].Value];
+                    }
+                }
+
+                points[a].SetNearestNeighbors(neighbors);
+            }
+        }
+
+        public class DuplicateKeyComparer : IComparer<KeyValuePair<float, int>>
+        {
+            public int Compare(KeyValuePair<float, int> a, KeyValuePair<float, int> b)
+            {
+                if (a.Key < b.Key) { return -1; }
+                else if (a.Key > b.Key) { return 1; }
+                else
+                {
+                    if (a.Value < b.Value) { return -1; }
+                    return 1;
+                }
+            }
+        }
+
+        public static float SquareDistance(Vector3 a, Vector3 b)
+        {
+            return Mathf.Pow(a.x - b.x, 2f) + Mathf.Pow(a.y - b.y, 2f) + Mathf.Pow(a.z - b.z, 2f);
         }
     }
 }

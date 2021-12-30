@@ -34,11 +34,11 @@ namespace WorldGeneration.Objects
         private const float MAX_SPEED = 2.0f;
 
         // Constructor
-        public Plate(Vector3 center, Vector3[] vertices = null, int[] vIndices = null, int[] triangles = null, Color[] colors = null)
+        public Plate(Vector3 center, int id, Vector3[] vertices = null, int[] vIndices = null, int[] triangles = null, Color[] colors = null)
         {
             Center = center;
             Points = new Point[vertices.Length];
-            for (int a = 0; a < Points.Length; a++) { Points[a] = new Point(vertices[a], vIndices[a]); }
+            for (int a = 0; a < Points.Length; a++) { Points[a] = new Point(vertices[a], id, vIndices[a]); }
             Triangles = triangles;
             if (colors != null) { Colors = colors; }
 
