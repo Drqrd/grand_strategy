@@ -14,10 +14,6 @@ namespace WorldGeneration.Maps
     public class HeightMap : Map
     {
         private const float NULL_VAL = -1f;
-        public const int NEIGHBOR_NUM = 3;
-        private float variation = AVG_HEIGHT / 2f;
-        private const int BLEND_DEPTH = 4;
-
 
         private MeshFilter[] meshFilters;
 
@@ -25,7 +21,6 @@ namespace WorldGeneration.Maps
         private Color[][] colors;
 
         public Point[][] Map { get { return map; } }
-        public Color[][] Colors { get { return colors; } }
 
         public HeightMap(World world) : base(world)
         {
@@ -90,7 +85,7 @@ namespace WorldGeneration.Maps
             SampleSurfaceHeights();
             foreach(Point point in faultLinePoints) { Blend(point, 0); }
             CalculateSpaceHeights();
-            EvaluateColors(world.HeightMapGradient);
+            EvaluateColors(world.Gradients.Height);
 
             // Set the colors
             meshFilters[0].sharedMesh.colors = colors[0];
@@ -102,19 +97,19 @@ namespace WorldGeneration.Maps
             {
                 for (int b = 0; b < map[a].Length; b++)
                 {
-                    map[a][b].Height.Surface = GetHeight(world.Plates[map[a][b].PlateId].PlateType) * (Sample(map[a][b].Pos) * 2f);
+                    map[a][b].Height.Surface = GetHeight(world.Plates[map[a][b].PlateId].PlateType) * (Sample(map[a][b].Pos) * 1.75f);
                 }
             }
         }
         private float GetHeight(Plate.TectonicPlateType plateType)
         {
-            return plateType == Plate.TectonicPlateType.Continental ? AVG_HEIGHT * 1.5f : AVG_HEIGHT / 3f;
+            return plateType == Plate.TectonicPlateType.Continental ? AVG_HEIGHT * world.HMParams.CMultiplier : AVG_DEPTH * world.HMParams.OMultiplier;
         }
 
         // Recursive blend function
         private void Blend(Point point, int depth)
         {
-            if (depth < BLEND_DEPTH)
+            if (depth < world.HMParams.BlendDepth)
             {
                 float avg = point.Height.Surface;
                 // Blend the neighbors, get avg
@@ -136,31 +131,8 @@ namespace WorldGeneration.Maps
                 for(int b = 0; b < map[a].Length; b++)
                 {
                     map[a][b].Height.Space = map[a][b].Height.Surface / MAX_HEIGHT;
-                    //map[a][b].Height.Space = Sample(map[a][b].Pos);
                 }
             }
-
-            /*
-            // Get max / min
-            float min = map[0][0].Height.Space, max = map[0][0].Height.Space;
-            for (int a = 0; a < map.Length; a++)
-            {
-                for (int b = 0; b < map[a].Length; b++)
-                {
-                    max = map[a][b].Height.Surface > max ? map[a][b].Height.Surface : max;
-                    min = map[a][b].Height.Surface < min ? map[a][b].Height.Surface : min;
-                }
-            }
-
-            // Normalize 0 - 1
-            for (int a = 0; a < map.Length; a++)
-            {
-                for (int b = 0; b < map[a].Length; b++)
-                {
-                    map[a][b].Height.Space = (map[a][b].Height.Surface - min) / (max - min);
-                }
-            }
-            */
         }
 
         public static float ScaleSurfaceToSpace(float input)
@@ -203,22 +175,22 @@ namespace WorldGeneration.Maps
             switch (index)
             {
                 case 2:
-                    f = MAX_HEIGHT/ 1.25f;
+                    f = MAX_HEIGHT;
                     break;
                 case 1:
-                    f = MAX_HEIGHT / 1.5f;
-                    break;
-                case 0:
-                    f = MAX_HEIGHT / 2f;
-                    break;
-                case -1:
                     f = AVG_HEIGHT;
                     break;
+                case 0:
+                    f = SEA_LEVEL;
+                    break;
+                case -1:
+                    f = AVG_DEPTH;
+                    break;
                 case -2:
-                    f = AVG_HEIGHT / 1.5f;
+                    f = MAX_DEPTH;
                     break;
                 default:
-                    f = AVG_HEIGHT /2f;
+                    f = AVG_HEIGHT;
                     break;
             }
 
@@ -275,9 +247,9 @@ namespace WorldGeneration.Maps
             // Set nearest neighbors
             for (int a = 0; a < points.Length; a++)
             {
-                Point[] neighbors = new Point[NEIGHBOR_NUM];
+                Point[] neighbors = new Point[world.HMParams.NeighborNumber];
 
-                for (int b = 0; b < NEIGHBOR_NUM; b++)
+                for (int b = 0; b < world.HMParams.NeighborNumber; b++)
                 {
                     if (b < distanceMap[a].Count)
                     {

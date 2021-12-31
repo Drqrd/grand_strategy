@@ -91,7 +91,7 @@ namespace WorldGeneration.TectonicPlate
                 // Do colors
                 // Percent on gradient
                 float onGradient = IMath.FloorFloat(Random.Range(0f, 1f), 0.1f);
-                Color color = plate.PlateType == Plate.TectonicPlateType.Continental ? world.Continental.Evaluate(onGradient) : world.Oceanic.Evaluate(onGradient);
+                Color color = plate.PlateType == Plate.TectonicPlateType.Continental ? world.Gradients.Continental.Evaluate(onGradient) : world.Gradients.Oceanic.Evaluate(onGradient);
                 plate.SetColors(color);
             }
 
