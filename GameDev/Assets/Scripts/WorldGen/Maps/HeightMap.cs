@@ -5,6 +5,7 @@ using System.Linq;
 
 using WorldGeneration.Objects;
 using WorldGeneration.TectonicPlate.Objects;
+using WorldGeneration.SPDS;
 
 using static WorldGeneration.HLZS;
 
@@ -50,7 +51,7 @@ namespace WorldGeneration.Maps
                 }
             }
 
-            SetPointNeighbors();
+            FindPointNeighbors();
         }
 
         public override void Build()
@@ -97,7 +98,7 @@ namespace WorldGeneration.Maps
             {
                 for (int b = 0; b < map[a].Length; b++)
                 {
-                    map[a][b].Height.Surface = GetHeight(world.Plates[map[a][b].PlateId].PlateType) * (Sample(map[a][b].Pos) * 1.75f);
+                    map[a][b].Height.Surface = GetHeight(world.Plates[map[a][b].PlateId].PlateType) * Mathf.Clamp(Sample(map[a][b].Pos) * 1.5f, 0f, 1.5f);
                 }
             }
         }
@@ -220,8 +221,21 @@ namespace WorldGeneration.Maps
         }
 
 
-        private void SetPointNeighbors()
+        private void FindPointNeighbors()
         {
+            Point[] points = map[0];
+
+            KDTree kdTree = new KDTree(points);
+
+            for(int a = 0; a < points.Length; a++)
+            {
+                kdTree.Search(points[a], kdTree.Root, world.HMParams.NeighborNumber);
+            }
+
+            List<KeyValuePair<float,int>>[] distanceMap = new List<KeyValuePair<float, int>>[points.Length];
+
+            // Naive approach
+            /*
             Point[] points = map[0];
 
             List<KeyValuePair<float, int>>[] distanceMap = new List<KeyValuePair<float, int>>[points.Length];
@@ -259,6 +273,7 @@ namespace WorldGeneration.Maps
 
                 points[a].SetNearestNeighbors(neighbors);
             }
+            */
         }
 
         public class DuplicateKeyComparer : IComparer<KeyValuePair<float, int>>

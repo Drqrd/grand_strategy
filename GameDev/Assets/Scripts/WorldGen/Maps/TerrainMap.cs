@@ -26,8 +26,6 @@ namespace WorldGeneration.Maps
                 // Initialize
                 colors[i] = new Color[world.Sphere.meshFilters[i].sharedMesh.vertexCount];
             }
-
-
         }
 
         public override void Build()
@@ -48,15 +46,13 @@ namespace WorldGeneration.Maps
             obj.AddComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/WorldGen/Map");
 
             Colorize();
-
-
         }
 
         private void Colorize()
         {
             for(int a = 0; a < colors.Length; a++)
             {
-                for(int b = 0;  b < colors.Length; b++)
+                for(int b = 0;  b < colors[a].Length; b++)
                 {
                     Point._Height height = world._HeightMap.Map[a][b].Height;
                     // Using height values from heightMap and the oceanic / plate gradients, create first pass color
@@ -70,10 +66,8 @@ namespace WorldGeneration.Maps
 
         private void FirstPass(int a, int b, Point._Height height)
         {
-
             if (height.Surface >= SEA_LEVEL)
             {
-                Debug.Log(EvaluateContinentalScale(height.Surface));
                 colors[a][b] = world.Gradients.Continental.Evaluate(EvaluateContinentalScale(height.Surface));
             }
             else

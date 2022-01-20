@@ -42,13 +42,13 @@ namespace WorldGeneration
         // Given a surface value, will evaluate the scale based on the continents normalized 0-1
         public static float EvaluateContinentalScale(float surfaceVal)
         {
-            return (MAX_HEIGHT - surfaceVal) / (MAX_HEIGHT - SEA_LEVEL);
+            return (surfaceVal - SEA_LEVEL) / (MAX_HEIGHT - SEA_LEVEL);
         }
 
         // Same as surface but for the ocean
         public static float EvaluateOceanicScale(float oceanVal)
         {
-            return (SEA_LEVEL - oceanVal) / SEA_LEVEL;
+            return (oceanVal) / (SEA_LEVEL);
         }
     }
 }

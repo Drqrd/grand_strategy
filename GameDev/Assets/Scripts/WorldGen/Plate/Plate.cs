@@ -34,7 +34,7 @@ namespace WorldGeneration.Objects
         private const float MAX_SPEED = 2.0f;
 
         // Constructor
-        public Plate(Vector3 center, int id, Vector3[] vertices = null, int[] vIndices = null, int[] triangles = null, Color[] colors = null)
+        public Plate(Vector3 center, int id, float CvO, Vector3[] vertices = null, int[] vIndices = null, int[] triangles = null, Color[] colors = null)
         {
             Center = center;
             Points = new Point[vertices.Length];
@@ -51,7 +51,7 @@ namespace WorldGeneration.Objects
             Speed = GetRandomSpeed();
 
             // Random assign if continental or oceanic
-            PlateType = Random.Range(0f, 1f) > 0.5f ? TectonicPlateType.Continental : TectonicPlateType.Oceanic;
+            PlateType = Random.Range(0f, 1f) >= CvO ? TectonicPlateType.Continental : TectonicPlateType.Oceanic;
 
             // Build mesh if vertices and triangles arent null
             if (vertices != null && Triangles != null)
@@ -92,11 +92,6 @@ namespace WorldGeneration.Objects
             Colors = colors.ToArray();
 
             SharedMesh.colors = Colors;
-        }
-
-        public void FindNearestNeighbors()
-        {
-
         }
     }
 }

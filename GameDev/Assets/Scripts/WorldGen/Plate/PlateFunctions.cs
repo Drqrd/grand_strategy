@@ -82,7 +82,7 @@ namespace WorldGeneration.TectonicPlate
             // Build plates
             for (int i = 0; i < world.PlateCenters.Length; i++)
             {
-                plates[i] = new Plate(world.PlateCenters[i], i, plateVertices[i].ToArray(), globalVertices[i].ToArray(), plateTriangles[i].ToArray());
+                plates[i] = new Plate(world.PlateCenters[i], i, world.CVO, plateVertices[i].ToArray(), globalVertices[i].ToArray(), plateTriangles[i].ToArray());
             }
 
 

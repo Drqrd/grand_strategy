@@ -169,35 +169,36 @@ MonoBehaviour:
   sphereType: 2
   plateSize: 1
   plateDeterminationType: 1
-  resolution: 10000
+  resolution: 100
   convertToSphere: 1
+  continentalVsOceanic: 0.5
   smoothMapSurface: 1
-  jitter: 0
+  jitter: 1
   alterFibonacciLattice: 0
   neighborNumber: 3
-  blendDepth: 4
-  continentHeightMutiplier: 1
-  oceanDepthMultiplier: 1
-  mapDisplay: 3
+  blendDepth: 3
+  continentHeightMutiplier: 1.5
+  oceanDepthMultiplier: 0.75
+  mapDisplay: 1
   displayVertices: 0
   boundaryDisplay: 0
   displayPlateCenters: 1
   displayPlateDirections: 1
   continentalGradient:
     serializedVersion: 2
-    key0: {r: 0.025631873, g: 0.4245283, b: 0.08804465, a: 1}
-    key1: {r: 0.8062348, g: 0.8113208, b: 0.5311855, a: 1}
-    key2: {r: 1, g: 1, b: 1, a: 0}
-    key3: {r: 0, g: 0, b: 0, a: 0}
-    key4: {r: 0, g: 0, b: 0, a: 0}
+    key0: {r: 0.8732544, g: 0.8962264, b: 0.68823427, a: 1}
+    key1: {r: 0.4397062, g: 0.8396226, b: 0.4150587, a: 1}
+    key2: {r: 0.10157315, g: 0.3962264, b: 0.07251688, a: 0}
+    key3: {r: 0.3962264, g: 0.30853727, b: 0.27436808, a: 0}
+    key4: {r: 1, g: 1, b: 1, a: 0}
     key5: {r: 0, g: 0, b: 0, a: 0}
     key6: {r: 0, g: 0, b: 0, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
     ctime0: 193
-    ctime1: 49151
-    ctime2: 65535
-    ctime3: 0
-    ctime4: 0
+    ctime1: 6554
+    ctime2: 39321
+    ctime3: 52428
+    ctime4: 65535
     ctime5: 0
     ctime6: 0
     ctime7: 0
@@ -210,7 +211,7 @@ MonoBehaviour:
     atime6: 0
     atime7: 0
     m_Mode: 0
-    m_NumColorKeys: 3
+    m_NumColorKeys: 5
     m_NumAlphaKeys: 2
   oceanicGradient:
     serializedVersion: 2

@@ -98,6 +98,7 @@ public class World : MonoBehaviour
     [SerializeField] private PlateDetermination plateDeterminationType;
     [SerializeField] [Range(1, 65534)] private int resolution = 1;
     [SerializeField] private bool convertToSphere = false;
+    [SerializeField] [Range(0f, 1f)] private float continentalVsOceanic = 0.5f;
 
     [Header("Sphere Transformation Parameters")]
     [SerializeField] private bool smoothMapSurface = true;
@@ -152,6 +153,7 @@ public class World : MonoBehaviour
     public HeightMapParams HMParams { get { return heightMapParams; } }
     public float[] DistBetweenCenters { get { return distBetweenCenters; } }
     public int Resolution { get { return resolution; } }
+    public float CVO { get { return continentalVsOceanic; } }
 
     // For terrain
     public HeightMap _HeightMap { get { return heightMap; } }
@@ -223,7 +225,7 @@ public class World : MonoBehaviour
         BuildHeightMap();
         BuildMoistureMap();
         BuildTemperatureMap();
-        BuildTerrainMap();
+        // BuildTerrainMap();
     }
 
     private void BuildTectonicPlates()
@@ -245,8 +247,7 @@ public class World : MonoBehaviour
     private void BuildHeightMap()
     {
         heightMap = new HeightMap(this);
-        heightMap.Build();
-        
+        // heightMap.Build();
     }
 
     private void BuildMoistureMap()
