@@ -66,14 +66,7 @@ namespace WorldGeneration.Maps
 
         private void FirstPass(int a, int b, Point._Height height)
         {
-            if (height.Surface >= SEA_LEVEL)
-            {
-                colors[a][b] = world.Gradients.Continental.Evaluate(EvaluateContinentalScale(height.Surface));
-            }
-            else
-            {
-                colors[a][b] = world.Gradients.Oceanic.Evaluate(EvaluateOceanicScale(height.Surface));
-            }
+            colors[a][b] = world.Gradients.Terrain.Evaluate(height.Space);
         }
     }
 }

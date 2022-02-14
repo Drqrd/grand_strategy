@@ -5,7 +5,7 @@ using System.Linq;
 
 using WorldGeneration.Objects;
 using WorldGeneration.TectonicPlate.Objects;
-using WorldGeneration.SPDS;
+using DataStructures.ViliWonka.KDTree;
 
 using static WorldGeneration.HLZS;
 
@@ -71,7 +71,9 @@ namespace WorldGeneration.Maps
             // meshFilters[0].sharedMesh.Optimize(); Messes with triangulation
 
             obj.AddComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/WorldGen/Map");
-            
+
+
+            SampleSurfaceHeights();
             EvaluateFaultLines();
 
             List<Point> faultLinePoints = new List<Point>();
@@ -83,8 +85,8 @@ namespace WorldGeneration.Maps
                 }
             }
 
-            SampleSurfaceHeights();
-            foreach(Point point in faultLinePoints) { Blend(point, 0); }
+            
+            foreach(Point point in faultLinePoints) { Blend(point); }
             CalculateSpaceHeights();
             EvaluateColors(world.Gradients.Height);
 
@@ -98,26 +100,27 @@ namespace WorldGeneration.Maps
             {
                 for (int b = 0; b < map[a].Length; b++)
                 {
-                    map[a][b].Height.Surface = GetHeight(world.Plates[map[a][b].PlateId].PlateType) * Mathf.Clamp(Sample(map[a][b].Pos) * 1.5f, 0f, 1.5f);
+                    map[a][b].Height.Surface = GetHeight(world.Plates[map[a][b].PlateId].PlateType) + (MAX_HEIGHT * Sample(map[a][b].Pos) / 3f);
                 }
             }
         }
         private float GetHeight(Plate.TectonicPlateType plateType)
         {
-            return plateType == Plate.TectonicPlateType.Continental ? AVG_HEIGHT * world.HMParams.CMultiplier : AVG_DEPTH * world.HMParams.OMultiplier;
+            return plateType == Plate.TectonicPlateType.Continental ? (MAX_HEIGHT * 0.5f * world.HMParams.CMultiplier) 
+                                                                    : (MAX_HEIGHT * 0.2f * world.HMParams.OMultiplier);
         }
 
         // Recursive blend function
-        private void Blend(Point point, int depth)
+        private void Blend(Point point, int depth = 0)
         {
             if (depth < world.HMParams.BlendDepth)
             {
                 float avg = point.Height.Surface;
                 // Blend the neighbors, get avg
-                foreach (Point neighbor in point.Neighbors) 
+                for (int a = 0; a < point.Neighbors.Length; a++)
                 {
-                    avg += neighbor.Height.Surface;
-                    Blend(neighbor, depth + 1); 
+                    avg += point.Neighbors[a].Height.Surface;
+                    Blend(point.Neighbors[a], depth + 1); 
                 }
                 // Blend current point 
                 avg /= point.Neighbors.Length + 1;
@@ -169,29 +172,32 @@ namespace WorldGeneration.Maps
             float f;
             if (faultLine.Type == FaultLine.FaultLineType.Convergent) { index += 1; }
             else if (faultLine.Type == FaultLine.FaultLineType.Divergent) { index -= 1; }
-            
-            if (plates[faultLine.FaultOf[0]].PlateType == Plate.TectonicPlateType.Continental) { index += 1; }
-            else if (plates[faultLine.FaultOf[0]].PlateType == Plate.TectonicPlateType.Oceanic) { index -= 1; }
+
+            index += plates[faultLine.FaultOf[0]].PlateType == Plate.TectonicPlateType.Continental ? 1 : -1;
+            index += plates[faultLine.FaultOf[1]].PlateType == Plate.TectonicPlateType.Continental ? 1 : -1;
 
             switch (index)
             {
-                case 2:
+                case 3:
                     f = MAX_HEIGHT;
                     break;
+                case 2:
+                    f = MAX_HEIGHT * 0.8f;
+                    break;
                 case 1:
-                    f = AVG_HEIGHT;
+                    f = MAX_HEIGHT * 0.6f;
                     break;
                 case 0:
-                    f = SEA_LEVEL;
+                    f = MAX_HEIGHT * 0.5f;
                     break;
                 case -1:
-                    f = AVG_DEPTH;
+                    f = MAX_HEIGHT * 0.4f;
                     break;
                 case -2:
-                    f = MAX_DEPTH;
+                    f = MAX_HEIGHT * 0.2f;
                     break;
                 default:
-                    f = AVG_HEIGHT;
+                    f = MIN_HEIGHT;
                     break;
             }
 
@@ -223,16 +229,27 @@ namespace WorldGeneration.Maps
 
         private void FindPointNeighbors()
         {
+            // KD - Tree
             Point[] points = map[0];
 
-            KDTree kdTree = new KDTree(points);
+            KDTree kdTree = new KDTree(points, 1);
 
-            for(int a = 0; a < points.Length; a++)
+            KDQuery query = new KDQuery();
+
+            foreach (Point point in points)
             {
-                kdTree.Search(points[a], kdTree.Root, world.HMParams.NeighborNumber);
-            }
+                List<int> results = new List<int>();
+                query.KNearest(kdTree, point.Pos, world.HMParams.NeighborNumber, results);
 
-            List<KeyValuePair<float,int>>[] distanceMap = new List<KeyValuePair<float, int>>[points.Length];
+                List<Point> nn = new List<Point>();
+                foreach (int ind in results)
+                {
+                    nn.Add(points[ind]);
+                }
+
+                point.SetNearestNeighbors(nn.ToArray());
+            }
+            
 
             // Naive approach
             /*

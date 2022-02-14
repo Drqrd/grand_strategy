@@ -60,15 +60,15 @@ public class World : MonoBehaviour
 
     public class _Gradient
     {
-        public _Gradient(Gradient Continental, Gradient Oceanic, Gradient Height)
+        public _Gradient(Gradient Terrain, Gradient Temperature, Gradient Height)
         {
-            this.Continental = Continental;
-            this.Oceanic = Oceanic;
+            this.Terrain = Terrain;
+            this.Temperature = Temperature;
             this.Height = Height;
         }
 
-        public Gradient Continental { get; private set; }
-        public Gradient Oceanic { get; private set; }
+        public Gradient Terrain { get; private set; }
+        public Gradient Temperature { get; private set; }
         public Gradient Height { get; private set; }
     }
 
@@ -109,8 +109,8 @@ public class World : MonoBehaviour
     [SerializeField] private bool alterFibonacciLattice = true;
 
     [Header("HeightMap Parameters")]
-    [SerializeField] [Range(1,4)] private int neighborNumber = 3;
-    [SerializeField] [Range(2,8)] private int blendDepth = 4;
+    [SerializeField] [Range(1,8)] private int neighborNumber = 3;
+    [SerializeField] [Range(0,8)] private int blendDepth = 4;
     [SerializeField] [Range(0f,2f)] private float continentHeightMutiplier = 1f;
     [SerializeField] [Range(0f,1f)] private float oceanDepthMultiplier = 1f;
 
@@ -129,8 +129,8 @@ public class World : MonoBehaviour
     [SerializeField] private bool displayPlateDirections = false;
 
     [Header("Gradients")]
-    [SerializeField] private Gradient continentalGradient;
-    [SerializeField] private Gradient oceanicGradient;
+    [SerializeField] private Gradient terrainMapGradient;
+    [SerializeField] private Gradient temperatureMapGradient;
     [SerializeField] private Gradient heightMapGradient;
 
     private HeightMap heightMap;
@@ -192,7 +192,7 @@ public class World : MonoBehaviour
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
     private void SetGroupProperties()
     {
-        gradients = new _Gradient(continentalGradient, oceanicGradient, heightMapGradient);
+        gradients = new _Gradient(terrainMapGradient, temperatureMapGradient, heightMapGradient);
         heightMapParams = new HeightMapParams(neighborNumber, blendDepth, continentHeightMutiplier, oceanDepthMultiplier);
     }
 
@@ -225,7 +225,7 @@ public class World : MonoBehaviour
         BuildHeightMap();
         BuildMoistureMap();
         BuildTemperatureMap();
-        // BuildTerrainMap();
+        BuildTerrainMap();
     }
 
     private void BuildTectonicPlates()
@@ -247,7 +247,7 @@ public class World : MonoBehaviour
     private void BuildHeightMap()
     {
         heightMap = new HeightMap(this);
-        // heightMap.Build();
+        heightMap.Build();
     }
 
     private void BuildMoistureMap()
