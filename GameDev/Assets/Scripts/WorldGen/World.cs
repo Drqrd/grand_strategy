@@ -60,15 +60,17 @@ public class World : MonoBehaviour
 
     public class _Gradient
     {
-        public _Gradient(Gradient Terrain, Gradient Temperature, Gradient Height)
+        public _Gradient(Gradient Terrain, Gradient Temperature, Gradient Moisture, Gradient Height)
         {
             this.Terrain = Terrain;
             this.Temperature = Temperature;
+            this.Moisture = Moisture;
             this.Height = Height;
         }
 
         public Gradient Terrain { get; private set; }
         public Gradient Temperature { get; private set; }
+        public Gradient Moisture { get; private set; }
         public Gradient Height { get; private set; }
     }
 
@@ -89,7 +91,15 @@ public class World : MonoBehaviour
 
     }
 
+    public class MoistureMapParams
+    {
+        public MoistureMapParams(int bd)
+        {
+            BlendDepth = bd;
+        }
 
+        public int BlendDepth { get; private set; }
+    }
 
     [SerializeField] private SphereType sphereType;
 
@@ -110,10 +120,12 @@ public class World : MonoBehaviour
 
     [Header("HeightMap Parameters")]
     [SerializeField] [Range(1,8)] private int neighborNumber = 3;
-    [SerializeField] [Range(0,8)] private int blendDepth = 4;
+    [SerializeField] [Range(0,8)] private int h_blendDepth = 4;
     [SerializeField] [Range(0f,2f)] private float continentHeightMutiplier = 1f;
     [SerializeField] [Range(0f,1f)] private float oceanDepthMultiplier = 1f;
 
+    [Header("MoistureMap Parameters")]
+    [SerializeField] [Range(0, 4)] private int m_blendDepth = 2;
 
     [Header("Display")]
     [SerializeField] private MapDisplay mapDisplay;
@@ -131,6 +143,7 @@ public class World : MonoBehaviour
     [Header("Gradients")]
     [SerializeField] private Gradient terrainMapGradient;
     [SerializeField] private Gradient temperatureMapGradient;
+    [SerializeField] private Gradient moistureMapGradient;
     [SerializeField] private Gradient heightMapGradient;
 
     private HeightMap heightMap;
@@ -141,6 +154,7 @@ public class World : MonoBehaviour
 
     private _Gradient gradients;
     private HeightMapParams heightMapParams;
+    private MoistureMapParams moistureMapParams;
 
     private float[] distBetweenCenters = new float[] { .2f, .5f, .7f, .9f, 1.2f };
 
@@ -151,6 +165,7 @@ public class World : MonoBehaviour
     public bool SmoothMapSurface { get { return smoothMapSurface; } }
     public _Gradient Gradients { get { return gradients; } }
     public HeightMapParams HMParams { get { return heightMapParams; } }
+    public MoistureMapParams MMParams { get { return moistureMapParams; } }
     public float[] DistBetweenCenters { get { return distBetweenCenters; } }
     public int Resolution { get { return resolution; } }
     public float CVO { get { return continentalVsOceanic; } }
@@ -192,8 +207,9 @@ public class World : MonoBehaviour
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
     private void SetGroupProperties()
     {
-        gradients = new _Gradient(terrainMapGradient, temperatureMapGradient, heightMapGradient);
-        heightMapParams = new HeightMapParams(neighborNumber, blendDepth, continentHeightMutiplier, oceanDepthMultiplier);
+        gradients = new _Gradient(terrainMapGradient, temperatureMapGradient, moistureMapGradient, heightMapGradient);
+        heightMapParams = new HeightMapParams(neighborNumber, h_blendDepth, continentHeightMutiplier, oceanDepthMultiplier);
+        moistureMapParams = new MoistureMapParams(m_blendDepth);
     }
 
 

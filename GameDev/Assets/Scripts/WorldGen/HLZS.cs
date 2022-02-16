@@ -27,6 +27,10 @@ namespace WorldGeneration
         public static float MAX_HEIGHT = 20000f;
         public static float MIN_HEIGHT = 0f;
 
+        // In C ?
+        public static float MAX_TEMP = 100f;
+        public static float MIN_TEMP = 0f;
+
         private static float[] elevationTime = new float[] { 0.0f, 0.27f, 0.55f, 0.82f, 1.0f }; // 2750 m max
         private static float[] latitudeTime = new float[] { 0.0f, 0.12f, 0.25f, 0.5f, .73f, 1.0f }; // 90 deg max
 

@@ -92,6 +92,8 @@ namespace WorldGeneration.Maps
 
             // Set the colors
             meshFilters[0].sharedMesh.colors = colors[0];
+
+            AssignWorldPointValues();
         }
 
         private void SampleSurfaceHeights()
@@ -182,19 +184,19 @@ namespace WorldGeneration.Maps
                     f = MAX_HEIGHT;
                     break;
                 case 2:
-                    f = MAX_HEIGHT * 0.8f;
+                    f = MAX_HEIGHT * 0.9f;
                     break;
                 case 1:
-                    f = MAX_HEIGHT * 0.6f;
+                    f = MAX_HEIGHT * 0.8f;
                     break;
                 case 0:
-                    f = MAX_HEIGHT * 0.5f;
+                    f = MAX_HEIGHT * 0.7f;
                     break;
                 case -1:
-                    f = MAX_HEIGHT * 0.4f;
+                    f = MAX_HEIGHT * 0.3f;
                     break;
                 case -2:
-                    f = MAX_HEIGHT * 0.2f;
+                    f = MAX_HEIGHT * 0.1f;
                     break;
                 default:
                     f = MIN_HEIGHT;
@@ -225,7 +227,6 @@ namespace WorldGeneration.Maps
                 }
             }
         }
-
 
         private void FindPointNeighbors()
         {
@@ -291,6 +292,18 @@ namespace WorldGeneration.Maps
                 points[a].SetNearestNeighbors(neighbors);
             }
             */
+        }
+
+        private void AssignWorldPointValues()
+        {
+            for (int a = 0; a < world.Plates.Length; a++)
+            {
+                for (int b = 0; b < world.Plates[a].Points.Length; b++)
+                {
+                    Point p = world.Plates[a].Points[b];
+                    world.Plates[a].Points[b] = map[0][p.GlobalPosition];
+                }
+            }
         }
 
         public class DuplicateKeyComparer : IComparer<KeyValuePair<float, int>>

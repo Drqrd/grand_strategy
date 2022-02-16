@@ -10,6 +10,8 @@ namespace WorldGeneration.TectonicPlate.Objects
         public Vector3 Pos { get; private set; }
         public Point[] Neighbors { get; private set; }
         public _Height Height { get; set; }
+        public _Temperature Temperature { get; set; }
+        public _Moisture Moisture { get; set; }
         public int GlobalPosition { get; private set; }
         public int PlateId { get; private set; }
 
@@ -17,6 +19,16 @@ namespace WorldGeneration.TectonicPlate.Objects
         {
             public float Space { get; set; }
             public float Surface { get; set; }
+        }
+
+        public class _Temperature
+        {
+            public float Heat { get; set; }
+        }
+
+        public class _Moisture
+        {
+            public float Value { get; set; }
         }
 
         public Point(Vector3 Pos, int PlateId, int vertexPosition)
@@ -27,6 +39,8 @@ namespace WorldGeneration.TectonicPlate.Objects
 
             // Height stuff
             Height = new _Height();
+            Temperature = new _Temperature();
+            Moisture = new _Moisture();
         }
 
         public void SetNearestNeighbors(Point[] points)

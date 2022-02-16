@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace WorldGeneration.Maps
@@ -17,7 +15,7 @@ namespace WorldGeneration.Maps
 
         protected virtual float Sample(Vector3 v)
         {
-            return (Noise.Sum(Noise.methods[3][2], v, 1, 8, 2f, 0.5f).value + 0.5f) / 2f;
+            return Noise.Sum(Noise.methods[3][2], v, 1, 8, 2f, 0.5f).value + 0.5f;
         }
     }
 }
