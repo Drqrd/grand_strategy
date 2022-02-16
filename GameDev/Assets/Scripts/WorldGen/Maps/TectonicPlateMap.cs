@@ -48,7 +48,7 @@ namespace WorldGeneration.Maps
 
                 meshFilters[i] = obj.AddComponent<MeshFilter>();
                 meshFilters[i].sharedMesh = world.Plates[i].SharedMesh;
-                obj.AddComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/WorldGen/Surface");
+                obj.AddComponent<MeshRenderer>().material = Materials.Map;
 
                 List<LineRenderer>[] linesList;
                 List<Color>[] color;

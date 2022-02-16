@@ -55,7 +55,7 @@ namespace WorldGeneration.Maps
             meshFilters[0].sharedMesh.RecalculateNormals();
             // meshFilters[0].sharedMesh.Optimize(); Messes with triangulation
 
-            obj.AddComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/WorldGen/Map");
+            obj.AddComponent<MeshRenderer>().material = Materials.Map;
 
             GetValues();
 
