@@ -507,12 +507,24 @@ namespace WorldGeneration.TectonicPlate
 
         // Each triangle has their own set of vertices, the triangles should share vertices with neighboring triangles
         // to smooth the surface of the Sphere
-        // Approach: Loop through each vertex element, find matching vertices, get their indices into a list and delete afterwards
+        // Prev approach: Loop through each vertex element, find matching vertices, get their indices into a list and delete afterwards
         private static void CondenseVerticesAndTriangles(List<Vector3> v, List<int> t, List<int> g, out List<Vector3> vertices, out List<int> triangles, out List<int> globals)
         {
             // Get distinct members of v
             vertices = v.Distinct().ToList();
             globals = g.Distinct().ToList();
+
+            Dictionary<Vector3, List<int>> map = new Dictionary<Vector3, List<int>>();
+            for (int i = 0; i < vertices.Count; i++) { map.Add(vertices[i], new List<int>()); }
+            for (int i = 0; i < v.Count; i++) { map[v[i]].Add(i); }
+
+            int ind = 0;
+            foreach(KeyValuePair<Vector3,List<int>> kvp in map) 
+            {
+                foreach(int i in kvp.Value) { t[i] = ind; }
+                ind++;
+            }
+            /*
             for (int i = 0; i < vertices.Count; i++)
             {
                 // For each vertex, if they match the current comparison vertex, change the triangle to the proper index
@@ -525,7 +537,7 @@ namespace WorldGeneration.TectonicPlate
                     }
                 }
             }
-
+            */
             triangles = t;
         }
 

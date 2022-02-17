@@ -291,8 +291,11 @@ public class World : MonoBehaviour
         previousMapDisplay = mapDisplay;
         foreach (Transform child in transform)
         {
-            if (child.gameObject.name.Contains(mapDisplay.ToString())) { child.gameObject.SetActive(true); }
-            else { child.gameObject.SetActive(false); }
+            if (!child.gameObject.name.Contains("Camera"))
+            {
+                if (child.gameObject.name.Contains(mapDisplay.ToString())) { child.gameObject.SetActive(true); }
+                else { child.gameObject.SetActive(false); }
+            }
         }
     }
 

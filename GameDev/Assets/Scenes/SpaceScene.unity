@@ -133,6 +133,7 @@ GameObject:
   m_Component:
   - component: {fileID: 651416406}
   - component: {fileID: 651416407}
+  - component: {fileID: 651416408}
   m_Layer: 0
   m_Name: World
   m_TagString: Untagged
@@ -177,7 +178,7 @@ MonoBehaviour:
   alterFibonacciLattice: 0
   neighborNumber: 4
   h_blendDepth: 4
-  continentHeightMutiplier: 1.33
+  continentHeightMutiplier: 1.25
   oceanDepthMultiplier: 0.66
   m_blendDepth: 0
   mapDisplay: 1
@@ -301,6 +302,19 @@ MonoBehaviour:
     m_Mode: 0
     m_NumColorKeys: 2
     m_NumAlphaKeys: 2
+--- !u!114 &651416408
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 651416405}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85d29e269d3ee40479062861c6465bd4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rotationSpeed: 0.1
 --- !u!1 &905161311
 GameObject:
   m_ObjectHideFlags: 0
@@ -310,6 +324,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 905161312}
+  - component: {fileID: 905161317}
   - component: {fileID: 905161314}
   - component: {fileID: 905161313}
   - component: {fileID: 905161316}
@@ -329,7 +344,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 905161311}
   m_LocalRotation: {x: 0.38268343, y: 0, z: 0, w: 0.92387956}
-  m_LocalPosition: {x: 0, y: 10, z: -10}
+  m_LocalPosition: {x: 0, y: 10, z: 10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -568,6 +583,20 @@ Light:
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0.5
+--- !u!114 &905161317
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 905161311}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a48b19a6bc6e48e4f851bcf1f3ab3962, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  focus: {fileID: 651416406}
+  movementSpeed: 10
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0

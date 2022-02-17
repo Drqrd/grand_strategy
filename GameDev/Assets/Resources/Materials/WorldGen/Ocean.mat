@@ -66,10 +66,10 @@ Material:
     - Vector1_086c2a2f98354c1d8fdd88846f883d3a: 0.25
     - Vector1_0c59cceae8c94e32bae78b1403f4b2f0: 0.25
     - Vector1_1258ce4117784f0484065f8bfe05294a: 0.5
-    - Vector1_74c8649a0a00484bb0242550b6ffae41: 0.02
+    - Vector1_74c8649a0a00484bb0242550b6ffae41: 0.01
     - Vector1_9f88c9bb9f5941f2a9345d4bbee25b70: 0.5
     - Vector1_af517ee4564b4868b97f1fb22d7e6cb8: 0.9
-    - Vector1_fa032579b6eb46e19328829aefb992fa: 0.01
+    - Vector1_fa032579b6eb46e19328829aefb992fa: 0.005
     - _AddPrecomputedVelocity: 0
     - _AlphaCutoffEnable: 0
     - _AlphaDstBlend: 10

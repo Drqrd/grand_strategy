@@ -29,9 +29,6 @@ public class CameraController : MonoBehaviour
     // Keyboard lerping
     Vector2 kInputVector = Vector2.zero;
 
-    // Mouse lerping
-    Vector2 savedMousePos;
-
     // Scroll lerping
     private float prevZoomDist;
     private float nextZoomDist;
@@ -39,9 +36,7 @@ public class CameraController : MonoBehaviour
 
     private void Awake()
     {
-        kInputVector = Vector3.zero;
-        savedMousePos = transform.position;
-        
+        kInputVector = Vector3.zero;  
 
         prevZoomDist = transform.position.magnitude;
         nextZoomDist = transform.position.magnitude;
