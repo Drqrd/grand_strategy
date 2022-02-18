@@ -15,6 +15,7 @@ public class InvertedPrimitives : Editor
         meshFilter.sharedMesh = new Mesh();
         meshFilter.sharedMesh.vertices = tmf.sharedMesh.vertices;
         meshFilter.sharedMesh.triangles = tmf.sharedMesh.triangles.Reverse().ToArray();
+        meshFilter.sharedMesh.uv = tmf.sharedMesh.uv;
         meshFilter.sharedMesh.RecalculateNormals();
 
         MeshRenderer meshRenderer = obj.AddComponent<MeshRenderer>();
