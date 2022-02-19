@@ -86,7 +86,7 @@ namespace WorldGeneration.Meshes
                 }
             }
 
-            meshObj.AddComponent<MeshRenderer>().sharedMaterial = Resources.Load<Material>("Materials/WorldGen/Surface");
+            meshObj.AddComponent<MeshRenderer>().sharedMaterial = Resources.Load<Material>("Materials/WorldGen/Map");
             meshFilters[0] = meshObj.AddComponent<MeshFilter>();
             meshFilters[0].sharedMesh = new Mesh();
 

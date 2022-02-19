@@ -10,5 +10,8 @@ public class SpaceSkybox : MonoBehaviour
         Vector3[] vertices = meshFilter.sharedMesh.vertices;
         for(int a = 0; a < vertices.Length; a++) { vertices[a] = vertices[a].normalized; }
         meshFilter.sharedMesh.vertices = vertices;
+
+        meshFilter.sharedMesh.RecalculateNormals();
+        meshFilter.sharedMesh.Optimize();
     }
 }

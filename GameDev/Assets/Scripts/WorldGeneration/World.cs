@@ -109,6 +109,7 @@ public class World : MonoBehaviour
     [SerializeField] [Range(1, 65534)] private int resolution = 1;
     [SerializeField] private bool convertToSphere = false;
     [SerializeField] [Range(0f, 1f)] private float continentalVsOceanic = 0.5f;
+    [SerializeField] private bool randomizeFloodFill = false;
 
     [Header("Sphere Transformation Parameters")]
     [SerializeField] private bool smoothMapSurface = true;
@@ -163,6 +164,8 @@ public class World : MonoBehaviour
     public PlateDetermination PlateDeterminationType { get { return plateDeterminationType; } }
     public BoundaryDisplay _BoundaryDisplay { get { return boundaryDisplay; } }
     public bool SmoothMapSurface { get { return smoothMapSurface; } }
+
+    public bool RandomizeFloodFill { get { return randomizeFloodFill; } }
     public _Gradient Gradients { get { return gradients; } }
     public HeightMapParams HMParams { get { return heightMapParams; } }
     public MoistureMapParams MMParams { get { return moistureMapParams; } }
@@ -229,10 +232,7 @@ public class World : MonoBehaviour
                 Sphere = null;
                 break;
         }
-        if (Sphere != null)
-        {
-            Sphere.Build();
-        }
+        if (Sphere != null) { Sphere.Build(); }
     }
 
     private void BuildMaps()
@@ -282,6 +282,7 @@ public class World : MonoBehaviour
     {
         terrainMap = new TerrainMap(this);
         terrainMap.Build();
+        terrainMap.Chunk();
     }
 
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */

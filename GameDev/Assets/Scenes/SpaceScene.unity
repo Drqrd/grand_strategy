@@ -132,8 +132,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 651416406}
-  - component: {fileID: 651416407}
   - component: {fileID: 651416408}
+  - component: {fileID: 651416407}
   m_Layer: 0
   m_Name: World
   m_TagString: Untagged
@@ -170,9 +170,10 @@ MonoBehaviour:
   sphereType: 2
   plateSize: 1
   plateDeterminationType: 1
-  resolution: 10000
+  resolution: 50000
   convertToSphere: 1
   continentalVsOceanic: 0.7
+  randomizeFloodFill: 0
   smoothMapSurface: 1
   jitter: 1
   alterFibonacciLattice: 0
@@ -314,7 +315,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85d29e269d3ee40479062861c6465bd4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rotationSpeed: 0.1
+  rotationSpeed: 0
 --- !u!43 &813473606
 Mesh:
   m_ObjectHideFlags: 0

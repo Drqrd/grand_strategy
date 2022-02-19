@@ -3,6 +3,8 @@ using System.Linq;
 using UnityEngine;
 using IDict;
 
+using Extensions.List;
+
 using WorldGeneration.Objects;
 using WorldGeneration.TectonicPlate.Objects;
 
@@ -416,13 +418,32 @@ namespace WorldGeneration.TectonicPlate
             }
 
             // iterate through each plate center by way of distance map, and if it hasnt been touched yet, assign it to the plate
-            for (int i = 0; i < triangles.Count; i++)
+            if (world.RandomizeFloodFill)
             {
-                for (int j = 0; j < world.PlateCenters.Length; j++)
+                List<int> inds = new List<int>();
+                for (int i = 0; i < world.PlateCenters.Length; i++) { inds.Add(i); }
+                for (int i = 0; i < triangles.Count; i++)
                 {
-                    if (triangles[distanceMap[j].Values[i]].PlateCenter == -1)
+                    inds.Shuffle();
+                    for (int j = 0; j < world.PlateCenters.Length; j++)
                     {
-                        triangles[distanceMap[j].Values[i]].PlateCenter = j;
+                        if (triangles[distanceMap[inds[j]].Values[i]].PlateCenter == -1)
+                        {
+                            triangles[distanceMap[inds[j]].Values[i]].PlateCenter = j;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < triangles.Count; i++)
+                {
+                    for (int j = 0; j < world.PlateCenters.Length; j++)
+                    {
+                        if (triangles[distanceMap[j].Values[i]].PlateCenter == -1)
+                        {
+                            triangles[distanceMap[j].Values[i]].PlateCenter = j;
+                        }
                     }
                 }
             }
@@ -540,8 +561,6 @@ namespace WorldGeneration.TectonicPlate
             */
             triangles = t;
         }
-
-
         /*------------------------------------------------------------------------------------*/
     }
 }

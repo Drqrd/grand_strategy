@@ -36,6 +36,12 @@ namespace WorldGeneration.Maps
             CreateOceanShader(parentObj);
         }
 
+        public void Chunk()
+        {
+            
+        }
+
+
         private void DetermineOceanAndContinents()
         {
             // Divide based on continent vs oceanic
