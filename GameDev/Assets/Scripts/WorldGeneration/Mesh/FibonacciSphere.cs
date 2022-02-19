@@ -91,14 +91,20 @@ namespace WorldGeneration.Meshes
             meshFilters[0].sharedMesh = new Mesh();
 
             // Delaunator Triangluation
-            Vector3[] pp = DelaunatorTriangulate(meshFilters[0].sharedMesh, vertices);
+            DelaunatorTriangulate(meshFilters[0].sharedMesh, vertices);
 
             meshFilters[0].sharedMesh.RecalculateNormals();
             meshFilters[0].sharedMesh.Optimize();
         }
 
-        private Vector3[] DelaunatorTriangulate(Mesh mesh, Vector3[] vertices)
+        private void DelaunatorTriangulate(Mesh mesh, Vector3[] vertices)
         {
+            // Add jitter
+            if (jitter > 0)
+            {
+                for (int i = 0; i < vertices.Length; i++) { vertices[i] = AddJitter(vertices[i]); }
+            }
+
             // Delaunay wizardry
             IPoint[] planarProjection = new IPoint[vertices.Length];
             for (int i = 0; i < vertices.Length; i++) { planarProjection[i] = V2SphereToPlane(vertices[i]); }
@@ -120,22 +126,10 @@ namespace WorldGeneration.Meshes
             int[] convexHull = new int[cv.Count];
             for (int i = 0; i < cv.Count; i++) { convexHull[i] = v.IndexOf(cv[i]); }
 
-            // Add jitter
-            if (jitter > 0)
-            {
-                for (int i = 0; i < addTheNegZ.Count; i++)
-                {
-                    addTheNegZ[i] = AddJitter(addTheNegZ[i]);
-                }
-            }
-
-
             int[] triangles = CloseMesh(addTheNegZ.ToArray(), delaunay.Triangles.ToList(), convexHull);
 
             mesh.vertices = addTheNegZ.ToArray();
             mesh.triangles = triangles;
-
-            return pp;
         }
 
 
