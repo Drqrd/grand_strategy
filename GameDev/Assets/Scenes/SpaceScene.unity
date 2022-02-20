@@ -132,6 +132,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 651416406}
+  - component: {fileID: 651416409}
   - component: {fileID: 651416408}
   - component: {fileID: 651416407}
   m_Layer: 0
@@ -316,6 +317,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rotationSpeed: 0
+--- !u!114 &651416409
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 651416405}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df42e445d263dd04285e9e5840030497, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!43 &813473606
 Mesh:
   m_ObjectHideFlags: 0

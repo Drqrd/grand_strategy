@@ -122,6 +122,7 @@ namespace WorldGeneration.Maps
 
             meshFilter.sharedMesh.RecalculateNormals();
 
+            UpdateGlobalValues(vertices, colors);
             // For separating ocean and continents
             // CreateContinents(obj);
             // CreateOceans(obj);
@@ -232,7 +233,18 @@ namespace WorldGeneration.Maps
 
             return vertices;
         }
-        
+        private void UpdateGlobalValues(Vector3[] vertices, Color[] colors)
+        {
+            for (int a = 0; a < world.Plates.Length; a++)
+            {
+                for (int b = 0; b < world.Plates[a].Points.Length; b++)
+                {
+                    Point p = world.Plates[a].Points[b];
+                    world.Plates[a].Points[b].Terrain.Surface = vertices[p.GlobalPosition];
+                    world.Plates[a].Points[b].Terrain.SurfaceColor = colors[p.GlobalPosition];
+                }
+            }
+        }
     }
 }
 

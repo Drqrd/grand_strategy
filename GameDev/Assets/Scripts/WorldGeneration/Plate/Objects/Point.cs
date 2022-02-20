@@ -2,9 +2,11 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
+using System;
 
 namespace WorldGeneration.TectonicPlate.Objects
 {
+    [Serializable]
     public class Point
     {
         public Vector3 Pos { get; private set; }
@@ -12,6 +14,7 @@ namespace WorldGeneration.TectonicPlate.Objects
         public _Height Height { get; set; }
         public _Temperature Temperature { get; set; }
         public _Moisture Moisture { get; set; }
+        public _Terrain Terrain { get; set; }
         public int GlobalPosition { get; private set; }
         public int PlateId { get; private set; }
 
@@ -31,6 +34,13 @@ namespace WorldGeneration.TectonicPlate.Objects
             public float Value { get; set; }
         }
 
+        public class _Terrain
+        {
+            public Vector3 Surface { get; set; }
+            public Color SurfaceColor { get; set; }
+        }
+
+
         public Point(Vector3 Pos, int PlateId, int vertexPosition)
         {
             this.Pos = Pos;
@@ -41,6 +51,7 @@ namespace WorldGeneration.TectonicPlate.Objects
             Height = new _Height();
             Temperature = new _Temperature();
             Moisture = new _Moisture();
+            Terrain = new _Terrain();
         }
 
         public void SetNearestNeighbors(Point[] points)
