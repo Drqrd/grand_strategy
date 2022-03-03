@@ -14,7 +14,7 @@ copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+FITNESS FOR A PARTICULAR PURvertexE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
@@ -33,7 +33,7 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 
-using WorldGeneration.TectonicPlate.Objects;
+using static WorldData;
 
 namespace DataStructures.ViliWonka.KDTree {
 
@@ -184,80 +184,80 @@ namespace DataStructures.ViliWonka.KDTree {
                 int i1 = i0 + 1;
 
                 // X Coords
-                if (points[i0].Pos.x > points[i1].Pos.x) {
+                if (points[i0].vertex.x > points[i1].vertex.x) {
                     // i0 is bigger, i1 is smaller
-                    if (points[i1].Pos.x < min.x)
-                        min.x = points[i1].Pos.x;
+                    if (points[i1].vertex.x < min.x)
+                        min.x = points[i1].vertex.x;
 
-                    if (points[i0].Pos.x > max.x)
-                        max.x = points[i0].Pos.x;
+                    if (points[i0].vertex.x > max.x)
+                        max.x = points[i0].vertex.x;
                 }
                 else {
                     // i1 is smaller, i0 is bigger
-                    if (points[i0].Pos.x < min.x)
-                        min.x = points[i0].Pos.x;
+                    if (points[i0].vertex.x < min.x)
+                        min.x = points[i0].vertex.x;
 
-                    if (points[i1].Pos.x > max.x)
-                        max.x = points[i1].Pos.x;
+                    if (points[i1].vertex.x > max.x)
+                        max.x = points[i1].vertex.x;
                 }
 
                 // Y Coords
-                if (points[i0].Pos.y > points[i1].Pos.y) {
+                if (points[i0].vertex.y > points[i1].vertex.y) {
                     // i0 is bigger, i1 is smaller
-                    if (points[i1].Pos.y < min.y)
-                        min.y = points[i1].Pos.y;
+                    if (points[i1].vertex.y < min.y)
+                        min.y = points[i1].vertex.y;
 
-                    if (points[i0].Pos.y > max.y)
-                        max.y = points[i0].Pos.y;
+                    if (points[i0].vertex.y > max.y)
+                        max.y = points[i0].vertex.y;
                 }
                 else {
                     // i1 is smaller, i0 is bigger
-                    if (points[i0].Pos.y < min.y)
-                        min.y = points[i0].Pos.y;
+                    if (points[i0].vertex.y < min.y)
+                        min.y = points[i0].vertex.y;
 
-                    if (points[i1].Pos.y > max.y)
-                        max.y = points[i1].Pos.y;
+                    if (points[i1].vertex.y > max.y)
+                        max.y = points[i1].vertex.y;
                 }
 
                 // Z Coords
-                if (points[i0].Pos.z > points[i1].Pos.z) {
+                if (points[i0].vertex.z > points[i1].vertex.z) {
                     // i0 is bigger, i1 is smaller
-                    if (points[i1].Pos.z < min.z)
-                        min.z = points[i1].Pos.z;
+                    if (points[i1].vertex.z < min.z)
+                        min.z = points[i1].vertex.z;
 
-                    if (points[i0].Pos.z > max.z)
-                        max.z = points[i0].Pos.z;
+                    if (points[i0].vertex.z > max.z)
+                        max.z = points[i0].vertex.z;
                 }
                 else {
                     // i1 is smaller, i0 is bigger
-                    if (points[i0].Pos.z < min.z)
-                        min.z = points[i0].Pos.z;
+                    if (points[i0].vertex.z < min.z)
+                        min.z = points[i0].vertex.z;
 
-                    if (points[i1].Pos.z > max.z)
-                        max.z = points[i1].Pos.z;
+                    if (points[i1].vertex.z > max.z)
+                        max.z = points[i1].vertex.z;
                 }
             }
 
             // if array was odd, calculate also min/max for the last element
             if(even != Count) {
                 // X
-                if (min.x > points[even].Pos.x)
-                    min.x = points[even].Pos.x;
+                if (min.x > points[even].vertex.x)
+                    min.x = points[even].vertex.x;
 
-                if (max.x < points[even].Pos.x)
-                    max.x = points[even].Pos.x;
+                if (max.x < points[even].vertex.x)
+                    max.x = points[even].vertex.x;
                 // Y
-                if (min.y > points[even].Pos.y)
-                    min.y = points[even].Pos.y;
+                if (min.y > points[even].vertex.y)
+                    min.y = points[even].vertex.y;
 
-                if (max.y < points[even].Pos.y)
-                    max.y = points[even].Pos.y;
+                if (max.y < points[even].vertex.y)
+                    max.y = points[even].vertex.y;
                 // Z
-                if (min.z > points[even].Pos.z)
-                    min.z = points[even].Pos.z;
+                if (min.z > points[even].vertex.z)
+                    min.z = points[even].vertex.z;
 
-                if (max.z < points[even].Pos.z)
-                    max.z = points[even].Pos.z;
+                if (max.z < points[even].vertex.z)
+                    max.z = points[even].vertex.z;
             }
 
             KDBounds b = new KDBounds();
@@ -316,29 +316,29 @@ namespace DataStructures.ViliWonka.KDTree {
             negNode.end = splittingIndex;
             parent.negativeChild = negNode;
 
-            // Positive / Right node
-            Vector3 posMin = parentBounds.min;
-            posMin[splitAxis] = splitPivot;
+            // vertexitive / Right node
+            Vector3 vertexMin = parentBounds.min;
+            vertexMin[splitAxis] = splitPivot;
 
-            KDNode posNode = GetKDNode();
-            posNode.bounds = parentBounds;
-            posNode.bounds.min = posMin;
-            posNode.start = splittingIndex;
-            posNode.end = parent.end;
-            parent.positiveChild = posNode;
+            KDNode vertexNode = GetKDNode();
+            vertexNode.bounds = parentBounds;
+            vertexNode.bounds.min = vertexMin;
+            vertexNode.start = splittingIndex;
+            vertexNode.end = parent.end;
+            parent.positiveChild = vertexNode;
 
             // check if we are actually splitting it anything
             // this if check enables duplicate coordinates, but makes construction a bit slower
 #if KDTREE_DUPLICATES
-            if(negNode.Count != 0 && posNode.Count != 0) {
+            if(negNode.Count != 0 && vertexNode.Count != 0) {
             #endif
                 // Constraint function deciding if split should be continued
                 if(ContinueSplit(negNode))
                     SplitNode(negNode);
 
 
-                if(ContinueSplit(posNode))
-                    SplitNode(posNode);
+                if(ContinueSplit(vertexNode))
+                    SplitNode(vertexNode);
 
 #if KDTREE_DUPLICATES
             }
@@ -365,38 +365,38 @@ namespace DataStructures.ViliWonka.KDTree {
             float midPoint = (boundsStart + boundsEnd) / 2f;
 
             bool negative = false;
-            bool positive = false;
+            bool vertexitive = false;
 
             float negMax = Single.MinValue;
-            float posMin = Single.MaxValue;
+            float vertexMin = Single.MaxValue;
 
             // this for loop section is used both for sorted and unsorted data
             for (int i = start; i < end; i++) {
 
-                if (points[permutation[i]].Pos[axis] < midPoint)
+                if (points[permutation[i]].vertex[axis] < midPoint)
                     negative = true;
                 else
-                    positive = true;
+                    vertexitive = true;
 
-                if (negative == true && positive == true)
+                if (negative == true && vertexitive == true)
                     return midPoint;
             }
 
             if (negative) {
 
                 for (int i = start; i < end; i++)
-                    if (negMax < points[permutation[i]].Pos[axis])
-                        negMax = points[permutation[i]].Pos[axis];
+                    if (negMax < points[permutation[i]].vertex[axis])
+                        negMax = points[permutation[i]].vertex[axis];
 
                 return negMax;
             }
             else {
 
                 for (int i = start; i < end; i++)
-                    if (posMin > points[permutation[i]].Pos[axis])
-                        posMin = points[permutation[i]].Pos[axis];
+                    if (vertexMin > points[permutation[i]].vertex[axis])
+                        vertexMin = points[permutation[i]].vertex[axis];
 
-                return posMin;
+                return vertexMin;
             }
         }
 
@@ -419,7 +419,7 @@ namespace DataStructures.ViliWonka.KDTree {
 
             // note: increasing right pointer is actually decreasing!
             int LP = start - 1; // left pointer (negative side)
-            int RP = end;       // right pointer (positive side)
+            int RP = end;       // right pointer (vertexitive side)
 
             int temp;           // temporary var for swapping permutation indexes
 
@@ -429,13 +429,13 @@ namespace DataStructures.ViliWonka.KDTree {
                     // move from left to the right until "out of bounds" value is found
                     LP++;
                 }
-                while (LP < RP && points[permutation[LP]].Pos[axis] < partitionPivot);
+                while (LP < RP && points[permutation[LP]].vertex[axis] < partitionPivot);
 
                 do {
                     // move from right to the left until "out of bounds" value found
                     RP--;
                 }
-                while (LP < RP && points[permutation[RP]].Pos[axis] >= partitionPivot);
+                while (LP < RP && points[permutation[RP]].vertex[axis] >= partitionPivot);
 
                 if (LP < RP) {
                                 // swap

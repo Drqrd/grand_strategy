@@ -25,7 +25,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-using WorldGeneration.TectonicPlate.Objects;
+using static WorldData;
 
 namespace DataStructures.ViliWonka.KDTree {
 
@@ -130,7 +130,7 @@ namespace DataStructures.ViliWonka.KDTree {
 
                             int index = permutation[i];
 
-                            Vector3 v = points[index].Pos;
+                            Vector3 v = points[index].vertex;
 
                             if(v[0] >= min[0]
                             && v[1] >= min[1]

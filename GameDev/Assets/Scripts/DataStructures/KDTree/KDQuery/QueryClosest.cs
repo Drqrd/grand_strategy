@@ -25,7 +25,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-using WorldGeneration.TectonicPlate.Objects;
+using static WorldData;
 
 namespace DataStructures.ViliWonka.KDTree {
 
@@ -121,7 +121,7 @@ namespace DataStructures.ViliWonka.KDTree {
 
                         int index = permutation[i];
 
-                        sqrDist = Vector3.SqrMagnitude(points[index].Pos - queryPosition);
+                        sqrDist = Vector3.SqrMagnitude(points[index].vertex - queryPosition);
 
                         if(sqrDist <= SSR) {
 
