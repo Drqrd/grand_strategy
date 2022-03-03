@@ -123,6 +123,77 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &145345585
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 145345586}
+  - component: {fileID: 145345589}
+  - component: {fileID: 145345587}
+  - component: {fileID: 145345588}
+  m_Layer: 0
+  m_Name: DefaultWorld
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &145345586
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 145345585}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &145345587
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 145345585}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df42e445d263dd04285e9e5840030497, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  worldName: DefaultWorld
+--- !u!114 &145345588
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 145345585}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85d29e269d3ee40479062861c6465bd4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rotationSpeed: 0
+--- !u!114 &145345589
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 145345585}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c586656a93a3ddd45982f9f48e636916, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &651416405
 GameObject:
   m_ObjectHideFlags: 0
@@ -168,14 +239,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aff7782eb4b7a8f439f991708e333aa3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sphereType: 2
   plateSize: 1
-  plateDeterminationType: 1
-  resolution: 50000
-  convertToSphere: 1
+  plateDeterminationType: 0
+  resolution: 1000
   continentalVsOceanic: 0.7
-  randomizeFloodFill: 0
-  smoothMapSurface: 1
+  chunks: 1
   jitter: 1
   alterFibonacciLattice: 0
   neighborNumber: 4
@@ -186,25 +254,25 @@ MonoBehaviour:
   mapDisplay: 1
   displayVertices: 0
   boundaryDisplay: 0
-  displayPlateCenters: 1
-  displayPlateDirections: 1
+  displayPlateCenters: 0
+  displayPlateDirections: 0
   terrainMapGradient:
     serializedVersion: 2
     key0: {r: 0.13647206, g: 0.16776212, b: 0.38679248, a: 1}
     key1: {r: 0.074065454, g: 0.3641641, b: 0.6886792, a: 1}
-    key2: {r: 0.007625796, g: 0.6601456, b: 0.70059335, a: 0}
-    key3: {r: 0.9150943, g: 0.9001386, b: 0.555963, a: 0}
-    key4: {r: 0.31516552, g: 0.735849, b: 0.34344676, a: 0}
-    key5: {r: 0.16130295, g: 0.4339623, b: 0.18334001, a: 0}
-    key6: {r: 0.4245283, g: 0.4245283, b: 0.4245283, a: 0}
+    key2: {r: 0.9150943, g: 0.9001386, b: 0.555963, a: 0}
+    key3: {r: 0.31516552, g: 0.735849, b: 0.34344676, a: 0}
+    key4: {r: 0.16130295, g: 0.4339623, b: 0.18334001, a: 0}
+    key5: {r: 0.4245283, g: 0.4245283, b: 0.4245283, a: 0}
+    key6: {r: 1, g: 1, b: 1, a: 0}
     key7: {r: 1, g: 1, b: 1, a: 0}
-    ctime0: 6554
-    ctime1: 26214
-    ctime2: 42532
-    ctime3: 42598
-    ctime4: 45875
-    ctime5: 52428
-    ctime6: 58982
+    ctime0: 2699
+    ctime1: 17733
+    ctime2: 42598
+    ctime3: 45875
+    ctime4: 52428
+    ctime5: 58982
+    ctime6: 65535
     ctime7: 65535
     atime0: 0
     atime1: 65535
@@ -215,7 +283,7 @@ MonoBehaviour:
     atime6: 0
     atime7: 0
     m_Mode: 0
-    m_NumColorKeys: 8
+    m_NumColorKeys: 7
     m_NumAlphaKeys: 2
   temperatureMapGradient:
     serializedVersion: 2
@@ -329,6 +397,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df42e445d263dd04285e9e5840030497, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  worldName: DefaultWorld
 --- !u!43 &813473606
 Mesh:
   m_ObjectHideFlags: 0
