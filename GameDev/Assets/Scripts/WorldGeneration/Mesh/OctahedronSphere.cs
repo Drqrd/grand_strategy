@@ -15,11 +15,9 @@ namespace WorldGeneration.Meshes
         private Vector3[] sides = new Vector3[] { Vector3.forward, Vector3.right, Vector3.back, Vector3.left, Vector3.forward };
 
         private Transform parent;
-        private int resolution;
         private bool normalize;
-        private float jitter;
 
-        public OctahedronSphere(Transform parent, int resolution, bool normalize = true)
+        public OctahedronSphere(Transform parent, int resolution, float jitter, bool normalize = true) : base(resolution, jitter)
         {
             this.parent = parent;
             this.resolution = resolution;
