@@ -3,11 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-using WorldGeneration.Objects;
-using WorldGeneration.TectonicPlate.Objects;
 using DataStructures.ViliWonka.KDTree;
 
 using static WorldGeneration.HLZS;
+
+using static WorldData;
 
 namespace WorldGeneration.Maps
 {
@@ -15,129 +15,99 @@ namespace WorldGeneration.Maps
     public class HeightMap : Map
     {
         private const float NULL_VAL = -1f;
+        private World.Parameters.Height parameters;
+        private MeshFilter meshFilter;
 
-        private MeshFilter[] meshFilters;
-
-        private Point[][] map;
-        private Color[][] colors;
-
-        public Point[][] Map { get { return map; } }
-
-        public HeightMap(World world) : base(world)
+        public HeightMap(World world, SaveData saveData) : base(world)
         {
             this.world = world;
-
-            meshFilters = new MeshFilter[world.Sphere.meshFilters.Length];
-            map = new Point[meshFilters.Length][];
-            colors = new Color[meshFilters.Length][];
-
-            for (int i = 0; i < meshFilters.Length; i++)
-            {
-                // Initialize
-                map[i] = new Point[world.Sphere.meshFilters[i].sharedMesh.vertexCount];
-                colors[i] = new Color[world.Sphere.meshFilters[i].sharedMesh.vertexCount];
-            }
-
-            for(int a = 0; a < world.Plates.Length; a++)
-            {
-                for(int b = 0; b < world.Plates[a].Points.Length; b++)
-                {
-                    Point p = world.Plates[a].Points[b];
-                    int gPos = p.GlobalPosition;
-
-                    map[0][gPos] = p;
-                    map[0][gPos].Height.Surface = NULL_VAL;
-                    map[0][gPos].Height.Space = NULL_VAL;
-                }
-            }
-
-            FindPointNeighbors();
+            parameters = world.parameters.height;  
+            this.saveData = saveData;
         }
 
         public override void Build()
         {
+            for (int a = 0; a < world.worldData.points.Length; a++)
+            {
+                Point point = world.worldData.points[a];
+                point.heightData = new Point.Height(NULL_VAL);
+            }
+
+            SampleSurfaceHeights();
+
+            Point[] faultLinePoints = EvaluateFaultLines(world.worldData.plates);
+            foreach (Point point in faultLinePoints) { Blend(point); }
+
+            CalculateSpaceHeights();
+
+            BuildGameObject();
+        }
+
+        private void BuildGameObject()
+        {
+            MeshData meshData = world.worldData.meshData;
+
             GameObject parentObj = new GameObject(World.MapDisplay.HeightMap.ToString());
             parentObj.transform.parent = world.transform;
             GameObject obj = new GameObject("Mesh");
             obj.transform.parent = parentObj.transform;
 
-            meshFilters[0] = obj.AddComponent<MeshFilter>();
-            meshFilters[0].sharedMesh = new Mesh();
-            Vector3[] vertices = world.Sphere.meshFilters[0].sharedMesh.vertices;
-            meshFilters[0].sharedMesh.vertices = vertices;
-            meshFilters[0].sharedMesh.triangles = world.Sphere.meshFilters[0].sharedMesh.triangles;
+            meshFilter = obj.AddComponent<MeshFilter>();
+            meshFilter.sharedMesh = new Mesh();
+            meshFilter.sharedMesh.vertices = meshData.vertices;
+            meshFilter.sharedMesh.triangles = meshData.triangles;
+            meshFilter.sharedMesh.RecalculateNormals();
 
-            meshFilters[0].sharedMesh.RecalculateNormals();
-            // meshFilters[0].sharedMesh.Optimize(); Messes with triangulation
+            // meshFilter.sharedMesh.Optimize(); Messes with triangulation
 
-            obj.AddComponent<MeshRenderer>().material = Materials.Map;
+            obj.AddComponent<MeshRenderer>().material = materials.map;
 
-
-            SampleSurfaceHeights();
-            EvaluateFaultLines();
-
-            List<Point> faultLinePoints = new List<Point>();
-            for(int a = 0; a < map.Length; a++)
-            {
-                for (int b = 0; b < map[a].Length; b++)
-                {
-                    if(map[a][b].Height.Surface != NULL_VAL) { faultLinePoints.Add(map[a][b]); }
-                }
-            }
-
-            
-            foreach(Point point in faultLinePoints) { Blend(point); }
-            CalculateSpaceHeights();
-            EvaluateColors(world.Gradients.Height);
-
-            // Set the colors
-            meshFilters[0].sharedMesh.colors = colors[0];
-
-            AssignWorldPointValues();
+            Color[] colors = EvaluateColors(parameters.gradient);
+            meshFilter.sharedMesh.colors = colors;
         }
 
         private void SampleSurfaceHeights()
         {
-            for(int a = 0; a < map.Length; a++)
+            Point[] points = world.worldData.points;
+            for(int a = 0; a < points.Length; a++)
             {
-                for (int b = 0; b < map[a].Length; b++)
+                if (points[a].plate != null)
                 {
-                    map[a][b].Height.Surface = GetHeight(world.Plates[map[a][b].PlateId].PlateType) + (MAX_HEIGHT * Sample(map[a][b].Pos) / 3f);
+                    points[a].heightData.surface = GetHeight(points[a].plate.plateType)
+                                                 + (MAX_HEIGHT * Sample(points[a].vertex) / 3f);
                 }
             }
         }
-        private float GetHeight(Plate.TectonicPlateType plateType)
+        private float GetHeight(Plate.Type plateType)
         {
-            return plateType == Plate.TectonicPlateType.Continental ? (MAX_HEIGHT * 0.5f * world.HMParams.CMultiplier) 
-                                                                    : (MAX_HEIGHT * 0.2f * world.HMParams.OMultiplier);
+            return plateType == Plate.Type.Continental ? (MAX_HEIGHT * 0.5f * parameters.cMultiplier) 
+                                                       : (MAX_HEIGHT * 0.2f * parameters.oMultiplier);
         }
 
         // Recursive blend function
         private void Blend(Point point, int depth = 0)
         {
-            if (depth < world.HMParams.BlendDepth)
+            if (depth < parameters.blendDepth)
             {
-                float avg = point.Height.Surface;
+                float avg = point.heightData.surface;
                 // Blend the neighbors, get avg
-                for (int a = 0; a < point.Neighbors.Length; a++)
+                for (int a = 0; a < point.neighbors.Length; a++)
                 {
-                    avg += point.Neighbors[a].Height.Surface;
-                    Blend(point.Neighbors[a], depth + 1); 
+                    avg += point.neighbors[a].heightData.surface;
+                    Blend(point.neighbors[a], depth + 1); 
                 }
                 // Blend current point 
-                avg /= point.Neighbors.Length + 1;
-                point.Height.Surface = avg;
+                avg /= point.neighbors.Length + 1;
+                point.heightData.surface = avg;
             }
         }
 
         private void CalculateSpaceHeights()
         {
-            for(int a = 0; a < map.Length; a++)
+            for(int a = 0; a < world.worldData.points.Length; a++)
             {
-                for(int b = 0; b < map[a].Length; b++)
-                {
-                    map[a][b].Height.Space = map[a][b].Height.Surface / MAX_HEIGHT;
-                }
+                Point point = world.worldData.points[a];
+                point.heightData.space = point.heightData.surface / MAX_HEIGHT;
             }
         }
 
@@ -151,32 +121,34 @@ namespace WorldGeneration.Maps
             else { return input / MAX_HEIGHT; }
         }
 
-        public void EvaluateFaultLines()
+        public Point[] EvaluateFaultLines(Plate[] plates)
         {
             // Populate the fault lines
-            Plate[] plates = world.Plates;
+            List<Point> flp = new List<Point>();
             for (int a = 0; a < plates.Length; a++)
             {
-                FaultLine[] faultLines = plates[a].FaultLines;
-
+                FaultLine[] faultLines = plates[a].faultLines;
                 // Get the average faultLine heights
                 for (int b = 0; b < faultLines.Length; b++)
                 {
                     float faultHeights = EvaluateFaultLineHeight(faultLines[b], plates);
-                    AssignFaultValues(faultHeights, a, b);
+                    List<Point> tempFlp = AssignFaultValues(faultHeights, a, b);
+                    flp = flp.Concat(tempFlp).ToList();
                 }
             }
+
+            return flp.Distinct().ToArray();
         }
 
         public float EvaluateFaultLineHeight(FaultLine faultLine, Plate[] plates)
         {
             int index = 0;
             float f;
-            if (faultLine.Type == FaultLine.FaultLineType.Convergent) { index += 1; }
-            else if (faultLine.Type == FaultLine.FaultLineType.Divergent) { index -= 1; }
+            if (faultLine.type == FaultLine.Type.Convergent) { index += 1; }
+            else if (faultLine.type == FaultLine.Type.Divergent) { index -= 1; }
 
-            index += plates[faultLine.FaultOf[0]].PlateType == Plate.TectonicPlateType.Continental ? 1 : -1;
-            index += plates[faultLine.FaultOf[1]].PlateType == Plate.TectonicPlateType.Continental ? 1 : -1;
+            index += faultLine.faultOf[0].plateType == Plate.Type.Continental ? 1 : -1;
+            index += faultLine.faultOf[1].plateType == Plate.Type.Continental ? 1 : -1;
 
             switch (index)
             {
@@ -206,104 +178,45 @@ namespace WorldGeneration.Maps
             return f;
         }
 
-        private void AssignFaultValues(float val, int plateInd, int faultInd)
+        private List<Point> AssignFaultValues(float val, int plateInd, int faultInd)
         {
-            FaultLine fl = world.Plates[plateInd].FaultLines[faultInd];
-            int[] inds = fl.VertexIndices0.ToList().Distinct().ToArray();
-            for(int a = 0; a < inds.Length; a++)
+            List<Point> flp = new List<Point>();
+            FaultLine fl = world.worldData.plates[plateInd].faultLines[faultInd];
+            Edge[] edges = fl.edges;
+            for(int a = 0; a < edges.Length; a++)
             {
-                int pos = world.Plates[plateInd].Points[inds[a]].GlobalPosition;
-                map[0][pos].Height.Surface = val;
+                foreach(Point point in edges[a].edge) 
+                { 
+                    point.heightData.surface = val;
+                    flp.Add(point);
+                }
             }
+            return flp;
         }
 
-        public void EvaluateColors(Gradient gradient)
+        public Color[] EvaluateColors(Gradient gradient)
         {
-            for (int a = 0; a < map.Length; a++)
+            Color[] colors = new Color[world.worldData.points.Length];
+            for (int a = 0; a < colors.Length; a++)
             {
-                for (int b = 0; b < map[a].Length; b++)
-                {
-                    colors[a][b] = gradient.Evaluate(map[a][b].Height.Space);
-                }
+                colors[a] = gradient.Evaluate(world.worldData.points[a].heightData.space);
             }
+
+            return colors;
         }
 
-        private void FindPointNeighbors()
+        public void Load()
         {
-            // KD - Tree
-            Point[] points = map[0];
+            GameObject parentObj = new GameObject(World.MapDisplay.HeightMap.ToString());
+            parentObj.transform.parent = world.transform;
+            GameObject obj = new GameObject("Mesh");
+            obj.transform.parent = parentObj.transform;
 
-            KDTree kdTree = new KDTree(points, 1);
-
-            KDQuery query = new KDQuery();
-
-            foreach (Point point in points)
-            {
-                List<int> results = new List<int>();
-                query.KNearest(kdTree, point.Pos, world.HMParams.NeighborNumber, results);
-
-                List<Point> nn = new List<Point>();
-                foreach (int ind in results)
-                {
-                    nn.Add(points[ind]);
-                }
-
-                point.SetNearestNeighbors(nn.ToArray());
-            }
-            
-
-            // Naive approach
-            /*
-            Point[] points = map[0];
-
-            List<KeyValuePair<float, int>>[] distanceMap = new List<KeyValuePair<float, int>>[points.Length];
-
-            for (int a = 0; a < distanceMap.Length; a++) { distanceMap[a] = new List<KeyValuePair<float, int>>(); }
-
-            // Map distances
-            for (int a = 0; a < points.Length; a++)
-            {
-                for (int b = a + 1; b < points.Length; b++)
-                {
-                    float dist = SquareDistance(points[a].Pos, points[b].Pos);
-                    distanceMap[a].Add(new KeyValuePair<float, int>(dist, b));
-                    distanceMap[b].Add(new KeyValuePair<float, int>(dist, a));
-                }
-            }
-
-            foreach (List<KeyValuePair<float, int>> d in distanceMap)
-            {
-                d.Sort(new DuplicateKeyComparer());
-            }
-
-            // Set nearest neighbors
-            for (int a = 0; a < points.Length; a++)
-            {
-                Point[] neighbors = new Point[world.HMParams.NeighborNumber];
-
-                for (int b = 0; b < world.HMParams.NeighborNumber; b++)
-                {
-                    if (b < distanceMap[a].Count)
-                    {
-                        neighbors[b] = points[distanceMap[a][b].Value];
-                    }
-                }
-
-                points[a].SetNearestNeighbors(neighbors);
-            }
-            */
-        }
-
-        private void AssignWorldPointValues()
-        {
-            for (int a = 0; a < world.Plates.Length; a++)
-            {
-                for (int b = 0; b < world.Plates[a].Points.Length; b++)
-                {
-                    Point p = world.Plates[a].Points[b];
-                    world.Plates[a].Points[b] = map[0][p.GlobalPosition];
-                }
-            }
+            MeshFilter meshFilter = obj.AddComponent<MeshFilter>();
+            meshFilter.sharedMesh = new Mesh();
+            Vector3[] vertices = new Vector3[1];
+            meshFilter.sharedMesh.vertices = vertices;
+            meshFilter.sharedMesh.triangles = new int[1];
         }
 
         public class DuplicateKeyComparer : IComparer<KeyValuePair<float, int>>
@@ -326,4 +239,3 @@ namespace WorldGeneration.Maps
         }
     }
 }
-

@@ -1,45 +1,24 @@
 using UnityEngine;
-using System.Collections.Generic;
 
-using WorldGeneration.TectonicPlate.Objects;
+using static WorldData;
 
 namespace WorldGeneration.Maps
 {
     public class TemperatureMap : Map
     {
-        private MeshFilter[] meshFilters;
-
-        private Point[][] map;
-        private Color[][] colors;
-
-        public TemperatureMap(World world) : base(world)
+        private MeshFilter meshFilter;
+        private World.Parameters.Temperature parameters;
+        public TemperatureMap(World world, SaveData saveData) : base(world)
         {
             this.world = world;
-            meshFilters = new MeshFilter[world.Sphere.meshFilters.Length];
-            map = new Point[meshFilters.Length][];
-            colors = new Color[meshFilters.Length][];
-
-            for (int i = 0; i < meshFilters.Length; i++)
-            {
-                // Initialize
-                map[i] = new Point[world.Sphere.meshFilters[i].sharedMesh.vertexCount];
-                colors[i] = new Color[world.Sphere.meshFilters[i].sharedMesh.vertexCount];
-            }
-
-            for (int a = 0; a < world.Plates.Length; a++)
-            {
-                for (int b = 0; b < world.Plates[a].Points.Length; b++)
-                {
-                    Point p = world.Plates[a].Points[b];
-                    int gPos = p.GlobalPosition;
-
-                    map[0][gPos] = p;
-                }
-            }
+            this.saveData = saveData;
+            parameters = world.parameters.temperature;
         }
 
         public override void Build()
         {
+            MeshData meshData = world.worldData.meshData;
+
             GameObject parentObj = new GameObject(World.MapDisplay.TemperatureMap.ToString());
             parentObj.transform.parent = world.transform;
 
@@ -47,34 +26,35 @@ namespace WorldGeneration.Maps
             obj.transform.parent = parentObj.transform;
 
             
-            meshFilters[0] = obj.AddComponent<MeshFilter>();
-            meshFilters[0].sharedMesh = new Mesh();
-            Vector3[] vertices = world.Sphere.meshFilters[0].sharedMesh.vertices;
-            meshFilters[0].sharedMesh.vertices = vertices;
-            meshFilters[0].sharedMesh.triangles = world.Sphere.meshFilters[0].sharedMesh.triangles;
+            meshFilter = obj.AddComponent<MeshFilter>();
+            meshFilter.sharedMesh = new Mesh();
+            meshFilter.sharedMesh.vertices = meshData.vertices;
+            meshFilter.sharedMesh.triangles = meshData.triangles;
+            meshFilter.sharedMesh.RecalculateNormals();
 
-            meshFilters[0].sharedMesh.RecalculateNormals();
+            meshFilter.sharedMesh.RecalculateNormals();
             // meshFilters[0].sharedMesh.Optimize(); Messes with triangulation
 
-            obj.AddComponent<MeshRenderer>().material = Materials.Map;
+            obj.AddComponent<MeshRenderer>().material = materials.map;
             
-            EvaluateColors(world.Gradients.Temperature);
+            Color[] colors = EvaluateColors(parameters.gradient);
 
             // Set the colors
-            meshFilters[0].sharedMesh.colors = colors[0];
+            meshFilter.sharedMesh.colors = colors;
         }
-        public void EvaluateColors(Gradient gradient)
+        public Color[] EvaluateColors(Gradient gradient)
         {
-            for (int a = 0; a < map.Length; a++)
+            Color[] colors = new Color[world.worldData.points.Length];
+            for(int a = 0; a < world.worldData.points.Length; a++)
             {
-                for (int b = 0; b < map[a].Length; b++)
-                {
-                    float longitude = 1.1f - Mathf.Abs(map[a][b].Pos.y);
-                    if (map[a][b].Height.Space >= 0.7f) { longitude -= .1f * map[a][b].Height.Space; }
-                    else { longitude += 0.05f * map[a][b].Height.Space; }
-                    colors[a][b] = gradient.Evaluate(longitude);
-                }
+                Point point = world.worldData.points[a];
+                float longitude = 1.1f - Mathf.Abs(point.vertex.y);
+                if (point.heightData.space >= 0.7f) { longitude -= .1f * point.heightData.space; }
+                else { longitude += 0.05f * point.heightData.space; }
+                colors[a] = gradient.Evaluate(longitude);
             }
+
+            return colors;
         }
     }
 }

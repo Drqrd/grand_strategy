@@ -1,29 +1,34 @@
 using UnityEngine;
 
+using static WorldData;
+
 namespace WorldGeneration.Maps
 {
     public abstract class Map
     {
         protected World world;
-        protected _Materials Materials;
-        protected class _Materials
+        protected SaveData saveData;
+        protected Materials materials;
+        protected class Materials
         {
-            public Material Map { get; private set; }
-            public Material Surface { get; private set; }
-            public Material Ocean { get; private set; }
+            public Material map { get; private set; }
+            public Material surface { get; private set; }
+            public Material ocean { get; private set; }
 
-            public _Materials(Material Map, Material Surface, Material Ocean)
+            public Materials(Material map, Material surface, Material ocean)
             {
-                this.Map = Map;
-                this.Surface = Surface;
-                this.Ocean = Ocean;
+                this.map = map;
+                this.surface = surface;
+                this.ocean = ocean;
             }
         }
 
         public Map(World world)
         {
             this.world = world;
-            this.Materials = new _Materials(
+            this.saveData = world.worldData.saveData;
+
+            this.materials = new Materials(
                 Resources.Load<Material>("Materials/WorldGen/Map"),
                 Resources.Load<Material>("Materials/WorldGen/Surface"),
                 Resources.Load<Material>("Materials/WorldGen/Ocean")
@@ -31,7 +36,6 @@ namespace WorldGeneration.Maps
         }
 
         public abstract void Build();
-
         protected virtual float Sample(Vector3 v)
         {
             return Noise.Sum(Noise.methods[3][2], v, 1, 8, 2f, 0.5f).value + 0.5f;
