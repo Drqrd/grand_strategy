@@ -5,50 +5,74 @@ using UnityEngine;
 using System;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+using System.Runtime.Serialization;
 
-using WorldGeneration.TectonicPlate.Objects;
+using Serialization.Surrogates;
 
+using static WorldData;
 public class WorldSave : MonoBehaviour
 {
-    WorldData worldData;
+    [SerializeField] private string worldName;
+    
+    public World world { get; private set; }
+    public string WorldName { get { return worldName; } }
+
+    public void Start()
+    {
+        World w = null;
+        TryGetComponent(out w);
+        world = w;
+    }
+
     public void SaveWorld(World world, string fileName)
     {
-        // Get data into Serializable
-        WorldData saveData = new WorldData();
-        saveData.points = new Point[world.Plates.Length][];
-        saveData.triangles = new int[world.Plates.Length][];
-        for (int a = 0; a < world.Plates.Length; a++)
-        {
-            saveData.points[a] = world.Plates[a].Points;
-            saveData.triangles[a] = world.Plates[a].Triangles;
-        }
+        string filePath = Application.persistentDataPath + "/" + fileName + ".dat";
 
-        BinaryFormatter bf = new BinaryFormatter();
-        FileStream file = File.Open(Application.persistentDataPath + "/" + fileName + ".dat", FileMode.Open);
+        SaveData saveData = world.worldData.saveData;
+
+        BinaryFormatter bf = GenerateBinaryFormatter();
+
+        FileStream file = File.Open(filePath, FileMode.OpenOrCreate);
         bf.Serialize(file,saveData);
         file.Close();
+
+        Debug.Log("World Saved!");
     }
 
-    public WorldData LoadWorld(string fileName)
+    public void LoadWorld(string fileName)
     {
-
-        if (File.Exists(Application.persistentDataPath + "/" + fileName + ".dat"))
+        string filePath = Application.persistentDataPath + "/" + fileName + ".dat";
+        if (File.Exists(filePath))
         {
-            BinaryFormatter bf = new BinaryFormatter();
-            FileStream file = File.Open(Application.persistentDataPath + "/" + fileName + ".dat", FileMode.Open);
-            WorldData saveData = (WorldData)bf.Deserialize(file);
+            BinaryFormatter bf = GenerateBinaryFormatter();
+
+            FileStream file = File.Open(filePath, FileMode.Open);
+            SaveData saveData = (SaveData)bf.Deserialize(file);
             file.Close();
 
-            return saveData;
+            world = gameObject.AddComponent<World>();
+
+            world.LoadWorld(saveData);
+
+            Debug.Log("World Loaded!");
         }
-
-        return null;
+        else { Debug.LogError("ERROR LOADING WORLD \"" + fileName + "\""); }
     }
-}
 
-[Serializable]
-public class WorldData
-{
-    public Point[][] points;
-    public int[][] triangles;
+    // Adds a Vector3, Color surrogate as Unity Vector3 and Color is not serializable
+    private BinaryFormatter GenerateBinaryFormatter()
+    {
+        BinaryFormatter bf = new BinaryFormatter();
+
+        SurrogateSelector surrogateSelector = new SurrogateSelector();
+        Vector3SerializationSurrogate vector3SS = new Vector3SerializationSurrogate();
+        ColorSerializationSurrogate colorSS = new ColorSerializationSurrogate();
+
+        surrogateSelector.AddSurrogate(typeof(Vector3), new StreamingContext(StreamingContextStates.All), vector3SS);
+        surrogateSelector.AddSurrogate(typeof(Color), new StreamingContext(StreamingContextStates.All), colorSS);
+
+        bf.SurrogateSelector = surrogateSelector;
+
+        return bf;
+    }
 }
