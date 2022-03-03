@@ -1,7 +1,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+
+using static Extensions;
+
 using DelaunatorSharp;
+
+
+// Stopped using fibonnacci sphere due to how points are grouped, chunking for rendering optomization is not
+// Feasible (currently)
+
+
 /*
  * Fibonacci Distribution on Sphere
  * - https://medium.com/@vagnerseibert/distributing-points-on-a-sphere-6b593cc05b42
@@ -19,20 +28,20 @@ namespace WorldGeneration.Meshes
 {
     public class FibonacciSphere : CustomMesh
     {
-        public Mesh PPMesh { get; private set; }
-
         private Transform parent;
-        private int numPoints;
-        private float jitter;
         private bool alterFibonacciLattice;
 
-        public FibonacciSphere(Transform parent, int numPoints, float jitter = 0f, bool alterFibonacciLattice = true)
+        private World.Parameters.CustomMesh parameters;
+
+        public FibonacciSphere(Transform parent, int resolution, float jitter, bool alterFibonacciLattice = true) : base(resolution, jitter)
         {
+            parameters = parent.GetComponent<World>().parameters.customMesh;
+
             this.parent = parent;
-            this.numPoints = numPoints;
-            this.jitter = jitter;
             this.alterFibonacciLattice = alterFibonacciLattice;
-            meshFilters = new MeshFilter[1];
+
+            this.resolution = resolution;
+            this.jitter = jitter;
         }
 
         public override void Build()
@@ -40,26 +49,26 @@ namespace WorldGeneration.Meshes
             GameObject meshObj = new GameObject("Mesh");
             meshObj.transform.parent = parent;
 
-            Vector3[] vertices = new Vector3[numPoints];
+            Vector3[] vertices = new Vector3[resolution];
 
             // Altered fibonacci lattice
             if (alterFibonacciLattice)
             {
                 float epsilon;
-                if (numPoints >= 600000) { epsilon = 214f; }
-                else if (numPoints >= 400000) { epsilon = 75f; }
-                else if (numPoints >= 11000) { epsilon = 27f; }
-                else if (numPoints >= 890) { epsilon = 10f; }
-                else if (numPoints >= 177) { epsilon = 3.33f; }
-                else if (numPoints >= 24) { epsilon = 1.33f; }
+                if (resolution >= 600000) { epsilon = 214f; }
+                else if (resolution >= 400000) { epsilon = 75f; }
+                else if (resolution >= 11000) { epsilon = 27f; }
+                else if (resolution >= 890) { epsilon = 10f; }
+                else if (resolution >= 177) { epsilon = 3.33f; }
+                else if (resolution >= 24) { epsilon = 1.33f; }
                 else { epsilon = .33f; }
 
                 float goldenRatio = (1f + Mathf.Sqrt(5f)) / 2f;
 
-                for (int i = 0; i < numPoints; i++)
+                for (int i = 0; i < resolution; i++)
                 {
                     float theta = 2f * Mathf.PI * i / goldenRatio;
-                    float phi = Mathf.Acos(1f - 2f * (i + epsilon) / (numPoints - 1f + 2f * epsilon));
+                    float phi = Mathf.Acos(1f - 2f * (i + epsilon) / (resolution - 1f + 2f * epsilon));
 
                     float x = Mathf.Cos(theta) * Mathf.Sin(phi);
                     float y = Mathf.Sin(theta) * Mathf.Sin(phi);
@@ -71,11 +80,11 @@ namespace WorldGeneration.Meshes
             // Default vertices
             else
             {
-                for (int i = 0; i < numPoints; i++)
+                for (int i = 0; i < resolution; i++)
                 {
                     float k = i + .5f;
 
-                    float phi = Mathf.Acos(1f - 2f * k / numPoints);
+                    float phi = Mathf.Acos(1f - 2f * k / resolution);
                     float theta = Mathf.PI * (1 + Mathf.Sqrt(5)) * k;
 
                     float x = Mathf.Cos(theta) * Mathf.Sin(phi);
@@ -86,19 +95,22 @@ namespace WorldGeneration.Meshes
                 }
             }
 
-            meshObj.AddComponent<MeshRenderer>().sharedMaterial = Resources.Load<Material>("Materials/WorldGen/Map");
-            meshFilters[0] = meshObj.AddComponent<MeshFilter>();
-            meshFilters[0].sharedMesh = new Mesh();
+            Mesh mesh = new Mesh();
 
             // Delaunator Triangluation
-            DelaunatorTriangulate(meshFilters[0].sharedMesh, vertices);
+            DelaunatorTriangulate(mesh, vertices);
 
-            meshFilters[0].sharedMesh.RecalculateNormals();
-            meshFilters[0].sharedMesh.Optimize();
+            mesh.RecalculateNormals();
+
+            meshObj.AddComponent<MeshRenderer>().sharedMaterial = Resources.Load<Material>("Materials/WorldGen/Map");
+            meshFilter = meshObj.AddComponent<MeshFilter>();
+            meshFilter.sharedMesh = mesh;
         }
 
         private void DelaunatorTriangulate(Mesh mesh, Vector3[] vertices)
         {
+            mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+
             // Add jitter
             if (jitter > 0)
             {
@@ -187,12 +199,6 @@ namespace WorldGeneration.Meshes
         {
             V2 p = new V2(v3.x / (1f - v3.z), v3.y / (1f - v3.z));
             return p;
-        }
-        private Vector3 AddJitter(Vector3 v)
-        {
-            float j = jitter / Mathf.Sqrt(numPoints);
-            Vector3 r = new Vector3(Random.Range(-1, 1), Random.Range(-1, 1), Random.Range(-1, 1)) * Random.Range(-j, j);
-            return (v + r).normalized;
         }
     }
 
