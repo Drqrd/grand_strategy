@@ -2,14 +2,13 @@ using UnityEngine;
 
 using WorldGeneration.Meshes;
 using WorldGeneration.Maps;
-using WorldGeneration.Objects;
 
-using static WorldGeneration.TectonicPlate.Functions;
+using System.Collections.Generic;
 
-// TODO:
-//  - Create a get seed function to input into the map generators
-//  - Nearest neighor calculation for plate boundary work.
-//      Determined by same (adjacent) vertices / sides
+using DataStructures.ViliWonka.KDTree;
+
+using static WorldData;
+
 public class World : MonoBehaviour
 {
     public enum PlateSize
@@ -20,20 +19,6 @@ public class World : MonoBehaviour
         Large,
         Enormous
     };
-
-    public enum SphereType
-    {
-        Octahedron,
-        Cube,
-        Fibonacci
-    }
-
-    public enum CellType
-    {
-        Triangle,
-        Circumcenter,
-        Centroid
-    }
 
     public enum MapDisplay
     {
@@ -47,7 +32,6 @@ public class World : MonoBehaviour
 
     public enum PlateDetermination
     {
-        ClosestCenter,
         FloodFill
     }
 
@@ -58,72 +42,25 @@ public class World : MonoBehaviour
         FaultLineType
     }
 
-    public class _Gradient
-    {
-        public _Gradient(Gradient Terrain, Gradient Temperature, Gradient Moisture, Gradient Height)
-        {
-            this.Terrain = Terrain;
-            this.Temperature = Temperature;
-            this.Moisture = Moisture;
-            this.Height = Height;
-        }
-
-        public Gradient Terrain { get; private set; }
-        public Gradient Temperature { get; private set; }
-        public Gradient Moisture { get; private set; }
-        public Gradient Height { get; private set; }
-    }
-
-    public class HeightMapParams
-    {
-        public HeightMapParams(int nn, int bd, float cm, float om)
-        {
-            NeighborNumber = nn;
-            BlendDepth = bd;
-            CMultiplier = cm;
-            OMultiplier = om;
-        }
-
-        public int NeighborNumber { get; private set; }
-        public int BlendDepth { get; private set; }
-        public float CMultiplier { get; private set; }
-        public float OMultiplier { get; private set; }
-
-    }
-
-    public class MoistureMapParams
-    {
-        public MoistureMapParams(int bd)
-        {
-            BlendDepth = bd;
-        }
-
-        public int BlendDepth { get; private set; }
-    }
-
-    [SerializeField] private SphereType sphereType;
-
     [Header("General Parameters")]
     [SerializeField] private PlateSize plateSize;
     [SerializeField] private PlateDetermination plateDeterminationType;
-    [SerializeField] [Range(1, 65534)] private int resolution = 1;
-    [SerializeField] private bool convertToSphere = false;
+    [SerializeField] [Range(2, 100000)] private int resolution = 2;
     [SerializeField] [Range(0f, 1f)] private float continentalVsOceanic = 0.5f;
-    [SerializeField] private bool randomizeFloodFill = false;
+    [SerializeField] [Range(1,16)] private int chunks = 8;
 
-    [Header("Sphere Transformation Parameters")]
-    [SerializeField] private bool smoothMapSurface = true;
+    [Header("Optimization")]
+    [SerializeField] [Range(2,100)] private int threadNumber = 4;
 
     [Header("Fibonacci Exclusive Parameters")]
     [SerializeField] [Range(0f, 1f)] private float jitter = 0;
-    // [SerializeField] private CellType cellType = CellType.Triangle;
     [SerializeField] private bool alterFibonacciLattice = true;
 
     [Header("HeightMap Parameters")]
-    [SerializeField] [Range(1,8)] private int neighborNumber = 3;
-    [SerializeField] [Range(0,8)] private int h_blendDepth = 4;
-    [SerializeField] [Range(0f,2f)] private float continentHeightMutiplier = 1f;
-    [SerializeField] [Range(0f,1f)] private float oceanDepthMultiplier = 1f;
+    [SerializeField] [Range(1, 8)] private int neighborNumber = 3;
+    [SerializeField] [Range(0, 8)] private int h_blendDepth = 4;
+    [SerializeField] [Range(0f, 2f)] private float continentHeightMutiplier = 1f;
+    [SerializeField] [Range(0f, 1f)] private float oceanDepthMultiplier = 1f;
 
     [Header("MoistureMap Parameters")]
     [SerializeField] [Range(0, 4)] private int m_blendDepth = 2;
@@ -147,60 +84,21 @@ public class World : MonoBehaviour
     [SerializeField] private Gradient moistureMapGradient;
     [SerializeField] private Gradient heightMapGradient;
 
-    private HeightMap heightMap;
-    private TectonicPlateMap plateMap;
-    private MoistureMap moistureMap;
-    private TemperatureMap temperatureMap;
-    private TerrainMap terrainMap;
+    // Maps
+    private TectonicPlateMap plateMap = null;
+    private HeightMap heightMap = null;
+    private MoistureMap moistureMap = null;
+    private TemperatureMap temperatureMap = null;
+    private TerrainMap terrainMap = null;
 
-    private _Gradient gradients;
-    private HeightMapParams heightMapParams;
-    private MoistureMapParams moistureMapParams;
-
-    private float[] distBetweenCenters = new float[] { .2f, .5f, .7f, .9f, 1.2f };
-
-    // Public properties from parameters
-    public PlateSize _PlateSize { get { return plateSize; } }
-    public PlateDetermination PlateDeterminationType { get { return plateDeterminationType; } }
-    public BoundaryDisplay _BoundaryDisplay { get { return boundaryDisplay; } }
-    public bool SmoothMapSurface { get { return smoothMapSurface; } }
-
-    public bool RandomizeFloodFill { get { return randomizeFloodFill; } }
-    public _Gradient Gradients { get { return gradients; } }
-    public HeightMapParams HMParams { get { return heightMapParams; } }
-    public MoistureMapParams MMParams { get { return moistureMapParams; } }
-    public float[] DistBetweenCenters { get { return distBetweenCenters; } }
-    public int Resolution { get { return resolution; } }
-    public float CVO { get { return continentalVsOceanic; } }
-
-    // For terrain
-    public HeightMap _HeightMap { get { return heightMap; } }
+    // Parameters & shared data
+    public Parameters parameters { get; private set; }
+    public WorldData worldData { get; private set; }
 
     // Pure properties
-    public Vector3[] PlateCenters { get; set; }
-    public Plate[] Plates { get; private set; }
-    public CustomMesh Sphere { get; private set; }
+    public FibonacciSphere Sphere { get; private set; }
 
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
-
-    // Start is called before the first frame updates
-    private void Start()
-    {
-        // Get grouped properties set
-        SetGroupProperties();
-        
-        BuildMesh();
-
-        if (sphereType != SphereType.Octahedron)
-        {
-            BuildMaps();
-
-            // If the display is the last value, make prev - 1, otherwise + 1
-            previousMapDisplay = (int)mapDisplay == System.Enum.GetValues(typeof(MapDisplay)).Length ? (MapDisplay)((int)mapDisplay + 1) : (MapDisplay)((int)mapDisplay - 1);
-            previousBoundaryDisplay = (int)boundaryDisplay == System.Enum.GetValues(typeof(BoundaryDisplay)).Length ? (BoundaryDisplay)((int)mapDisplay + 1) : (BoundaryDisplay)((int)mapDisplay - 1);
-        }
-    }
-
     private void Update()
     {
         if (mapDisplay != previousMapDisplay) { ChangeMapDisplay(); }
@@ -208,81 +106,131 @@ public class World : MonoBehaviour
     }
 
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
-    private void SetGroupProperties()
+    
+    // Generate world from button press
+    public void GenerateWorld()
     {
-        gradients = new _Gradient(terrainMapGradient, temperatureMapGradient, moistureMapGradient, heightMapGradient);
-        heightMapParams = new HeightMapParams(neighborNumber, h_blendDepth, continentHeightMutiplier, oceanDepthMultiplier);
-        moistureMapParams = new MoistureMapParams(m_blendDepth);
+        while (transform.childCount > 0) { DestroyImmediate(transform.GetChild(0).gameObject); }
+
+        InitializeParameterProperties();
+
+        worldData = new WorldData();
+
+        BuildMesh();
+        GenerateSaveData();
+        BuildMaps();
+
+        // If the display is the last value, make prev - 1, otherwise + 1
+        previousMapDisplay = (int)mapDisplay == System.Enum.GetValues(typeof(MapDisplay)).Length ? (MapDisplay)((int)mapDisplay + 1) : (MapDisplay)((int)mapDisplay - 1);
+        previousBoundaryDisplay = (int)boundaryDisplay == System.Enum.GetValues(typeof(BoundaryDisplay)).Length ? (BoundaryDisplay)((int)mapDisplay + 1) : (BoundaryDisplay)((int)mapDisplay - 1);
+    }
+
+    // Loading from saved data
+    public void LoadWorld(SaveData saveData)
+    {
+        BuildMaps(saveData);
+    }
+
+    /* ------------------------------------------------------------------------------------------------------------------------------------------- */
+    private void InitializeParameterProperties()
+    {
+        parameters = new Parameters();
+        parameters.customMesh = new Parameters.CustomMesh(chunks);
+        parameters.plates = new Parameters.Plates(plateDeterminationType, plateSize, continentalVsOceanic, neighborNumber, threadNumber);
+        parameters.height = new Parameters.Height(h_blendDepth, continentHeightMutiplier, oceanDepthMultiplier, heightMapGradient);
+        parameters.moisture = new Parameters.Moisture(m_blendDepth, moistureMapGradient);
+        parameters.temperature = new Parameters.Temperature(temperatureMapGradient);
+        parameters.terrain = new Parameters.Terrain(terrainMapGradient);
     }
 
 
     private void BuildMesh()
     {
-        switch (sphereType)
+        Sphere = new FibonacciSphere(transform, resolution, jitter, alterFibonacciLattice);
+        // Sphere = new CubeSphere(transform, resolution, jitter);
+        Sphere.Build();
+    }
+
+    private void GenerateSaveData()
+    {
+        worldData = new WorldData();
+
+        Mesh mesh = Sphere.meshFilter.sharedMesh;
+        worldData.meshData = new WorldData.MeshData(mesh.vertices, mesh.triangles, mesh.normals);
+
+        GeneratePoints();
+    }
+
+    private void GeneratePoints()
+    {
+        Point[] points = new Point[worldData.meshData.vertices.Length];
+        for (int a = 0; a < worldData.meshData.vertices.Length; a++)
         {
-            case SphereType.Octahedron:
-                Sphere = new OctahedronSphere(transform, resolution, convertToSphere);
-                break;
-            case SphereType.Cube:
-                break;
-            case SphereType.Fibonacci:
-                Sphere = new FibonacciSphere(transform, resolution, jitter, alterFibonacciLattice);
-                break;
-            default:
-                Sphere = null;
-                break;
+            points[a] = new Point(worldData.meshData.vertices[a], a);
         }
-        if (Sphere != null) { Sphere.Build(); }
+
+        worldData.points = points;
+
+        // KD - Tree to find neighbors
+        KDTree kdTree = new KDTree(worldData.points, 1);
+
+        KDQuery query = new KDQuery();
+
+        foreach (Point point in points)
+        {
+            List<int> results = new List<int>();
+            query.KNearest(kdTree, point.vertex, neighborNumber, results);
+
+            List<Point> nn = new List<Point>();
+            foreach (int ind in results)
+            {
+                nn.Add(points[ind]);
+            }
+
+            point.neighbors = nn.ToArray();
+        }
     }
 
-    private void BuildMaps()
+    private void BuildMaps(SaveData saveData = null)
     {
-        BuildTectonicPlates();
-        BuildHeightMap();
-        BuildMoistureMap();
-        BuildTemperatureMap();
-        BuildTerrainMap();
+        BuildTectonicPlateMap(saveData);
+        BuildHeightMap(saveData);
+        BuildMoistureMap(saveData);
+        BuildTemperatureMap(saveData);
+        BuildTerrainMap(saveData);
     }
 
-    private void BuildTectonicPlates()
+    private void BuildTectonicPlateMap(SaveData saveData = null)
     {
-        
-        PlateCenters = GeneratePlateCenters(this);
-        Plates = GeneratePlates(this);
-        GenerateFaultLines(this);
-
-        BuildTectonicPlateMap();
+        plateMap = new TectonicPlateMap(this, saveData);
+        if (saveData == null) { plateMap.Build(); }
+        else { plateMap.Load(); }
+    }
+   
+    private void BuildHeightMap(SaveData saveData = null)
+    {
+       heightMap = new HeightMap(this, saveData);
+       if (saveData == null) { heightMap.Build(); }
+       else { heightMap.Load(); }
     }
 
-    private void BuildTectonicPlateMap()
-    {
-        plateMap = new TectonicPlateMap(this);
-        plateMap.Build();
-    }
 
-    private void BuildHeightMap()
+    private void BuildMoistureMap(SaveData saveData = null)
     {
-        heightMap = new HeightMap(this);
-        heightMap.Build();
-    }
-
-    private void BuildMoistureMap()
-    {
-        moistureMap = new MoistureMap(this);
+        moistureMap = new MoistureMap(this, saveData);
         moistureMap.Build();
     }
 
-    private void BuildTemperatureMap()
+    private void BuildTemperatureMap(SaveData saveData = null)
     {
-        temperatureMap = new TemperatureMap(this);
+        temperatureMap = new TemperatureMap(this, saveData);
         temperatureMap.Build();
     }
 
-    private void BuildTerrainMap()
+    private void BuildTerrainMap(SaveData saveData = null)
     {
-        terrainMap = new TerrainMap(this);
+        terrainMap = new TerrainMap(this, saveData);
         terrainMap.Build();
-        terrainMap.Chunk();
     }
 
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -304,30 +252,31 @@ public class World : MonoBehaviour
     {
         previousBoundaryDisplay = boundaryDisplay;
         Transform boundaryRef = transform.Find(MapDisplay.TectonicPlateMap.ToString()).GetChild(0);
+        TectonicPlateMap.FaultData faultData = plateMap.faultData;
 
         foreach (Transform boundary in boundaryRef)
         {
             switch (boundaryDisplay)
             {
                 case BoundaryDisplay.Default:
-                    foreach(LineRenderer line in plateMap.Lines)
+                    foreach(LineRenderer line in faultData.lines)
                     {
-                        line.startColor = TectonicPlateMap.DefaultColor;
-                        line.endColor = TectonicPlateMap.DefaultColor;
+                        line.startColor = faultData.defaultColor;
+                        line.endColor = faultData.defaultColor;
                     }
                     break;
                 case BoundaryDisplay.FaultLines:
-                    for (int a = 0; a < plateMap.Lines.Length; a++)
+                    for (int a = 0; a < faultData.lines.Length; a++)
                     {
-                        plateMap.Lines[a].startColor = plateMap.FaultLineColors[a];
-                        plateMap.Lines[a].endColor = plateMap.FaultLineColors[a];
+                        faultData.lines[a].startColor = faultData.colors[a];
+                        faultData.lines[a].endColor = faultData.colors[a];
                     }
                     break;
                 case BoundaryDisplay.FaultLineType:
-                    for (int a = 0; a < plateMap.Lines.Length; a++)
+                    for (int a = 0; a < faultData.lines.Length; a++)
                     {
-                        plateMap.Lines[a].startColor = plateMap.WeightedLineColors[a];
-                        plateMap.Lines[a].endColor = plateMap.WeightedLineColors[a];
+                        faultData.lines[a].startColor = faultData.weightedColors[a];
+                        faultData.lines[a].endColor = faultData.weightedColors[a];
                     }
                     break;
                 default:
@@ -342,26 +291,114 @@ public class World : MonoBehaviour
     {
         if (Application.isPlaying)
         {
-            if (mapDisplay == MapDisplay.TectonicPlateMap && Plates != null)
+            if (mapDisplay == MapDisplay.TectonicPlateMap && worldData.plates != null)
             {
                 Gizmos.color = Color.red;
-                for (int i = 0; i < Plates.Length; i++)
+                for (int i = 0; i < worldData.plates.Length; i++)
                 {
-                    if (displayPlateDirections) { Gizmos.DrawLine(Plates[i].Center, Plates[i].Direction); }
-                    if (displayPlateCenters) { Gizmos.DrawSphere(Plates[i].Center, 0.01f); }
+                    if (displayPlateDirections) { Gizmos.DrawLine(worldData.plates[i].center, worldData.plates[i].direction); }
+                    if (displayPlateCenters) { Gizmos.DrawSphere(worldData.plates[i].center, 0.01f); }
                 }
             }
 
             if (displayVertices)
             {
-                for (int i = 0; i < Sphere.meshFilters.Length; i++)
+                for (int i = 0; i < worldData.meshData.vertices.Length; i++)
                 {
-                    foreach (Vector3 v in Sphere.meshFilters[i].sharedMesh.vertices)
+                    foreach (Vector3 v in worldData.meshData.vertices)
                     {
                         Gizmos.DrawSphere(v, 0.01f);
                     }
                 }
             }
+        }
+    }
+
+    // Parameters class for clean code, part of refactoring
+    public class Parameters
+    {
+        public CustomMesh customMesh { get; set; }
+        public Plates plates { get; set; }
+        public Height height { get; set; }
+        public Moisture moisture { get; set; }
+        public Temperature temperature { get; set; }
+        public Terrain terrain { get; set; }
+
+        public class CustomMesh
+        {
+            public CustomMesh(int cs)
+            {
+                chunks = cs;
+            }
+
+            public int chunks { get; private set; }
+        }
+
+        public class Plates
+        {
+            public Plates(PlateDetermination pdt, PlateSize pz, float cvo, int nn, int tn)
+            {
+                plateDeterminationType = pdt;
+                plateSize = pz;
+                continentalVsOceanic = cvo;
+                neighborNumber = nn;
+                threadNumber = tn;
+            }
+
+            public PlateDetermination plateDeterminationType { get; private set; }
+            public PlateSize plateSize { get; private set; }
+            public float continentalVsOceanic { get; private set; }
+            public int neighborNumber { get; private set; }
+            public int threadNumber { get; private set; }
+        }
+
+
+        public class Height
+        {
+            public Height(int bd, float cm, float om, Gradient g)
+            {
+                blendDepth = bd;
+                cMultiplier = cm;
+                oMultiplier = om;
+                gradient = g;
+            }
+
+            public int blendDepth { get; private set; }
+            public float cMultiplier { get; private set; }
+            public float oMultiplier { get; private set; }
+            public Gradient gradient { get; private set; }
+        }
+
+        public class Moisture
+        {
+            public Moisture(int bd, Gradient g)
+            {
+                blendDepth = bd;
+                gradient = g;
+            }
+
+            public int blendDepth { get; private set; }
+            public Gradient gradient { get; private set; }
+        }
+
+        public class Temperature
+        {
+            public Temperature(Gradient g)
+            {
+                gradient = g;
+            }
+
+            public Gradient gradient { get; private set; }
+        }
+
+        public class Terrain
+        {
+            public Terrain(Gradient g)
+            {
+                gradient = g;
+            }
+
+            public Gradient gradient { get; private set; }
         }
     }
 }
