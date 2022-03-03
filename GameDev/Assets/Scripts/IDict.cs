@@ -1,23 +1,30 @@
 using System.Collections.Generic;
+using UnityEngine;
+
+using static WorldData;
 
 namespace IDict
 {
-    public class IntArrCompareOverride : IEqualityComparer<int[]>
+    public class EdgeCompareOverride : IEqualityComparer<Edge>
     {
-        public bool Equals(int[] i1, int[] i2)
+        public bool Equals(Edge a, Edge b)
         {
-            if (i1 == null && i2 == null) { return true; }
-            if (i1 == null || i2 == null) { return false; }
+            if (a == null && b == null) { return true; }
+            if (a == null || b == null) { return false; }
 
             bool val = true;
-            for (int ind = 0; ind < i1.Length; ind++) { if (i1[ind] != i2[ind]) { val = false; } }
+            for (int ind = 0; ind < a.edge.Length; ind++) { if (a.edge[ind].vertex != b.edge[ind].vertex) { val = false; } }
             return val;
         }
 
-        public int GetHashCode(int[] arr)
+        public int GetHashCode(Edge e)
         {
-            int hc = arr.Length;
-            foreach (int val in arr) { hc = unchecked(hc * 314159 + val); }
+            int hc = e.edge.Length;
+            foreach (Point val in e.edge) 
+            {
+                int v = (int)Mathf.Floor(12 * val.vertex.x + 23 * val.vertex.y + 34 * val.vertex.z);
+                hc = unchecked(hc * 314159 + v); 
+            }
             return hc;
         }
     }
