@@ -5,6 +5,7 @@ using WorldGeneration.Maps;
 
 using System.Collections.Generic;
 
+using DelaunatorSharp;
 using DataStructures.ViliWonka.KDTree;
 
 using static WorldData;
@@ -42,15 +43,15 @@ public class World : MonoBehaviour
         FaultLineType
     }
 
+    [Header("Debug")]
+    public bool alter;
+
     [Header("General Parameters")]
     [SerializeField] private PlateSize plateSize;
     [SerializeField] private PlateDetermination plateDeterminationType;
     [SerializeField] [Range(2, 100000)] private int resolution = 2;
     [SerializeField] [Range(0f, 1f)] private float continentalVsOceanic = 0.5f;
     [SerializeField] [Range(1,16)] private int chunks = 8;
-
-    [Header("Optimization")]
-    [SerializeField] [Range(2,100)] private int threadNumber = 4;
 
     [Header("Fibonacci Exclusive Parameters")]
     [SerializeField] [Range(0f, 1f)] private float jitter = 0;
@@ -99,11 +100,13 @@ public class World : MonoBehaviour
     public FibonacciSphere Sphere { get; private set; }
 
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
+    /*
     private void Update()
     {
         if (mapDisplay != previousMapDisplay) { ChangeMapDisplay(); }
         if (boundaryDisplay != previousBoundaryDisplay && mapDisplay == MapDisplay.TectonicPlateMap) { ChangeBoundaryDisplay(); }
     }
+    */
 
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
     
@@ -117,8 +120,13 @@ public class World : MonoBehaviour
         worldData = new WorldData();
 
         BuildMesh();
-        GenerateSaveData();
-        BuildMaps();
+
+        transform.GetChild(0).gameObject.SetActive(false);
+
+        TestDelaunay();
+
+        // GenerateSaveData();
+        // BuildMaps();
 
         // If the display is the last value, make prev - 1, otherwise + 1
         previousMapDisplay = (int)mapDisplay == System.Enum.GetValues(typeof(MapDisplay)).Length ? (MapDisplay)((int)mapDisplay + 1) : (MapDisplay)((int)mapDisplay - 1);
@@ -134,9 +142,9 @@ public class World : MonoBehaviour
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
     private void InitializeParameterProperties()
     {
-        parameters = new Parameters();
+        parameters = new Parameters(resolution);
         parameters.customMesh = new Parameters.CustomMesh(chunks);
-        parameters.plates = new Parameters.Plates(plateDeterminationType, plateSize, continentalVsOceanic, neighborNumber, threadNumber);
+        parameters.plates = new Parameters.Plates(plateDeterminationType, plateSize, continentalVsOceanic, neighborNumber);
         parameters.height = new Parameters.Height(h_blendDepth, continentHeightMutiplier, oceanDepthMultiplier, heightMapGradient);
         parameters.moisture = new Parameters.Moisture(m_blendDepth, moistureMapGradient);
         parameters.temperature = new Parameters.Temperature(temperatureMapGradient);
@@ -151,6 +159,18 @@ public class World : MonoBehaviour
         Sphere.Build();
     }
 
+    private void TestDelaunay()
+    {
+        float scale = 0.01f;
+        Vector3 cubeSize = new Vector3(scale,scale,scale);
+
+        GameObject cubes = new GameObject("Cubes");
+        cubes.transform.parent = this.transform;
+
+        GameObject lines = new GameObject("Lines");
+        lines.transform.parent = this.transform;
+    }
+
     private void GenerateSaveData()
     {
         worldData = new WorldData();
@@ -158,9 +178,10 @@ public class World : MonoBehaviour
         Mesh mesh = Sphere.meshFilter.sharedMesh;
         worldData.meshData = new WorldData.MeshData(mesh.vertices, mesh.triangles, mesh.normals);
 
-        GeneratePoints();
+        // GeneratePoints();
     }
 
+    /*
     private void GeneratePoints()
     {
         Point[] points = new Point[worldData.meshData.vertices.Length];
@@ -190,14 +211,17 @@ public class World : MonoBehaviour
             point.neighbors = nn.ToArray();
         }
     }
+    */
 
     private void BuildMaps(SaveData saveData = null)
     {
+        /*
         BuildTectonicPlateMap(saveData);
         BuildHeightMap(saveData);
         BuildMoistureMap(saveData);
         BuildTemperatureMap(saveData);
         BuildTerrainMap(saveData);
+        */
     }
 
     private void BuildTectonicPlateMap(SaveData saveData = null)
@@ -297,7 +321,7 @@ public class World : MonoBehaviour
                 for (int i = 0; i < worldData.plates.Length; i++)
                 {
                     if (displayPlateDirections) { Gizmos.DrawLine(worldData.plates[i].center, worldData.plates[i].direction); }
-                    if (displayPlateCenters) { Gizmos.DrawSphere(worldData.plates[i].center, 0.01f); }
+                    if (displayPlateCenters) { Gizmos.DrawCube(worldData.plates[i].center, new Vector3(0.1f,0.1f,0.1f)); }
                 }
             }
 
@@ -307,7 +331,7 @@ public class World : MonoBehaviour
                 {
                     foreach (Vector3 v in worldData.meshData.vertices)
                     {
-                        Gizmos.DrawSphere(v, 0.01f);
+                        Gizmos.DrawCube(v, new Vector3(0.1f, 0.1f, 0.1f));
                     }
                 }
             }
@@ -317,12 +341,18 @@ public class World : MonoBehaviour
     // Parameters class for clean code, part of refactoring
     public class Parameters
     {
+        public int resolution { get; private set; }
         public CustomMesh customMesh { get; set; }
         public Plates plates { get; set; }
         public Height height { get; set; }
         public Moisture moisture { get; set; }
         public Temperature temperature { get; set; }
         public Terrain terrain { get; set; }
+
+        public Parameters(int r)
+        {
+            resolution = r + 1;
+        }
 
         public class CustomMesh
         {
@@ -336,13 +366,12 @@ public class World : MonoBehaviour
 
         public class Plates
         {
-            public Plates(PlateDetermination pdt, PlateSize pz, float cvo, int nn, int tn)
+            public Plates(PlateDetermination pdt, PlateSize pz, float cvo, int nn)
             {
                 plateDeterminationType = pdt;
                 plateSize = pz;
                 continentalVsOceanic = cvo;
                 neighborNumber = nn;
-                threadNumber = tn;
             }
 
             public PlateDetermination plateDeterminationType { get; private set; }
@@ -400,5 +429,26 @@ public class World : MonoBehaviour
 
             public Gradient gradient { get; private set; }
         }
+    }
+
+    private void DrawCube(Vector3 center, Vector3 scale, Transform parent)
+    {
+        GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        obj.transform.position = center;
+        obj.transform.localScale = scale;
+        obj.transform.parent = parent;
+        obj.GetComponent<MeshRenderer>().sharedMaterial = Resources.Load<Material>("Materials/WorldGen/Centers");
+    }
+
+    private void DrawLine(Vector3 pt1, Vector3 pt2, Transform parent)
+    {
+        GameObject obj = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/Line"));
+        obj.transform.parent = parent;
+
+        LineRenderer line = obj.GetComponent<LineRenderer>();
+        line.positionCount = 2;
+        line.SetPositions(new Vector3[] { pt1, pt2 });
+        line.startWidth = 0.005f;
+        line.endWidth = 0.005f;
     }
 }
