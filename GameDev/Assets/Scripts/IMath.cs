@@ -2,9 +2,11 @@ using UnityEngine;
 
 public static class IMath
 {
-    public static float DistanceBetweenPoints(Vector3 a, Vector3 b)
+    public static float RightAngleDistance(Vector3 p, Vector3[] l)
     {
-        return Mathf.Sqrt(Mathf.Pow(b.x - a.x, 2f) + Mathf.Pow(b.y - a.y, 2f) + Mathf.Pow(b.z - a.z, 2f));
+        if (l.Length != 2) { Debug.LogError("l must have length of 2."); return -1f; }
+        return Mathf.Abs((l[1].x - l[0].x) * (l[0].y - p.y) - (l[0].x - p.x) * (l[1].y - l[0].y)) /
+            Mathf.Sqrt(Mathf.Pow(l[1].x - l[0].x, 2f) + Mathf.Pow(l[1].y - l[0].y, 2f));
     }
 
     public static Vector3 TriangleCentroid(Vector3 a, Vector3 b, Vector3 c)
