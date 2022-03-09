@@ -6,7 +6,6 @@ using static Extensions;
 
 using DelaunatorSharp;
 
-
 // Stopped using fibonnacci sphere due to how points are grouped, chunking for rendering optomization is not
 // Feasible (currently)
 
@@ -122,19 +121,16 @@ namespace WorldGeneration.Meshes
             for (int i = 0; i < vertices.Length; i++) { planarProjection[i] = V2SphereToPlane(vertices[i]); }
             Delaunator delaunay = new Delaunator(planarProjection);
 
-            // For debug
-            Vector3[] pp = new Vector3[vertices.Length];
-            for (int i = 0; i < vertices.Length; i++) { pp[i] = SphereToPlane(vertices[i]); }
-
-
             // Figure out the final point in the back. Takes the convex hull given by delaunator and the final point added,
             // draws triangles
             List<Vector3> addTheNegZ = vertices.ToList();
             addTheNegZ.Add(Vector3.forward);
 
-            // Get the indices of the convex hull points
             List<IPoint> cv = delaunay.GetHullPoints().ToList();
             List<IPoint> v = delaunay.Points.ToList();
+
+            AddFinalPoint(delaunay);
+
             int[] convexHull = new int[cv.Count];
             for (int i = 0; i < cv.Count; i++) { convexHull[i] = v.IndexOf(cv[i]); }
 
@@ -185,20 +181,93 @@ namespace WorldGeneration.Meshes
             return triangles.ToArray();
         }
 
+        /* Approach:
+         * 1. Get the triangles which contain the hull points
+         * 2. Get the triangle neighbors
+         * 3. Find all centroid-based voronoi cells that are created from these triangles
+         * 4. Add final point
+         * 5. Create new triangle centroids from the final point + hull points
+         * 6. Update neighboring voronoi cells with new centroid points
+         * 7. Create final voronoi cell
+         */
+        private void AddFinalPoint(Delaunator delaunay)
+        {
+            // --- Get triangles that contain hull points
+            IPoint[] IPts = delaunay.GetHullPoints();
+
+            HashSet<IPoint> IHPSet = new HashSet<IPoint>();
+            for(int a = 0; a < IPts.Length; a++) { IHPSet.Add(IPts[a]); }
+
+
+            List<ITriangle> ITriangles = new List<ITriangle>();
+            delaunay.ForEachTriangle(triangle =>
+            {
+                if (IHPSet.Overlaps(triangle.Points)) 
+                { 
+                    ITriangles.Add(triangle);
+                }
+            });
+
+            /*
+            // --- Get triangle neighbors
+            List<ITriangle> neighbors = new List<ITriangle>();
+            for(int a = 0; a < ITriangles.Count; a++)
+            {
+                IEnumerable<int> adj = delaunay.TrianglesAdjacentToTriangle(ITriangles[a].Index);
+                for (int b = 0; b < adj.Count(); b++)
+                {
+                    if (!neighbors.Contains(delaunay.GetTriangles().ElementAt(adj.ElementAt(b))))
+                    {
+                        neighbors.Add(delaunay.GetTriangles().ElementAt(adj.ElementAt(b)));
+                    }
+                }
+            }
+
+            ITriangles = ITriangles.Concat(neighbors.Distinct()).ToList();
+            */
+
+            // --- Find all centroid-based voronoi cells that are created from these triangles
+            HashSet<IPoint> centroids = new HashSet<IPoint>();
+            for (int a = 0; a < ITriangles.Count; a++)
+            {
+                centroids.Add(delaunay.GetCentroid(ITriangles[a].Index));
+            }
+
+            List<IVoronoiCell> voronoiCells = new List<IVoronoiCell>();
+            delaunay.ForEachVoronoiCellBasedOnCentroids(cell => 
+            { 
+                if (centroids.Overlaps(cell.Points)) { voronoiCells.Add(cell); }
+            });
+
+            // --- Add final point (done in triangle centroids
+            Vector3[] hullPoints = new Vector3[IPts.Length]; // + 1
+            for (int a = 0; a < IPts.Length; a++) { hullPoints[a] = PlaneToSphere(IPts[a]); }
+            // hullPoints[hullPoints.Length - 1] = Vector3.forward;
+
+            // --- Create new triangle centroids from the final point + hull points
+            Vector3[] triangleCentroids = new Vector3[hullPoints.Length];
+            for(int a = 0; a < hullPoints.Length - 1; a++) { triangleCentroids[a]}
+
+            // --- Update neighboring voronoi cells with new centroid points
+            // --- Create final voronoi cell
+        }
+
         private bool TriDeterminant(Vector2 a, Vector2 b, Vector2 c)
         {
             return (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y) > 0;
-        }
-
-        private Vector2 SphereToPlane(Vector3 v3)
-        {
-            return new Vector2(v3.x / (1f - v3.z), v3.y / (1f - v3.z));
         }
 
         private V2 V2SphereToPlane(Vector3 v3)
         {
             V2 p = new V2(v3.x / (1f - v3.z), v3.y / (1f - v3.z));
             return p;
+        }
+        private Vector3 PlaneToSphere(IPoint pt)
+        {
+            float x = (float)pt.X;
+            float y = (float)pt.Y;
+            float divisor = (float)(1f + x * x + y * y);
+            return new Vector3(2f * x / divisor, 2f * y / divisor, (-1f + x * x + y * y) / divisor);
         }
     }
 
