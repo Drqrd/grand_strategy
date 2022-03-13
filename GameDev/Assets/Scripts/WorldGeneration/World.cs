@@ -161,14 +161,70 @@ public class World : MonoBehaviour
 
     private void TestDelaunay()
     {
+        WorldData.DelaunayData dd = worldData.delaunayData;
         float scale = 0.01f;
         Vector3 cubeSize = new Vector3(scale,scale,scale);
 
-        GameObject cubes = new GameObject("Cubes");
-        cubes.transform.parent = this.transform;
+        GameObject triangleCenters = new GameObject("Triangle Centers");
+        triangleCenters.transform.parent = this.transform;
 
-        GameObject lines = new GameObject("Lines");
-        lines.transform.parent = this.transform;
+        for(int a = 0; a < dd.triangleCenters.Length; a++)
+        {
+            DrawCube(dd.triangleCenters[a], cubeSize, triangleCenters.transform);
+        }
+
+        GameObject voronoiPoints = new GameObject("Voronoi Points");
+        voronoiPoints.transform.parent = this.transform;
+        for(int a = 0; a < dd.voronoiPoints.Length; a++)
+        {
+            DrawCube(dd.voronoiPoints[a], cubeSize, voronoiPoints.transform);
+        }
+
+        GameObject triangleLines = new GameObject("Triangle Lines");
+        triangleLines.transform.parent = this.transform;
+
+        for(int a = 0; a < dd.triangleEdges.Length; a++)
+        {
+            DrawLine(dd.triangleEdges[a][0], dd.triangleEdges[a][1], triangleLines.transform, Color.gray);
+        }
+
+        GameObject voronoiLines = new GameObject("Voronoi Lines");
+        voronoiLines.transform.parent = this.transform;
+
+        for(int a = 0; a < dd.voronoiEdges.Length; a++)
+        {
+            DrawLine(dd.voronoiEdges[a][0], dd.voronoiEdges[a][1], voronoiLines.transform, Color.blue);
+        }
+
+        GameObject debugCenters = new GameObject("Debug Centers");
+        debugCenters.transform.parent = this.transform;
+
+        for(int a = 0; a < dd.debug.Length; a++)
+        {
+            DrawCube(dd.debug[a], cubeSize, debugCenters.transform);
+        }
+        for(int a = 0; a < dd.debugVoronoi.Length; a++)
+        {
+            DrawCube(dd.debugVoronoi[a], cubeSize * 3f, debugCenters.transform);
+        }
+
+
+        GameObject finalCell = new GameObject("Final Cell");
+        finalCell.transform.parent = this.transform;
+
+        for(int a = 0; a < dd.finalCell.Length; a++)
+        {
+            DrawLine(dd.finalCell[a][0], dd.finalCell[a][1], finalCell.transform, Color.green);
+        }
+
+        GameObject newEdges = new GameObject("New Voronoi Edges");
+        newEdges.transform.parent = this.transform;
+        for(int a = 0; a < dd.debugNewVoronoiEdges.Length; a++)
+        {
+            DrawLine(dd.debugNewVoronoiEdges[a][0], dd.debugNewVoronoiEdges[a][1], newEdges.transform, Color.cyan);
+        }
+
+        
     }
 
     private void GenerateSaveData()
@@ -440,7 +496,7 @@ public class World : MonoBehaviour
         obj.GetComponent<MeshRenderer>().sharedMaterial = Resources.Load<Material>("Materials/WorldGen/Centers");
     }
 
-    private void DrawLine(Vector3 pt1, Vector3 pt2, Transform parent)
+    private void DrawLine(Vector3 pt1, Vector3 pt2, Transform parent, Color color)
     {
         GameObject obj = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/Line"));
         obj.transform.parent = parent;
@@ -450,5 +506,7 @@ public class World : MonoBehaviour
         line.SetPositions(new Vector3[] { pt1, pt2 });
         line.startWidth = 0.005f;
         line.endWidth = 0.005f;
+        line.startColor = color;
+        line.endColor = color;
     }
 }

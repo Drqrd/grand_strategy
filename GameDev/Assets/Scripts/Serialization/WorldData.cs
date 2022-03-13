@@ -1,13 +1,51 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class WorldData
 {
     public SaveData saveData { get; set; }
+    public DelaunayData delaunayData { get; set;}
     public MeshData meshData { get; set; }
     public Point[] points { get; set; }
     public Triangle[] triangles { get; set; }
     public Plate[] plates { get; set; }
+
+
+    // For debug lines
+    public class DelaunayData
+    {
+        public DelaunayData(Vector3[][] triangleEdges, Vector3[][] voronoiEdges, Vector3[] triangleCenters)
+        {
+
+            this.triangleEdges = triangleEdges;
+            this.voronoiEdges = voronoiEdges;
+            this.triangleCenters = triangleCenters;
+
+            Dictionary<Vector3, int> map = new Dictionary<Vector3, int>();
+            for(int a = 0; a < voronoiEdges.Length; a++)
+            {
+                for(int b = 0; b < voronoiEdges[a].Length; b++)
+                {
+                    if (map.ContainsKey(voronoiEdges[a][b])) { map[voronoiEdges[a][b]] += 1; }
+                    else { map.Add(voronoiEdges[a][b], 1); }
+                }
+            }
+
+            voronoiPoints = map.Keys.ToArray();
+        }
+
+        public Vector3[][] triangleEdges { get; private set; }
+        public Vector3[][] voronoiEdges { get; private set; }
+        public Vector3[] triangleCenters { get; private set; }
+        public Vector3[] voronoiPoints { get; private set; }
+        public Vector3[] debug { get; set; }
+        public Vector3[][] finalCell { get; set; }
+        public Vector3[] debugVoronoi { get; set; }
+        public Vector3[][] debugNewVoronoiEdges { get; set; }
+    }
+
 
     public class MeshData
     {
@@ -125,7 +163,7 @@ public class WorldData
         {
             points = pts;
             triangles = tris;
-            triangleCenter = IMath.TriangleCentroid(pts[0].vertex, pts[1].vertex, pts[2].vertex);
+            triangleCenter = IMath.Triangle.Centroid(pts[0].vertex, pts[1].vertex, pts[2].vertex);
             plate = null;
         }
 
