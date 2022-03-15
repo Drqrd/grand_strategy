@@ -27,14 +27,17 @@ namespace WorldGeneration.Meshes
 {
     public class FibonacciSphere : CustomMesh
     {
+        private World world;
+        private World.Parameters.CustomMesh parameters;
         private Transform parent;
         private bool alterFibonacciLattice;
 
-        private World.Parameters.CustomMesh parameters;
+        
 
-        public FibonacciSphere(Transform parent, int resolution, float jitter, bool alterFibonacciLattice = true) : base(resolution, jitter)
+        public FibonacciSphere(World world, Transform parent, int resolution, float jitter, bool alterFibonacciLattice = true) : base(resolution, jitter)
         {
-            parameters = parent.GetComponent<World>().parameters.customMesh;
+            this.world = world;
+            parameters = world.parameters.customMesh;
 
             this.parent = parent;
             this.alterFibonacciLattice = alterFibonacciLattice;
@@ -147,7 +150,7 @@ namespace WorldGeneration.Meshes
             int b, c;
             for (int i = 0; i < convexHull.Length - 1; i++)
             {
-                if (TriDeterminant(vertices[a], vertices[convexHull[i]], vertices[convexHull[i + 1]]))
+                if (IMath.Triangle.Clockwise2D(vertices[a], vertices[convexHull[i]], vertices[convexHull[i + 1]]))
                 {
                     b = convexHull[i];
                     c = convexHull[i + 1];
@@ -163,7 +166,7 @@ namespace WorldGeneration.Meshes
                 triangles.Add(c);
             }
 
-            if (TriDeterminant(vertices[a], vertices[convexHull[convexHull.Length - 1]], vertices[convexHull[0]]))
+            if (IMath.Triangle.Clockwise2D(vertices[a], vertices[convexHull[convexHull.Length - 1]], vertices[convexHull[0]]))
             {
                 b = convexHull[convexHull.Length - 1];
                 c = convexHull[0];
@@ -198,7 +201,7 @@ namespace WorldGeneration.Meshes
                 evPoints[a] = new Vector3[] { PlaneToSphere(ves[a].P), PlaneToSphere(ves[a].Q) };
             }
 
-            // Get hull triangles
+            /* --- New Voronoi Edges --- */
             List<ITriangle> debugTris = new List<ITriangle>();
             delaunay.ForEachTriangle(triangle =>
             {
@@ -212,11 +215,28 @@ namespace WorldGeneration.Meshes
             }
 
             List<IVoronoiCell> cells = new List<IVoronoiCell>();
+            List<IVoronoiCell> intermediateCells = new List<IVoronoiCell>();
             delaunay.ForEachVoronoiCellBasedOnCentroids(cell =>
             {
-                if (cell.Points.Length > 3 && centroidHash.Overlaps(cell.Points)) { cells.Add(cell); }
+                if (cell.Points.Length > 3)
+                {
+                    if (centroidHash.Overlaps(cell.Points)) { cells.Add(cell); }
+                    intermediateCells.Add(cell);
+                }
             });
 
+            // World data cells
+            WorldData.Cell[] cs = new WorldData.Cell[intermediateCells.Count + 1];
+            for (int a = 0; a < intermediateCells.Count; a++)
+            {
+                IVoronoiCell cell = intermediateCells[a];
+                Vector3[] verts = new Vector3[cell.Points.Length];
+                for (int b = 0; b < cell.Points.Length; b++)
+                {
+                    verts[b] = PlaneToSphere(cell.Points[b]);
+                }
+                cs[a] = new WorldData.Cell(PlaneToSphere(delaunay.Points[cell.Index]), verts, cell.Index);
+            }
 
             Dictionary<IPoint, int> pointMap = new Dictionary<IPoint, int>();
             for(int a = 0; a < cells.Count; a++)
@@ -234,7 +254,7 @@ namespace WorldGeneration.Meshes
                 if (point.Value == 1 && centroidHash.Contains(point.Key)) { debugCellPoints.Add(point.Key); }
             }
 
-                List<Vector3> debugVoronoi = new List<Vector3>();
+            List<Vector3> debugVoronoi = new List<Vector3>();
             for(int a = 0; a < debugCellPoints.Count; a++)
             {
                 debugVoronoi.Add(PlaneToSphere(debugCellPoints[a]));
@@ -263,21 +283,25 @@ namespace WorldGeneration.Meshes
                 etPoints[a + edges.Count] = new Vector3[] { PlaneToSphere(IPts[a]), Vector3.forward };
             }
 
-            Vector3[] debugCenters = new Vector3[IPts.Length];
+            Vector3[] newTriangleCentroids = new Vector3[IPts.Length];
             for (int a = 0; a < IPts.Length - 1; a++)
             {
-                debugCenters[a] = IMath.Triangle.Centroid(PlaneToSphere(IPts[a]), PlaneToSphere(IPts[a + 1]), Vector3.forward);
+                newTriangleCentroids[a] = IMath.Triangle.Centroid(PlaneToSphere(IPts[a]), PlaneToSphere(IPts[a + 1]), Vector3.forward);
             }
-            debugCenters[IPts.Length - 1] = IMath.Triangle.Centroid(PlaneToSphere(IPts[0]), PlaneToSphere(IPts[IPts.Length - 1]), Vector3.forward);
+            newTriangleCentroids[IPts.Length - 1] = IMath.Triangle.Centroid(PlaneToSphere(IPts[0]), PlaneToSphere(IPts[IPts.Length - 1]), Vector3.forward);
+
+            cs[cs.Length - 1] = new WorldData.Cell(Vector3.forward, newTriangleCentroids, cs.Length - 1);
 
             Vector3[][] finalCell = new Vector3[IPts.Length][];
             for (int a = 0; a < finalCell.Length - 1; a++)
             {
-                finalCell[a] = new Vector3[] { debugCenters[a], debugCenters[a + 1] };
+                finalCell[a] = new Vector3[] { newTriangleCentroids[a], newTriangleCentroids[a + 1] };
             }
-            finalCell[finalCell.Length - 1] = new Vector3[] { debugCenters[0], debugCenters[debugCenters.Length - 1] };
+            finalCell[finalCell.Length - 1] = new Vector3[] { newTriangleCentroids[0], newTriangleCentroids[newTriangleCentroids.Length - 1] };
 
-            List<Vector3> finalCellPoints = debugCenters.ToList();
+            
+
+            List<Vector3> finalCellPoints = newTriangleCentroids.ToList();
             List<Vector3[]> newVoronoiEdges = new List<Vector3[]>();
             for(int a = 0; a < debugVoronoi.Count; a++)
             {
@@ -294,18 +318,14 @@ namespace WorldGeneration.Meshes
                 }
                 newVoronoiEdges.Add(new Vector3[] { currBest, debugVoronoi[a]});
             }
+            world.worldData.debug = new WorldData.Debug();
+            world.worldData.debug.delaunay = new WorldData.Debug.Delaunay(etPoints.ToArray(), 
+                        evPoints, points, debugVoronoi.ToArray(), newVoronoiEdges.ToArray(), finalCell);
 
-            parent.GetComponent<World>().worldData.delaunayData = new WorldData.DelaunayData(etPoints.ToArray(), evPoints, points);
-            parent.GetComponent<World>().worldData.delaunayData.debug = debugCenters;
-            parent.GetComponent<World>().worldData.delaunayData.finalCell = finalCell;
-            parent.GetComponent<World>().worldData.delaunayData.debugVoronoi = debugVoronoi.ToArray();
-            parent.GetComponent<World>().worldData.delaunayData.debugNewVoronoiEdges = newVoronoiEdges.ToArray();
+            world.worldData.cells = cs; 
         }
 
-        private bool TriDeterminant(Vector2 a, Vector2 b, Vector2 c)
-        {
-            return (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y) > 0;
-        }
+
 
         private Point SphereToPlane(Vector3 v3)
         {
@@ -318,11 +338,6 @@ namespace WorldGeneration.Meshes
             float y = (float)pt.Y;
             float divisor = (float)(1f + x * x + y * y);
             return new Vector3(2f * x / divisor, 2f * y / divisor, (-1f + x * x + y * y) / divisor);
-        }
-
-        private Edge Inverse(Edge edge)
-        {
-            return new Edge(edge.Index, edge.Q, edge.P);
         }
     }
 }
