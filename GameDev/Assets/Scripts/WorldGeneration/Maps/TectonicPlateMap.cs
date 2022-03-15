@@ -12,11 +12,9 @@ namespace WorldGeneration.Maps
     // Approach:
     // - For continents vs oceans, get random distribution of points a set distance from one another.
     // - Decrement height from the continent centers, which will be considered mountains
-    
+
     public class TectonicPlateMap : Map
     {
-        private static float[] distBetweenCenters = { .2f, .5f, .7f, .9f, 1.2f };
-
         public class FaultData
         {
             public FaultData() { }
@@ -32,10 +30,10 @@ namespace WorldGeneration.Maps
         public FaultData faultData { get; private set; }
 
         private World.Parameters.Plates parameters;
-        public TectonicPlateMap(World world, SaveData saveData) : base(world)
+        public TectonicPlateMap(World world, Save save) : base(world)
         {
             this.world = world;
-            this.saveData = saveData;
+            this.save = save;
 
             parameters = world.parameters.plates;
         }
@@ -49,11 +47,42 @@ namespace WorldGeneration.Maps
 
         private void BuildTectonicPlates()
         {
-            world.worldData.triangles = GetTriangles();
-            Vector3[] plateCenters = GeneratePlateCenters();
+            Cell[] plateCenters = GeneratePlateCenters();
             world.worldData.plates = GeneratePlates(plateCenters);
         }
 
+        private void BuildGameObject()
+        {
+            Plate[] plates = world.worldData.plates;
+
+            GameObject parentObj = new GameObject(World.MapDisplay.TectonicPlateMap.ToString());
+            parentObj.transform.parent = world.transform;
+
+            GameObject platesObj = new GameObject("Plates");
+            platesObj.transform.parent = parentObj.transform;
+
+            for (int a = 0; a < plates.Length; a++)
+            {
+                Plate plate = plates[a];
+
+                GameObject plateObj = new GameObject("Plate " + a);
+                plateObj.transform.parent = platesObj.transform;
+
+                for (int b = 0; b < plate.cells.Length; b++)
+                {
+                    GameObject cell = new GameObject("Cell" + b);
+                    cell.transform.parent = plateObj.transform;
+
+                    MeshFilter meshFilter = cell.AddComponent<MeshFilter>();
+                    meshFilter.sharedMesh = plate.cells[b].mesh;
+
+                    MeshRenderer meshRenderer = cell.AddComponent<MeshRenderer>();
+                    meshRenderer.sharedMaterial = Resources.Load<Material>("Materials/WorldGen/Map");
+                }
+            }
+        }
+
+        /*
         private void BuildGameObject()
         {
             WorldData.Plate[] plates = world.worldData.plates;
@@ -78,7 +107,7 @@ namespace WorldGeneration.Maps
                 obj.transform.parent = platesObj.transform;
 
                 MeshFilter meshFilter = obj.AddComponent<MeshFilter>();
-                meshFilter.sharedMesh = new Mesh();
+                meshFilter.sharedMesh = new UnityEngine.Mesh();
 
                 meshFilter.sharedMesh.vertices = plates[i].mesh.vertices;
                 meshFilter.sharedMesh.triangles = plates[i].mesh.triangles;
@@ -101,7 +130,8 @@ namespace WorldGeneration.Maps
                 List<Color>[] color;
 
                 // Build fault lines of plate
-                BuildBoundaries(faultLinesObj.transform, i, out linesList, out color);
+                // BuildBoundaries(faultLinesObj.transform, i, out linesList, out color);
+                
 
                 // Collapse line and colors
                 for (int a = 0; a < linesList.Length; a++)
@@ -128,64 +158,66 @@ namespace WorldGeneration.Maps
             faultData.lines = lines.ToArray();
             faultData.colors = colors.ToArray();
             faultData.weightedColors = weightedColors.ToArray();
-        }
+             
+    }
 
-        private void BuildBoundaries(Transform parent, int ind, out List<LineRenderer>[] linesList, out List<Color>[] color)
+    /*
+    private void BuildBoundaries(Transform parent, int ind, out List<LineRenderer>[] linesList, out List<Color>[] color)
+    {
+        // List for lines
+        FaultLine[] faultLines = world.worldData.plates[ind].faultLines;
+
+        linesList = new List<LineRenderer>[faultLines.Length];
+        color = new List<Color>[faultLines.Length];
+
+        // Iterate through FaultLines
+        for (int a = 0; a < faultLines.Length; a++)
         {
-            // List for lines
-            FaultLine[] faultLines = world.worldData.plates[ind].faultLines;
+            GameObject faultLineObj = new GameObject("Fault Line");
+            faultLineObj.transform.parent = parent;
 
-            linesList = new List<LineRenderer>[faultLines.Length];
-            color = new List<Color>[faultLines.Length];
+            linesList[a] = new List<LineRenderer>();
+            color[a] = new List<Color>();
 
-            // Iterate through FaultLines
-            for (int a = 0; a < faultLines.Length; a++)
+            Color c = Random.ColorHSV();
+
+            // Get all relavent values
+            for (int b = 0; b < faultLines[a].edges.Length; b++)
             {
-                GameObject faultLineObj = new GameObject("Fault Line");
-                faultLineObj.transform.parent = parent;
-
-                linesList[a] = new List<LineRenderer>();
-                color[a] = new List<Color>();
-
-                Color c = Random.ColorHSV();
-
-                // Get all relavent values
-                for (int b = 0; b < faultLines[a].edges.Length; b++)
-                {
-                    Edge edge = faultLines[a].edges[b];
-                    linesList[a].Add(BuildLineRenderer(edge, faultLineObj.transform));
-                    color[a].Add(c);
-                }
+                Edge edge = faultLines[a].edges[b];
+                linesList[a].Add(BuildLineRenderer(edge, faultLineObj.transform));
+                color[a].Add(c);
             }
         }
+    }
 
-        private LineRenderer BuildLineRenderer(Edge edge, Transform parent)
+    private LineRenderer BuildLineRenderer(Vector3[] edge, Transform parent)
+    {
+        Vector3[] vertices = new Vector3[10];
+        GameObject lineObj = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/Line"));
+        lineObj.transform.parent = parent;
+        LineRenderer line = lineObj.GetComponent<LineRenderer>();
+
+        vertices[0] = edge[0].normalized;
+        vertices[vertices.Length - 1] = edge[1].normalized;
+
+        for (int b = 1; b < vertices.Length - 1; b++)
         {
-            Vector3[] vertices = new Vector3[10];
-            GameObject lineObj = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/Line"));
-            lineObj.transform.parent = parent;
-            LineRenderer line = lineObj.GetComponent<LineRenderer>();
-
-            vertices[0] = edge.edge[0].vertex.normalized;
-            vertices[vertices.Length - 1] = edge.edge[1].vertex.normalized;
-
-            for (int b = 1; b < vertices.Length - 1; b++)
-            {
-                vertices[b] = Vector3.Lerp(vertices[0], vertices[vertices.Length - 1], (float)b / vertices.Length).normalized;
-            }
-
-            line.positionCount = vertices.Length;
-            line.SetPositions(vertices);
-
-            line.startColor = faultData.defaultColor;
-            line.endColor = faultData.defaultColor;
-
-            return line;
+            vertices[b] = Vector3.Lerp(vertices[0], vertices[vertices.Length - 1], (float)b / vertices.Length).normalized;
         }
 
-        /*--- ---*/
-        // Empty for now
-        public void Load()
+        line.positionCount = vertices.Length;
+        line.SetPositions(vertices);
+
+        line.startColor = faultData.defaultColor;
+        line.endColor = faultData.defaultColor;
+
+        return line;
+    }
+    */
+    
+    // Empty for now
+    public void Load()
         {
             GameObject parentObj = new GameObject(World.MapDisplay.TectonicPlateMap.ToString());
             parentObj.transform.parent = world.transform;
@@ -200,74 +232,19 @@ namespace WorldGeneration.Maps
 
 
         /* ---  --- */
-
-        private Triangle[] GetTriangles()
-        {
-            List<Triangle> ts = new List<Triangle>();
-            MeshData meshData = world.worldData.meshData;
-
-            for (int a = 0; a < meshData.triangles.Length; a += 3)
-            {
-                Point[] pts = new Point[3];
-                int[] tris = new int[3];
-
-                tris[0] = meshData.triangles[a + 0];
-                tris[1] = meshData.triangles[a + 1];
-                tris[2] = meshData.triangles[a + 2];
-
-                pts[0] = world.worldData.points[tris[0]];
-                pts[1] = world.worldData.points[tris[1]];
-                pts[2] = world.worldData.points[tris[2]];
-
-                ts.Add(new Triangle(pts, tris));
-            }
-
-            return ts.ToArray();
-        }
-
         // Generation of plate centers
-        private Vector3[] GeneratePlateCenters()
+        private Cell[] GeneratePlateCenters()
         {
-            List<Vector3> centers = new List<Vector3>();
-
-            centers.Add(Random.onUnitSphere);
-
-            float minDist = distBetweenCenters[(int)parameters.plateSize];
-            bool addToCenters;
-            int MAX_TRIES = 999, tries = 0;
-
-            while (tries < MAX_TRIES)
+            HashSet<Cell> centers = new HashSet<Cell>();
+            while(centers.Count < parameters.plateNumber)
             {
-                // Get random point
-                addToCenters = true;
-                Vector3 c = Random.onUnitSphere;
-
-                // iterate through
-                for (int i = 0; i < centers.Count; i++)
-                {
-                    // If distance is larger than allowed, add to tries, tell it to not execute last bit, and break
-                    float dist = Vector3.Distance(centers[i], c);
-
-                    if (dist <= minDist)
-                    {
-                        tries += 1;
-                        addToCenters = false;
-                    }
-                }
-
-                if (addToCenters)
-                {
-                    centers.Add(c);
-                    tries = 0;
-                }
-
-            };
-
+                centers.Add(world.worldData.cells[Random.Range(0, world.worldData.cells.Length - 1)]);
+            }
             return centers.ToArray();
         }
 
         // Generates the actual plates
-        private Plate[] GeneratePlates(Vector3[] plateCenters)
+        private Plate[] GeneratePlates(Cell[] plateCenters)
         {
             World.Parameters.Plates parameters = world.parameters.plates;
 
@@ -277,168 +254,58 @@ namespace WorldGeneration.Maps
             // Build plates
             for (int i = 0; i < plateCenters.Length; i++)
             {
+                plateCenters[i].plateId = i;
                 plates[i] = new Plate(plateCenters[i], parameters.continentalVsOceanic, i);
             }
 
-            KDQueryCenters(plates);
+            RandomFloodFillCells(plates);
 
-            GetPlatePointsAndTriangles(plates);
-            GenerateFaultLines(plates);
+            // GetPlatePointsAndTriangles(plates);
+            // GenerateFaultLines(plates);
             return plates;
         }
 
-        // Finds majority of Centers using radius query, any remaining triangles are found and assigned later
-        private void KDQueryCenters(Plate[] plates)
+        private void RandomFloodFillCells(Plate[] plates)
         {
-            Triangle[] triangles = world.worldData.triangles;
-            List<Point> pointCloud = new List<Point>();
-
-            for (int a = 0; a < triangles.Length; a++) 
-            { 
-                pointCloud.Add(new Point(triangles[a].triangleCenter, a)); 
-            }
-
-            // KD - Tree to find majority of plates
-            KDTree kdTree = new KDTree(pointCloud.ToArray(), 1);
-
-            KDQuery query = new KDQuery();
-
-            // K-Nearest Query
-            int avgPlateSize = world.parameters.resolution / plates.Length;
-
-            float[] plateModifier = new float[plates.Length];
-            float total = 0f;
-            for(int a = 0; a < plates.Length; a++) 
-            { 
-                plateModifier[a] = Random.Range(0.5f, 1.5f);
-                total += plateModifier[a];
-            }
-            for(int a = 0; a < plates.Length; a++)
+            List<Cell> queue = new List<Cell>();
+            for(int a = 0; a < plates.Length; a++) { queue.Add(plates[a].center); }
+            int cnt = 0;
+            while (queue.Count > 0 && cnt < world.parameters.resolution * 5)
             {
-                int modifier = Mathf.RoundToInt(plateModifier[a] / total * avgPlateSize);
-
-                List<int> resultInds = new List<int>();
-                query.KNearest(kdTree, plates[a].center, modifier, resultInds);
-                for(int b = 0; b < resultInds.Count; b++)
+                for (int a = 0; a < plates.Length; a++)
                 {
-                    if (triangles[resultInds[b]].plate == null) { triangles[resultInds[b]].plate = plates[a]; }
-                }
-            }
-
-            /* 
-            // Radius Query
-            float radius = distBetweenCenters[(int)parameters.plateSize] / 1.25f;
-            for(int a = 0; a < plates.Length; a++)
-            {
-                List<int> resultIdxs = new List<int>();
-                query.Radius(kdTree, plates[a].center, radius, resultIdxs);
-                foreach(int ind in resultIdxs) 
-                {
-                    if (triangles[ind].plate == null)
+                    int randomPos = a + Random.Range(0, queue.Count - 1 - a);
+                    Cell currentCell = queue[randomPos];
+                    queue[randomPos] = queue[a];
+                    for (int b = 0; b < currentCell.neighbors.Length; b++)
                     {
-                        triangles[ind].plate = plates[a];
+                        if (currentCell.neighbors[b].plateId == -1)
+                        {
+                            currentCell.neighbors[b].plateId = a;
+                            queue.Add(currentCell.neighbors[b]);
+                        }
                     }
+                    cnt++;
                 }
             }
-            */
+            
 
-            FindRemainingClosestCenters(plates, triangles);
+            // Assign cells
+            List<Cell>[] cells = new List<Cell>[plates.Length];
+            for(int a = 0; a < cells.Length; a++) { cells[a] = new List<Cell>(); }
+            UnityEngine.Debug.Log(cells.Length);
+            for (int a = 0; a < world.worldData.cells.Length; a++)
+            {
+                UnityEngine.Debug.Log(world.worldData.cells[a].plateId);
+                cells[world.worldData.cells[a].plateId].Add(world.worldData.cells[a]);
+            }
+            for(int a = 0; a < cells.Length; a++)
+            {
+                plates[a].cells = cells[a].ToArray();
+            }
         }
 
-        private void FindRemainingClosestCenters(Plate[] plates, Triangle[] triangles)
-        {
-
-            SortedList<float, Triangle>[] map = new SortedList<float, Triangle>[plates.Length];
-            for(int a = 0; a < plates.Length; a++) { map[a] = new SortedList<float, Triangle>(); }
-
-            for(int a = 0; a < triangles.Length; a++)
-            {
-                if (triangles[a].plate == null)
-                {
-                    for (int b = 0; b < plates.Length; b++)
-                    {
-                        float dist = Vector3.Distance(triangles[a].triangleCenter, plates[b].center);
-                        while (map[b].ContainsKey(dist)) { dist += .00001f; }
-                        map[b].Add(dist, triangles[a]);
-                    }
-                }
-            }
-
-            while(true)
-            {
-                int cnt = 0;
-                for (int a = 0; a < map.Length; a++)
-                {
-                    if (map[a].Count > 0)
-                    {
-                        Triangle triangle = map[a].Values[0];
-
-                        if (triangle.plate == null) { triangle.plate = plates[a]; }
-
-                        map[a].RemoveAt(0);
-                    }
-                    else { cnt += 1; }
-                }
-
-                if (cnt == map.Length) { break; }
-            }
-
-            /*
-            List<int> ids = new List<int>();
-            List<Triangle> centers = new List<Triangle>();
-            for (int a = 0; a < plates.Length; a++)
-            {
-                int id = Random.Range(0,triangles.Length - 1);
-                while (ids.Contains(id))
-                {
-                    ids.Remove(id);
-                    id = Random.Range(0, triangles.Length - 1);
-                    ids.Add(id);
-                }
-
-                centers.Add(triangles[id]);
-            }
-
-            // Iterative Floodfill
-            Queue<Triangle> queue = new Queue<Triangle>();
-            for (int a = 0; a < plates.Length; a++)
-            {
-                centers[a].plate = plates[a];
-                queue.Enqueue(centers[a]);
-            }
-
-            while (queue.Count > 0)
-            {
-                Triangle t = queue.Dequeue();
-                foreach (Triangle neighbor in t.neighbors)
-                {
-                    if (neighbor.plate == null)
-                    {
-                        neighbor.plate = t.plate;
-                        queue.Enqueue(neighbor);
-                    }
-                }
-            }
-            */
-
-            // Assign triangles
-            List<Triangle>[] tArrs = new List<Triangle>[plates.Length];
-            for (int a = 0; a < tArrs.Length; a++)
-            {
-                tArrs[a] = new List<Triangle>();
-            }
-
-            foreach (Triangle triangle in triangles)
-            {
-                tArrs[triangle.plate.id].Add(triangle);
-            }
-
-            for (int a = 0; a < plates.Length; a++)
-            {
-                plates[a].triangles = tArrs[a].ToArray();
-            }
-        }   
-
+        /*
         private void GetPlatePointsAndTriangles(Plate[] plates)
         {
             int plateInd = 0;
@@ -475,7 +342,7 @@ namespace WorldGeneration.Maps
                     triangles.Add(tris[2]);
                 }
 
-                plate.mesh = new Plate.Mesh(world.worldData.meshData.vertices, triangles.ToArray());
+                plate.mesh = new Plate.Mesh(world.worldData.mesh.vertices, triangles.ToArray());
                 plateInd++;
             }
         }
@@ -682,6 +549,7 @@ namespace WorldGeneration.Maps
 
             return edges.ToArray();
         }
+        */
     }
 }
 
