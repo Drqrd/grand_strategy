@@ -8,16 +8,17 @@ namespace WorldGeneration.Maps
     {
         private MeshFilter meshFilter;
         private World.Parameters.Temperature parameters;
-        public TemperatureMap(World world, SaveData saveData) : base(world)
+        public TemperatureMap(World world, Save save) : base(world)
         {
             this.world = world;
-            this.saveData = saveData;
+            this.save = save;
             parameters = world.parameters.temperature;
         }
 
         public override void Build()
         {
-            MeshData meshData = world.worldData.meshData;
+            /*
+            WorldData.Mesh meshData = world.worldData.mesh;
 
             GameObject parentObj = new GameObject(World.MapDisplay.TemperatureMap.ToString());
             parentObj.transform.parent = world.transform;
@@ -27,7 +28,7 @@ namespace WorldGeneration.Maps
 
             
             meshFilter = obj.AddComponent<MeshFilter>();
-            meshFilter.sharedMesh = new Mesh();
+            meshFilter.sharedMesh = new UnityEngine.Mesh();
             meshFilter.sharedMesh.vertices = meshData.vertices;
             meshFilter.sharedMesh.triangles = meshData.triangles;
             meshFilter.sharedMesh.RecalculateNormals();
@@ -41,7 +42,9 @@ namespace WorldGeneration.Maps
 
             // Set the colors
             meshFilter.sharedMesh.colors = colors;
+            */
         }
+        /*
         public Color[] EvaluateColors(Gradient gradient)
         {
             Color[] colors = new Color[world.worldData.points.Length];
@@ -56,6 +59,7 @@ namespace WorldGeneration.Maps
 
             return colors;
         }
+        */
     }
 }
 

@@ -10,10 +10,10 @@ namespace WorldGeneration.Maps
     {
         private World.Parameters.Terrain parameters;
 
-        public TerrainMap(World world, SaveData saveData) : base(world)
+        public TerrainMap(World world, Save save) : base(world)
         {
             this.world = world;
-            this.saveData = saveData;
+            this.save= save;
             parameters = world.parameters.terrain;
         }
 
@@ -32,18 +32,19 @@ namespace WorldGeneration.Maps
             obj.transform.parent = parentObj.transform;
 
             MeshFilter meshFilter = obj.AddComponent<MeshFilter>();
-            meshFilter.sharedMesh = new Mesh();
+            meshFilter.sharedMesh = new UnityEngine.Mesh();
 
             obj.AddComponent<MeshRenderer>().material = materials.map;
-
+            /*
             Color[] colors = Colorize();
             Vector3[] vertices = Elevate();
 
             meshFilter.sharedMesh.vertices = vertices;
-            meshFilter.sharedMesh.triangles = world.worldData.meshData.triangles;
+            meshFilter.sharedMesh.triangles = world.worldData.mesh.triangles;
             meshFilter.sharedMesh.colors = colors;
 
             meshFilter.sharedMesh.RecalculateNormals();
+            */
         }
 
         private void CreateOceanShader(GameObject parentObj)
@@ -60,7 +61,7 @@ namespace WorldGeneration.Maps
             obj.transform.localScale = new Vector3(scaleVal, scaleVal, scaleVal);
         }
 
-
+        /*
         private Color[] Colorize()
         {
             Color[] colors = new Color[world.worldData.points.Length];
@@ -86,6 +87,7 @@ namespace WorldGeneration.Maps
 
             return vs.ToArray();
         }
+        */
     }
 }
 

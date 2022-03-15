@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ using static WorldData;
 
 namespace WorldGeneration.Maps
 {
+    
     // All values for height are stored as surface and converted to space to avoid rounding errors.
     public class HeightMap : Map
     {
@@ -18,15 +20,16 @@ namespace WorldGeneration.Maps
         private World.Parameters.Height parameters;
         private MeshFilter meshFilter;
 
-        public HeightMap(World world, SaveData saveData) : base(world)
+        public HeightMap(World world, Save save) : base(world)
         {
             this.world = world;
             parameters = world.parameters.height;  
-            this.saveData = saveData;
+            this.save = save;
         }
 
         public override void Build()
         {
+            /*
             for (int a = 0; a < world.worldData.points.Length; a++)
             {
                 Point point = world.worldData.points[a];
@@ -41,11 +44,12 @@ namespace WorldGeneration.Maps
             CalculateSpaceHeights();
 
             BuildGameObject();
+            */
         }
 
         private void BuildGameObject()
         {
-            MeshData meshData = world.worldData.meshData;
+            Mesh meshData = world.worldData.mesh;
 
             GameObject parentObj = new GameObject(World.MapDisplay.HeightMap.ToString());
             parentObj.transform.parent = world.transform;
@@ -53,7 +57,7 @@ namespace WorldGeneration.Maps
             obj.transform.parent = parentObj.transform;
 
             meshFilter = obj.AddComponent<MeshFilter>();
-            meshFilter.sharedMesh = new Mesh();
+            meshFilter.sharedMesh = new UnityEngine.Mesh();
             meshFilter.sharedMesh.vertices = meshData.vertices;
             meshFilter.sharedMesh.triangles = meshData.triangles;
             meshFilter.sharedMesh.RecalculateNormals();
@@ -62,10 +66,10 @@ namespace WorldGeneration.Maps
 
             obj.AddComponent<MeshRenderer>().material = materials.map;
 
-            Color[] colors = EvaluateColors(parameters.gradient);
-            meshFilter.sharedMesh.colors = colors;
+            // Color[] colors = EvaluateColors(parameters.gradient);
+            // meshFilter.sharedMesh.colors = colors;
         }
-
+        /*
         private void SampleSurfaceHeights()
         {
             Point[] points = world.worldData.points;
@@ -115,7 +119,7 @@ namespace WorldGeneration.Maps
         {
             if (input < 0f)
             {
-                Debug.LogError("ERROR INPUT MUST BE NEGATIVE.");
+                UnityEngine.Debug.LogError("ERROR INPUT MUST BE NEGATIVE.");
                 return -1;
             }
             else { return input / MAX_HEIGHT; }
@@ -213,7 +217,7 @@ namespace WorldGeneration.Maps
             obj.transform.parent = parentObj.transform;
 
             MeshFilter meshFilter = obj.AddComponent<MeshFilter>();
-            meshFilter.sharedMesh = new Mesh();
+            meshFilter.sharedMesh = new UnityEngine.Mesh();
             Vector3[] vertices = new Vector3[1];
             meshFilter.sharedMesh.vertices = vertices;
             meshFilter.sharedMesh.triangles = new int[1];
@@ -237,5 +241,7 @@ namespace WorldGeneration.Maps
         {
             return Mathf.Pow(a.x - b.x, 2f) + Mathf.Pow(a.y - b.y, 2f) + Mathf.Pow(a.z - b.z, 2f);
         }
+        */
     }
+
 }
