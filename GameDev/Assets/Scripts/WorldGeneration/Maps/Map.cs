@@ -7,7 +7,7 @@ namespace WorldGeneration.Maps
     public abstract class Map
     {
         protected World world;
-        protected SaveData saveData;
+        protected Save save;
         protected Materials materials;
         protected class Materials
         {
@@ -26,7 +26,7 @@ namespace WorldGeneration.Maps
         public Map(World world)
         {
             this.world = world;
-            this.saveData = world.worldData.saveData;
+            this.save = world.worldData.save;
 
             this.materials = new Materials(
                 Resources.Load<Material>("Materials/WorldGen/Map"),
