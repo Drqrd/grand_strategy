@@ -28,7 +28,7 @@ public class WorldSave : MonoBehaviour
     {
         string filePath = Application.persistentDataPath + "/" + fileName + ".dat";
 
-        SaveData saveData = world.worldData.saveData;
+        Save saveData = world.worldData.save;
 
         BinaryFormatter bf = GenerateBinaryFormatter();
 
@@ -36,7 +36,7 @@ public class WorldSave : MonoBehaviour
         bf.Serialize(file,saveData);
         file.Close();
 
-        Debug.Log("World Saved!");
+        UnityEngine.Debug.Log("World Saved!");
     }
 
     public void LoadWorld(string fileName)
@@ -47,16 +47,16 @@ public class WorldSave : MonoBehaviour
             BinaryFormatter bf = GenerateBinaryFormatter();
 
             FileStream file = File.Open(filePath, FileMode.Open);
-            SaveData saveData = (SaveData)bf.Deserialize(file);
+            Save saveData = (Save)bf.Deserialize(file);
             file.Close();
 
             world = gameObject.AddComponent<World>();
 
             world.LoadWorld(saveData);
 
-            Debug.Log("World Loaded!");
+            UnityEngine.Debug.Log("World Loaded!");
         }
-        else { Debug.LogError("ERROR LOADING WORLD \"" + fileName + "\""); }
+        else { UnityEngine.Debug.LogError("ERROR LOADING WORLD \"" + fileName + "\""); }
     }
 
     // Adds a Vector3, Color surrogate as Unity Vector3 and Color is not serializable
