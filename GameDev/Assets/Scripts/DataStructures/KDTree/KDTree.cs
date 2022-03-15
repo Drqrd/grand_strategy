@@ -24,7 +24,7 @@ SOFTWARE.
 // change to !KDTREE_DUPLICATES
 // if you know for sure you will not use duplicate coordinates (all unique)
 
-// Edited to work with project Point obj
+// Edited to work with project Vector3 obj
 
 #define KDTREE_DUPLICATES
 
@@ -41,8 +41,8 @@ namespace DataStructures.ViliWonka.KDTree {
 
         public KDNode RootNode { get; private set; }
 
-        public Point[] Points { get { return points; } } // points on which kd-tree will build on. This array will stay unchanged when re/building kdtree!
-        private Point[] points;
+        public Vector3[] Points { get { return points; } } // points on which kd-tree will build on. This array will stay unchanged when re/building kdtree!
+        private Vector3[] points;
 
         public int[] Permutation { get { return permutation; } } // index aray, that will be permuted
         private int[] permutation;
@@ -57,7 +57,7 @@ namespace DataStructures.ViliWonka.KDTree {
         public KDTree(int maxPointsPerLeafNode = 32) {
 
             Count       = 0;
-            points      = new Point[0];
+            points      = new Vector3[0];
             permutation = new     int[0];
 
             kdNodesStack = new KDNode[64];
@@ -65,7 +65,7 @@ namespace DataStructures.ViliWonka.KDTree {
             this.maxPointsPerLeafNode = maxPointsPerLeafNode;
         }
 
-        public KDTree(Point[] points, int maxPointsPerLeafNode = 32) {
+        public KDTree(Vector3[] points, int maxPointsPerLeafNode = 32) {
 
             this.points = points;
             this.permutation = new int[points.Length];
@@ -78,7 +78,7 @@ namespace DataStructures.ViliWonka.KDTree {
             Rebuild();
         }
 
-        public void Build(Point[] newPoints, int maxPointsPerLeafNode = -1) {
+        public void Build(Vector3[] newPoints, int maxPointsPerLeafNode = -1) {
 
             SetCount(newPoints.Length);
 
@@ -89,7 +89,7 @@ namespace DataStructures.ViliWonka.KDTree {
             Rebuild(maxPointsPerLeafNode);
         }
 
-        public void Build(List<Point> newPoints, int maxPointsPerLeafNode = -1) {
+        public void Build(List<Vector3> newPoints, int maxPointsPerLeafNode = -1) {
 
             SetCount(newPoints.Count);
 
@@ -184,80 +184,80 @@ namespace DataStructures.ViliWonka.KDTree {
                 int i1 = i0 + 1;
 
                 // X Coords
-                if (points[i0].vertex.x > points[i1].vertex.x) {
+                if (points[i0].x > points[i1].x) {
                     // i0 is bigger, i1 is smaller
-                    if (points[i1].vertex.x < min.x)
-                        min.x = points[i1].vertex.x;
+                    if (points[i1].x < min.x)
+                        min.x = points[i1].x;
 
-                    if (points[i0].vertex.x > max.x)
-                        max.x = points[i0].vertex.x;
+                    if (points[i0].x > max.x)
+                        max.x = points[i0].x;
                 }
                 else {
                     // i1 is smaller, i0 is bigger
-                    if (points[i0].vertex.x < min.x)
-                        min.x = points[i0].vertex.x;
+                    if (points[i0].x < min.x)
+                        min.x = points[i0].x;
 
-                    if (points[i1].vertex.x > max.x)
-                        max.x = points[i1].vertex.x;
+                    if (points[i1].x > max.x)
+                        max.x = points[i1].x;
                 }
 
                 // Y Coords
-                if (points[i0].vertex.y > points[i1].vertex.y) {
+                if (points[i0].y > points[i1].y) {
                     // i0 is bigger, i1 is smaller
-                    if (points[i1].vertex.y < min.y)
-                        min.y = points[i1].vertex.y;
+                    if (points[i1].y < min.y)
+                        min.y = points[i1].y;
 
-                    if (points[i0].vertex.y > max.y)
-                        max.y = points[i0].vertex.y;
+                    if (points[i0].y > max.y)
+                        max.y = points[i0].y;
                 }
                 else {
                     // i1 is smaller, i0 is bigger
-                    if (points[i0].vertex.y < min.y)
-                        min.y = points[i0].vertex.y;
+                    if (points[i0].y < min.y)
+                        min.y = points[i0].y;
 
-                    if (points[i1].vertex.y > max.y)
-                        max.y = points[i1].vertex.y;
+                    if (points[i1].y > max.y)
+                        max.y = points[i1].y;
                 }
 
                 // Z Coords
-                if (points[i0].vertex.z > points[i1].vertex.z) {
+                if (points[i0].z > points[i1].z) {
                     // i0 is bigger, i1 is smaller
-                    if (points[i1].vertex.z < min.z)
-                        min.z = points[i1].vertex.z;
+                    if (points[i1].z < min.z)
+                        min.z = points[i1].z;
 
-                    if (points[i0].vertex.z > max.z)
-                        max.z = points[i0].vertex.z;
+                    if (points[i0].z > max.z)
+                        max.z = points[i0].z;
                 }
                 else {
                     // i1 is smaller, i0 is bigger
-                    if (points[i0].vertex.z < min.z)
-                        min.z = points[i0].vertex.z;
+                    if (points[i0].z < min.z)
+                        min.z = points[i0].z;
 
-                    if (points[i1].vertex.z > max.z)
-                        max.z = points[i1].vertex.z;
+                    if (points[i1].z > max.z)
+                        max.z = points[i1].z;
                 }
             }
 
             // if array was odd, calculate also min/max for the last element
             if(even != Count) {
                 // X
-                if (min.x > points[even].vertex.x)
-                    min.x = points[even].vertex.x;
+                if (min.x > points[even].x)
+                    min.x = points[even].x;
 
-                if (max.x < points[even].vertex.x)
-                    max.x = points[even].vertex.x;
+                if (max.x < points[even].x)
+                    max.x = points[even].x;
                 // Y
-                if (min.y > points[even].vertex.y)
-                    min.y = points[even].vertex.y;
+                if (min.y > points[even].y)
+                    min.y = points[even].y;
 
-                if (max.y < points[even].vertex.y)
-                    max.y = points[even].vertex.y;
+                if (max.y < points[even].y)
+                    max.y = points[even].y;
                 // Z
-                if (min.z > points[even].vertex.z)
-                    min.z = points[even].vertex.z;
+                if (min.z > points[even].z)
+                    min.z = points[even].z;
 
-                if (max.z < points[even].vertex.z)
-                    max.z = points[even].vertex.z;
+                if (max.z < points[even].z)
+                    max.z = points[even].z;
             }
 
             KDBounds b = new KDBounds();
@@ -373,7 +373,7 @@ namespace DataStructures.ViliWonka.KDTree {
             // this for loop section is used both for sorted and unsorted data
             for (int i = start; i < end; i++) {
 
-                if (points[permutation[i]].vertex[axis] < midPoint)
+                if (points[permutation[i]][axis] < midPoint)
                     negative = true;
                 else
                     vertexitive = true;
@@ -385,16 +385,16 @@ namespace DataStructures.ViliWonka.KDTree {
             if (negative) {
 
                 for (int i = start; i < end; i++)
-                    if (negMax < points[permutation[i]].vertex[axis])
-                        negMax = points[permutation[i]].vertex[axis];
+                    if (negMax < points[permutation[i]][axis])
+                        negMax = points[permutation[i]][axis];
 
                 return negMax;
             }
             else {
 
                 for (int i = start; i < end; i++)
-                    if (vertexMin > points[permutation[i]].vertex[axis])
-                        vertexMin = points[permutation[i]].vertex[axis];
+                    if (vertexMin > points[permutation[i]][axis])
+                        vertexMin = points[permutation[i]][axis];
 
                 return vertexMin;
             }
@@ -429,13 +429,13 @@ namespace DataStructures.ViliWonka.KDTree {
                     // move from left to the right until "out of bounds" value is found
                     LP++;
                 }
-                while (LP < RP && points[permutation[LP]].vertex[axis] < partitionPivot);
+                while (LP < RP && points[permutation[LP]][axis] < partitionPivot);
 
                 do {
                     // move from right to the left until "out of bounds" value found
                     RP--;
                 }
-                while (LP < RP && points[permutation[RP]].vertex[axis] >= partitionPivot);
+                while (LP < RP && points[permutation[RP]][axis] >= partitionPivot);
 
                 if (LP < RP) {
                                 // swap

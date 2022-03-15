@@ -35,7 +35,7 @@ namespace DataStructures.ViliWonka.KDTree {
 
             Reset();
 
-            Point[] points = tree.Points;
+            Vector3[] points = tree.Points;
             int[] permutation = tree.Permutation;
 
             var rootNode = tree.RootNode;
@@ -130,7 +130,7 @@ namespace DataStructures.ViliWonka.KDTree {
 
                             int index = permutation[i];
 
-                            Vector3 v = points[index].vertex;
+                            Vector3 v = points[index];
 
                             if(v[0] >= min[0]
                             && v[1] >= min[1]

@@ -60,7 +60,7 @@ namespace DataStructures.ViliWonka.KDTree {
             kHeap.Clear();
             Reset();
 
-            Point[] points = tree.Points;
+            Vector3[] points = tree.Points;
             int[] permutation = tree.Permutation;
 
             ///Biggest Smallest Squared Radius
@@ -138,7 +138,7 @@ namespace DataStructures.ViliWonka.KDTree {
 
                         int index = permutation[i];
 
-                        sqrDist = Vector3.SqrMagnitude(points[index].vertex - queryPosition);
+                        sqrDist = Vector3.SqrMagnitude(points[index] - queryPosition);
 
                         if(sqrDist <= BSSR) {
 

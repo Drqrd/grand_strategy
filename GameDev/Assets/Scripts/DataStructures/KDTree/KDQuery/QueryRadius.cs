@@ -42,7 +42,7 @@ namespace DataStructures.ViliWonka.KDTree {
 
             Reset();
 
-            Point[] points = tree.Points;
+            Vector3[] points = tree.Points;
             int[] permutation = tree.Permutation;
 
             float squaredRadius = queryRadius * queryRadius;
@@ -119,7 +119,7 @@ namespace DataStructures.ViliWonka.KDTree {
 
                         int index = permutation[i];
 
-                        if(Vector3.SqrMagnitude(points[index].vertex - queryPosition) <= squaredRadius) {
+                        if(Vector3.SqrMagnitude(points[index] - queryPosition) <= squaredRadius) {
 
                             resultIndices.Add(index);
                         }
