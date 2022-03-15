@@ -12,6 +12,15 @@ public static class IMath
         {
             return new Vector2((a.x + b.x + c.x) / 3f, (a.y + b.y + c.y) / 3f);
         }
+
+        public static bool Clockwise2D(Vector2 a, Vector2 b, Vector2 c)
+        {
+            return (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y) > 0;
+        }
+        public static bool Clockwise3D(Vector3 a, Vector3 b, Vector3 c)
+        {
+            return Vector3.Dot(Vector3.Cross(b - a, c - a), a) > 0;
+        }
     }
 
     public static float RightAngleDistance(Vector3 p, Vector3[] l)
