@@ -12,15 +12,6 @@ using static WorldData;
 
 public class World : MonoBehaviour
 {
-    public enum PlateSize
-    {
-        Islands,
-        Small,
-        Medium,
-        Large,
-        Enormous
-    };
-
     public enum MapDisplay
     {
         Mesh,
@@ -43,11 +34,22 @@ public class World : MonoBehaviour
         FaultLineType
     }
 
-    [Header("Debug")]
-    public bool alter;
+    [Header("Debug Parameters")]
+    [SerializeField] private bool enableDebugOnGeneration;
+
+    [Header("Debug Delaunay")]
+    [SerializeField] private bool enableDelaunayDebug;
+    [SerializeField] private bool d_triangleCenters;
+    [SerializeField] private bool d_triangleCentroids; 
+    [SerializeField] private bool d_triangleEdges;
+    [SerializeField] private bool d_voronoiEdges;
+    [SerializeField] private bool d_constructedTriangleCentroids;
+    [SerializeField] private bool d_constructedVoronoiEdges;
+    [SerializeField] private bool d_finalCell;
+
 
     [Header("General Parameters")]
-    [SerializeField] private PlateSize plateSize;
+    [SerializeField] [Range(10, 50)] private int plateNumber = 20;
     [SerializeField] private PlateDetermination plateDeterminationType;
     [SerializeField] [Range(2, 100000)] private int resolution = 2;
     [SerializeField] [Range(0f, 1f)] private float continentalVsOceanic = 0.5f;
@@ -100,16 +102,16 @@ public class World : MonoBehaviour
     public FibonacciSphere Sphere { get; private set; }
 
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
-    /*
+
     private void Update()
     {
         if (mapDisplay != previousMapDisplay) { ChangeMapDisplay(); }
         if (boundaryDisplay != previousBoundaryDisplay && mapDisplay == MapDisplay.TectonicPlateMap) { ChangeBoundaryDisplay(); }
     }
-    */
+    
 
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
-    
+
     // Generate world from button press
     public void GenerateWorld()
     {
@@ -120,13 +122,12 @@ public class World : MonoBehaviour
         worldData = new WorldData();
 
         BuildMesh();
-
         transform.GetChild(0).gameObject.SetActive(false);
 
-        TestDelaunay();
+        if (enableDebugOnGeneration) { DebugWorld(); }
 
-        // GenerateSaveData();
-        // BuildMaps();
+        FindCellNeighbors();
+        BuildMaps();
 
         // If the display is the last value, make prev - 1, otherwise + 1
         previousMapDisplay = (int)mapDisplay == System.Enum.GetValues(typeof(MapDisplay)).Length ? (MapDisplay)((int)mapDisplay + 1) : (MapDisplay)((int)mapDisplay - 1);
@@ -134,9 +135,9 @@ public class World : MonoBehaviour
     }
 
     // Loading from saved data
-    public void LoadWorld(SaveData saveData)
+    public void LoadWorld(Save save)
     {
-        BuildMaps(saveData);
+        BuildMaps(save);
     }
 
     /* ------------------------------------------------------------------------------------------------------------------------------------------- */
@@ -144,172 +145,172 @@ public class World : MonoBehaviour
     {
         parameters = new Parameters(resolution);
         parameters.customMesh = new Parameters.CustomMesh(chunks);
-        parameters.plates = new Parameters.Plates(plateDeterminationType, plateSize, continentalVsOceanic, neighborNumber);
+        parameters.plates = new Parameters.Plates(plateDeterminationType, plateNumber, continentalVsOceanic, neighborNumber);
         parameters.height = new Parameters.Height(h_blendDepth, continentHeightMutiplier, oceanDepthMultiplier, heightMapGradient);
         parameters.moisture = new Parameters.Moisture(m_blendDepth, moistureMapGradient);
         parameters.temperature = new Parameters.Temperature(temperatureMapGradient);
         parameters.terrain = new Parameters.Terrain(terrainMapGradient);
     }
 
-
     private void BuildMesh()
     {
-        Sphere = new FibonacciSphere(transform, resolution, jitter, alterFibonacciLattice);
+        Sphere = new FibonacciSphere(this, transform, resolution, jitter, alterFibonacciLattice);
         // Sphere = new CubeSphere(transform, resolution, jitter);
         Sphere.Build();
+
+        Mesh mesh = Sphere.meshFilter.sharedMesh;
+        worldData.mesh = new Mesh();
+        worldData.mesh.vertices = mesh.vertices;
+        worldData.mesh.triangles = mesh.triangles;
+        worldData.mesh.normals = mesh.normals;
     }
 
-    private void TestDelaunay()
+    private void DebugWorld()
     {
-        WorldData.DelaunayData dd = worldData.delaunayData;
+        if (enableDelaunayDebug) { DebugDelaunay(); }
+    }
+
+    private void DebugDelaunay()
+    {
+        transform.GetChild(0).gameObject.SetActive(false);
+        WorldData.Debug.Delaunay d = worldData.debug.delaunay;
         float scale = 0.01f;
         Vector3 cubeSize = new Vector3(scale,scale,scale);
 
+        GameObject delaunayDebug = new GameObject("Delaunay Debug");
+        delaunayDebug.transform.parent = this.transform;
+
         GameObject triangleCenters = new GameObject("Triangle Centers");
-        triangleCenters.transform.parent = this.transform;
+        triangleCenters.transform.parent = delaunayDebug.transform;
 
-        for(int a = 0; a < dd.triangleCenters.Length; a++)
+        for(int a = 0; a < d.triangleCenters.Length; a++)
         {
-            DrawCube(dd.triangleCenters[a], cubeSize, triangleCenters.transform);
+            DrawCube(d.triangleCenters[a], cubeSize, triangleCenters.transform);
         }
 
-        GameObject voronoiPoints = new GameObject("Voronoi Points");
-        voronoiPoints.transform.parent = this.transform;
-        for(int a = 0; a < dd.voronoiPoints.Length; a++)
+        triangleCenters.SetActive(d_triangleCenters);
+
+        GameObject voronoiPoints = new GameObject("Triangle Centroids");
+        voronoiPoints.transform.parent = delaunayDebug.transform;
+        for(int a = 0; a < d.triangleCentroids.Length; a++)
         {
-            DrawCube(dd.voronoiPoints[a], cubeSize, voronoiPoints.transform);
+            DrawCube(d.triangleCentroids[a], cubeSize, voronoiPoints.transform);
         }
 
-        GameObject triangleLines = new GameObject("Triangle Lines");
-        triangleLines.transform.parent = this.transform;
+        voronoiPoints.SetActive(d_triangleCentroids);
 
-        for(int a = 0; a < dd.triangleEdges.Length; a++)
+        GameObject triangleEdges = new GameObject("Triangle Edges");
+        triangleEdges.transform.parent = delaunayDebug.transform;
+
+        for(int a = 0; a < d.triangleEdges.Length; a++)
         {
-            DrawLine(dd.triangleEdges[a][0], dd.triangleEdges[a][1], triangleLines.transform, Color.gray);
+            DrawLine(d.triangleEdges[a][0], d.triangleEdges[a][1], triangleEdges.transform, Color.gray);
         }
 
-        GameObject voronoiLines = new GameObject("Voronoi Lines");
-        voronoiLines.transform.parent = this.transform;
+        triangleEdges.SetActive(d_triangleEdges);
 
-        for(int a = 0; a < dd.voronoiEdges.Length; a++)
+        GameObject voronoiEdges = new GameObject("Voronoi Edges");
+        voronoiEdges.transform.parent = delaunayDebug.transform;
+
+        for(int a = 0; a < d.voronoiEdges.Length; a++)
         {
-            DrawLine(dd.voronoiEdges[a][0], dd.voronoiEdges[a][1], voronoiLines.transform, Color.blue);
+            DrawLine(d.voronoiEdges[a][0], d.voronoiEdges[a][1], voronoiEdges.transform, Color.blue);
         }
 
-        GameObject debugCenters = new GameObject("Debug Centers");
-        debugCenters.transform.parent = this.transform;
+        voronoiEdges.SetActive(d_voronoiEdges);
 
-        for(int a = 0; a < dd.debug.Length; a++)
+        GameObject constructedTriangleCentroids = new GameObject("Constructed Triangle Centroids");
+        constructedTriangleCentroids.transform.parent = delaunayDebug.transform;
+
+        for(int a = 0; a < d.constructedTriangleCentroids.Length; a++)
         {
-            DrawCube(dd.debug[a], cubeSize, debugCenters.transform);
-        }
-        for(int a = 0; a < dd.debugVoronoi.Length; a++)
-        {
-            DrawCube(dd.debugVoronoi[a], cubeSize * 3f, debugCenters.transform);
+            DrawCube(d.constructedTriangleCentroids[a], cubeSize * 3f, constructedTriangleCentroids.transform);
         }
 
+        constructedTriangleCentroids.SetActive(d_constructedTriangleCentroids);
+
+        GameObject constructedVoronoiEdges = new GameObject("Constructed Voronoi Edges");
+        constructedVoronoiEdges.transform.parent = delaunayDebug.transform;
+
+        for (int a = 0; a < d.constructedVoronoiEdges.Length; a++)
+        {
+            DrawLine(d.constructedVoronoiEdges[a][0], d.constructedVoronoiEdges[a][1], constructedVoronoiEdges.transform, Color.cyan);
+        }
+
+        constructedVoronoiEdges.SetActive(d_constructedVoronoiEdges);
 
         GameObject finalCell = new GameObject("Final Cell");
-        finalCell.transform.parent = this.transform;
+        finalCell.transform.parent = delaunayDebug.transform;
 
-        for(int a = 0; a < dd.finalCell.Length; a++)
+        for(int a = 0; a < d.finalCell.Length; a++)
         {
-            DrawLine(dd.finalCell[a][0], dd.finalCell[a][1], finalCell.transform, Color.green);
+            DrawLine(d.finalCell[a][0], d.finalCell[a][1], finalCell.transform, Color.green);
         }
 
-        GameObject newEdges = new GameObject("New Voronoi Edges");
-        newEdges.transform.parent = this.transform;
-        for(int a = 0; a < dd.debugNewVoronoiEdges.Length; a++)
-        {
-            DrawLine(dd.debugNewVoronoiEdges[a][0], dd.debugNewVoronoiEdges[a][1], newEdges.transform, Color.cyan);
-        }
-
-        
+        finalCell.SetActive(d_finalCell);
     }
 
-    private void GenerateSaveData()
+    private void FindCellNeighbors()
     {
-        worldData = new WorldData();
-
-        Mesh mesh = Sphere.meshFilter.sharedMesh;
-        worldData.meshData = new WorldData.MeshData(mesh.vertices, mesh.triangles, mesh.normals);
-
-        // GeneratePoints();
-    }
-
-    /*
-    private void GeneratePoints()
-    {
-        Point[] points = new Point[worldData.meshData.vertices.Length];
-        for (int a = 0; a < worldData.meshData.vertices.Length; a++)
+        Vector3[] pointCloud = new Vector3[worldData.cells.Length];
+        for (int a = 0; a < worldData.cells.Length; a++)
         {
-            points[a] = new Point(worldData.meshData.vertices[a], a);
+            pointCloud[a] = worldData.cells[a].center;
         }
-
-        worldData.points = points;
-
-        // KD - Tree to find neighbors
-        KDTree kdTree = new KDTree(worldData.points, 1);
-
+        KDTree kdTree = new KDTree(pointCloud, 1);
         KDQuery query = new KDQuery();
 
-        foreach (Point point in points)
+        for(int a = 0; a < worldData.cells.Length; a++)
         {
-            List<int> results = new List<int>();
-            query.KNearest(kdTree, point.vertex, neighborNumber, results);
-
-            List<Point> nn = new List<Point>();
-            foreach (int ind in results)
-            {
-                nn.Add(points[ind]);
-            }
-
-            point.neighbors = nn.ToArray();
+            List<int> neighbors = new List<int>();
+            query.KNearest(kdTree, worldData.cells[a].center, worldData.cells[a].points.Length + 2, neighbors);
+            Cell[] cells = new Cell[neighbors.Count];
+            for(int b = 0; b < neighbors.Count; b++) { cells[b] = worldData.cells[neighbors[b]]; }
+            worldData.cells[a].neighbors = cells;
         }
     }
-    */
 
-    private void BuildMaps(SaveData saveData = null)
+    private void BuildMaps(Save save = null)
     {
+        BuildTectonicPlateMap(save);
         /*
-        BuildTectonicPlateMap(saveData);
-        BuildHeightMap(saveData);
-        BuildMoistureMap(saveData);
-        BuildTemperatureMap(saveData);
-        BuildTerrainMap(saveData);
+        BuildHeightMap(save);
+        BuildMoistureMap(save);
+        BuildTemperatureMap(save);
+        BuildTerrainMap(save);
         */
     }
 
-    private void BuildTectonicPlateMap(SaveData saveData = null)
+    private void BuildTectonicPlateMap(Save save = null)
     {
-        plateMap = new TectonicPlateMap(this, saveData);
-        if (saveData == null) { plateMap.Build(); }
+        plateMap = new TectonicPlateMap(this, save);
+        if (save == null) { plateMap.Build(); }
         else { plateMap.Load(); }
     }
    
-    private void BuildHeightMap(SaveData saveData = null)
+    private void BuildHeightMap(Save save = null)
     {
-       heightMap = new HeightMap(this, saveData);
-       if (saveData == null) { heightMap.Build(); }
-       else { heightMap.Load(); }
+       heightMap = new HeightMap(this, save);
+       if (save == null) { heightMap.Build(); }
+       //else { heightMap.Load(); }
     }
 
 
-    private void BuildMoistureMap(SaveData saveData = null)
+    private void BuildMoistureMap(Save save = null)
     {
-        moistureMap = new MoistureMap(this, saveData);
+        moistureMap = new MoistureMap(this, save);
         moistureMap.Build();
     }
 
-    private void BuildTemperatureMap(SaveData saveData = null)
+    private void BuildTemperatureMap(Save save = null)
     {
-        temperatureMap = new TemperatureMap(this, saveData);
+        temperatureMap = new TemperatureMap(this, save);
         temperatureMap.Build();
     }
 
-    private void BuildTerrainMap(SaveData saveData = null)
+    private void BuildTerrainMap(Save save = null)
     {
-        terrainMap = new TerrainMap(this, saveData);
+        terrainMap = new TerrainMap(this, save);
         terrainMap.Build();
     }
 
@@ -376,16 +377,16 @@ public class World : MonoBehaviour
                 Gizmos.color = Color.red;
                 for (int i = 0; i < worldData.plates.Length; i++)
                 {
-                    if (displayPlateDirections) { Gizmos.DrawLine(worldData.plates[i].center, worldData.plates[i].direction); }
-                    if (displayPlateCenters) { Gizmos.DrawCube(worldData.plates[i].center, new Vector3(0.1f,0.1f,0.1f)); }
+                    if (displayPlateDirections) { Gizmos.DrawLine(worldData.plates[i].center.center, worldData.plates[i].direction); }
+                    if (displayPlateCenters) { Gizmos.DrawCube(worldData.plates[i].center.center, new Vector3(0.1f,0.1f,0.1f)); }
                 }
             }
 
             if (displayVertices)
             {
-                for (int i = 0; i < worldData.meshData.vertices.Length; i++)
+                for (int i = 0; i < worldData.mesh.vertices.Length; i++)
                 {
-                    foreach (Vector3 v in worldData.meshData.vertices)
+                    foreach (Vector3 v in worldData.mesh.vertices)
                     {
                         Gizmos.DrawCube(v, new Vector3(0.1f, 0.1f, 0.1f));
                     }
@@ -422,16 +423,16 @@ public class World : MonoBehaviour
 
         public class Plates
         {
-            public Plates(PlateDetermination pdt, PlateSize pz, float cvo, int nn)
+            public Plates(PlateDetermination pdt, int pn, float cvo, int nn)
             {
                 plateDeterminationType = pdt;
-                plateSize = pz;
+                plateNumber = pn;
                 continentalVsOceanic = cvo;
                 neighborNumber = nn;
             }
 
             public PlateDetermination plateDeterminationType { get; private set; }
-            public PlateSize plateSize { get; private set; }
+            public int plateNumber { get; private set; }
             public float continentalVsOceanic { get; private set; }
             public int neighborNumber { get; private set; }
             public int threadNumber { get; private set; }
