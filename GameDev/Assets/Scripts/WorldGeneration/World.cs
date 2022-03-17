@@ -27,6 +27,13 @@ public class World : MonoBehaviour
         FloodFill
     }
 
+    public enum PlateViewLevel
+    {
+        Cell,
+        Plate,
+        Planet
+    }
+
     public enum BoundaryDisplay
     {
         Default,
@@ -34,30 +41,17 @@ public class World : MonoBehaviour
         FaultLineType
     }
 
-    [Header("Debug Parameters")]
-    [SerializeField] private bool enableDebugOnGeneration;
-
-    [Header("Debug Delaunay")]
-    [SerializeField] private bool enableDelaunayDebug;
-    [SerializeField] private bool d_triangleCenters;
-    [SerializeField] private bool d_triangleCentroids; 
-    [SerializeField] private bool d_triangleEdges;
-    [SerializeField] private bool d_voronoiEdges;
-    [SerializeField] private bool d_constructedTriangleCentroids;
-    [SerializeField] private bool d_constructedVoronoiEdges;
-    [SerializeField] private bool d_finalCell;
-
-
     [Header("General Parameters")]
     [SerializeField] [Range(10, 50)] private int plateNumber = 20;
     [SerializeField] private PlateDetermination plateDeterminationType;
     [SerializeField] [Range(2, 100000)] private int resolution = 2;
     [SerializeField] [Range(0f, 1f)] private float continentalVsOceanic = 0.5f;
     [SerializeField] [Range(1,16)] private int chunks = 8;
-
-    [Header("Fibonacci Exclusive Parameters")]
     [SerializeField] [Range(0f, 1f)] private float jitter = 0;
     [SerializeField] private bool alterFibonacciLattice = true;
+
+    [Header("PlateMap Parameters")]
+    [SerializeField] private PlateViewLevel plateViewLevel;
 
     [Header("HeightMap Parameters")]
     [SerializeField] [Range(1, 8)] private int neighborNumber = 3;
@@ -86,6 +80,19 @@ public class World : MonoBehaviour
     [SerializeField] private Gradient temperatureMapGradient;
     [SerializeField] private Gradient moistureMapGradient;
     [SerializeField] private Gradient heightMapGradient;
+
+    [Header("Debug Parameters")]
+    [SerializeField] private bool enableDebugOnGeneration;
+
+    [Header("Debug Delaunay")]
+    [SerializeField] private bool enableDelaunayDebug;
+    [SerializeField] private bool d_triangleCenters;
+    [SerializeField] private bool d_triangleCentroids;
+    [SerializeField] private bool d_triangleEdges;
+    [SerializeField] private bool d_voronoiEdges;
+    [SerializeField] private bool d_constructedTriangleCentroids;
+    [SerializeField] private bool d_constructedVoronoiEdges;
+    [SerializeField] private bool d_finalCell;
 
     // Maps
     private TectonicPlateMap plateMap = null;
@@ -145,7 +152,7 @@ public class World : MonoBehaviour
     {
         parameters = new Parameters(resolution);
         parameters.customMesh = new Parameters.CustomMesh(chunks);
-        parameters.plates = new Parameters.Plates(plateDeterminationType, plateNumber, continentalVsOceanic, neighborNumber);
+        parameters.plates = new Parameters.Plates(plateDeterminationType, plateViewLevel, plateNumber, continentalVsOceanic, neighborNumber);
         parameters.height = new Parameters.Height(h_blendDepth, continentHeightMutiplier, oceanDepthMultiplier, heightMapGradient);
         parameters.moisture = new Parameters.Moisture(m_blendDepth, moistureMapGradient);
         parameters.temperature = new Parameters.Temperature(temperatureMapGradient);
@@ -263,9 +270,10 @@ public class World : MonoBehaviour
         for(int a = 0; a < worldData.cells.Length; a++)
         {
             List<int> neighbors = new List<int>();
-            query.KNearest(kdTree, worldData.cells[a].center, worldData.cells[a].points.Length + 2, neighbors);
+            query.KNearest(kdTree, worldData.cells[a].center, worldData.cells[a].points.Length + 1, neighbors);
             Cell[] cells = new Cell[neighbors.Count];
-            for(int b = 0; b < neighbors.Count; b++) { cells[b] = worldData.cells[neighbors[b]]; }
+
+            for(int b = 0; b < neighbors.Count; b++) { cells[b] = kdTree.Points[neighbors[b]]; }
             worldData.cells[a].neighbors = cells;
         }
     }
@@ -423,15 +431,17 @@ public class World : MonoBehaviour
 
         public class Plates
         {
-            public Plates(PlateDetermination pdt, int pn, float cvo, int nn)
+            public Plates(PlateDetermination pdt, PlateViewLevel pvl, int pn, float cvo, int nn)
             {
                 plateDeterminationType = pdt;
+                plateViewLevel = pvl;
                 plateNumber = pn;
                 continentalVsOceanic = cvo;
                 neighborNumber = nn;
             }
 
             public PlateDetermination plateDeterminationType { get; private set; }
+            public PlateViewLevel plateViewLevel { get; private set; }
             public int plateNumber { get; private set; }
             public float continentalVsOceanic { get; private set; }
             public int neighborNumber { get; private set; }
