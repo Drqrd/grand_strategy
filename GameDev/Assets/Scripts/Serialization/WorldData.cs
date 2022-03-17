@@ -175,7 +175,7 @@ public class WorldData
 
             plateType = UnityEngine.Random.Range(0f, 1f) >= CvO ? Type.Continental : Type.Oceanic;
             
-            float onGradient = IMath.FloorFloat(UnityEngine.Random.Range(0f, 1f), 0.1f);
+            float onGradient = IMath.FloorFloat(UnityEngine.Random.Range(0.25f, 1f), 0.1f);
             color = plateType == Type.Continental ? new Color(0f, onGradient, 0f, 1f) :
                                                     new Color(0f, 0f, onGradient, 1f);
         }
