@@ -30,6 +30,7 @@ namespace WorldGeneration.Maps
         public FaultData faultData { get; private set; }
 
         private World.Parameters.Plates parameters;
+
         public TectonicPlateMap(World world, Save save) : base(world)
         {
             this.world = world;
@@ -61,6 +62,7 @@ namespace WorldGeneration.Maps
             GameObject platesObj = new GameObject("Plates");
             platesObj.transform.parent = parentObj.transform;
 
+            CombineInstance[] combinePlateMeshes = new CombineInstance[plates.Length];
             for (int a = 0; a < plates.Length; a++)
             {
                 Plate plate = plates[a];
@@ -68,18 +70,53 @@ namespace WorldGeneration.Maps
                 GameObject plateObj = new GameObject("Plate " + a);
                 plateObj.transform.parent = platesObj.transform;
 
+                CombineInstance[] combineCellMeshes = new CombineInstance[plate.cells.Length];
                 for (int b = 0; b < plate.cells.Length; b++)
                 {
                     GameObject cell = new GameObject("Cell" + b);
                     cell.transform.parent = plateObj.transform;
 
+                    Color[] colors = new Color[plate.cells[b].mesh.vertices.Length];
+                    for (int c = 0; c < colors.Length; c++) { colors[c] = plate.color; }
+
                     MeshFilter meshFilter = cell.AddComponent<MeshFilter>();
                     meshFilter.sharedMesh = plate.cells[b].mesh;
+                    meshFilter.sharedMesh.SetColors(colors);
+
+                    combineCellMeshes[b].mesh = meshFilter.sharedMesh;
+                    combineCellMeshes[b].transform = meshFilter.transform.localToWorldMatrix;
 
                     MeshRenderer meshRenderer = cell.AddComponent<MeshRenderer>();
-                    meshRenderer.sharedMaterial = Resources.Load<Material>("Materials/WorldGen/Map");
+                    meshRenderer.sharedMaterial = materials.map;
+
+                    cell.SetActive(parameters.plateViewLevel == World.PlateViewLevel.Cell);
                 }
+
+                MeshFilter plateMeshFilter = plateObj.AddComponent<MeshFilter>();
+                plateMeshFilter.sharedMesh = new Mesh();
+                plateMeshFilter.sharedMesh.CombineMeshes(combineCellMeshes);
+                plateMeshFilter.sharedMesh = IMath.Mesh.CollapseVertices(plateMeshFilter.sharedMesh);
+                plateMeshFilter.sharedMesh.RecalculateNormals();
+
+                MeshRenderer plateMeshRenderer = plateObj.AddComponent<MeshRenderer>();
+                plateMeshRenderer.sharedMaterial = materials.map;
+
+                combinePlateMeshes[a].mesh = plateMeshFilter.sharedMesh;
+                combinePlateMeshes[a].transform = plateMeshFilter.transform.localToWorldMatrix;
+
+                plateMeshRenderer.enabled = parameters.plateViewLevel == World.PlateViewLevel.Plate;
             }
+
+            MeshFilter planetMeshFilter = parentObj.AddComponent<MeshFilter>();
+            planetMeshFilter.sharedMesh = new Mesh();
+            planetMeshFilter.sharedMesh.CombineMeshes(combinePlateMeshes);
+            planetMeshFilter.sharedMesh = IMath.Mesh.CollapseVertices(planetMeshFilter.sharedMesh);
+            planetMeshFilter.sharedMesh.RecalculateNormals();
+
+            MeshRenderer planetMeshRenderer = parentObj.AddComponent<MeshRenderer>();
+            planetMeshRenderer.sharedMaterial = materials.map;
+
+            planetMeshRenderer.enabled = parameters.plateViewLevel == World.PlateViewLevel.Planet;
         }
 
         /*
@@ -229,8 +266,6 @@ namespace WorldGeneration.Maps
             faultLinesObj.transform.parent = parentObj.transform;
         }
 
-
-
         /* ---  --- */
         // Generation of plate centers
         private Cell[] GeneratePlateCenters()
@@ -293,11 +328,10 @@ namespace WorldGeneration.Maps
             // Assign cells
             List<Cell>[] cells = new List<Cell>[plates.Length];
             for(int a = 0; a < cells.Length; a++) { cells[a] = new List<Cell>(); }
-            UnityEngine.Debug.Log(cells.Length);
             for (int a = 0; a < world.worldData.cells.Length; a++)
             {
-                UnityEngine.Debug.Log(world.worldData.cells[a].plateId);
-                cells[world.worldData.cells[a].plateId].Add(world.worldData.cells[a]);
+                try { cells[world.worldData.cells[a].plateId].Add(world.worldData.cells[a]); }
+                catch { UnityEngine.Debug.LogError(world.worldData.cells[a].plateId); }
             }
             for(int a = 0; a < cells.Length; a++)
             {
