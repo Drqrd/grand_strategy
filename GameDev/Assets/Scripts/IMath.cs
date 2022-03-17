@@ -1,5 +1,6 @@
 using UnityEngine;
-
+using System.Linq;
+using System.Collections.Generic;
 public static class IMath
 {
     public static class Triangle
@@ -29,8 +30,41 @@ public static class IMath
         return Mathf.Abs((l[1].x - l[0].x) * (l[0].y - p.y) - (l[0].x - p.x) * (l[1].y - l[0].y)) /
             Mathf.Sqrt(Mathf.Pow(l[1].x - l[0].x, 2f) + Mathf.Pow(l[1].y - l[0].y, 2f));
     }
+    public static class Mesh
+    {
+        public static UnityEngine.Mesh CollapseVertices(UnityEngine.Mesh mesh)
+        {
+            Vector3[] oldVertices = mesh.vertices;
+            List<Vector3> newVertices = new List<Vector3>();
 
+            int[] triangles = mesh.triangles;
 
+            Color[] oldColors = mesh.colors;
+            List<Color> newColors = new List<Color>();
+
+            int ind = 0;
+            for (int a = 0; a < oldVertices.Length; a++)
+            {
+                if (!newVertices.Contains(oldVertices[a]))
+                {
+                    newVertices.Add(oldVertices[a]);
+                    newColors.Add(oldColors[a]);
+                    for (int b = 0; b < triangles.Length; b++)
+                    {
+                        if (oldVertices[triangles[b]] == oldVertices[a]) { triangles[b] = ind; }
+                    }
+                    ind++;
+                }
+            }
+
+            UnityEngine.Mesh newMesh = new UnityEngine.Mesh();
+            newMesh.vertices = newVertices.ToArray();
+            newMesh.triangles = triangles;
+            newMesh.colors = newColors.ToArray();
+
+            return newMesh;
+        }
+    }
 
     public static Vector3 RandomVector3()
     {
