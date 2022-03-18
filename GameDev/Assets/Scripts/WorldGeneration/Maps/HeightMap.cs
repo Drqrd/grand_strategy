@@ -1,10 +1,7 @@
-
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-
-using DataStructures.ViliWonka.KDTree;
 
 using static WorldGeneration.HLZS;
 
@@ -12,7 +9,7 @@ using static WorldData;
 
 namespace WorldGeneration.Maps
 {
-    
+
     // All values for height are stored as surface and converted to space to avoid rounding errors.
     public class HeightMap : Map
     {
