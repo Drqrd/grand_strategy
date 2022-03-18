@@ -24,12 +24,6 @@ public static class IMath
         }
     }
 
-    public static float RightAngleDistance(Vector3 p, Vector3[] l)
-    {
-        if (l.Length != 2) { Debug.LogError("l must have length of 2."); return -1f; }
-        return Mathf.Abs((l[1].x - l[0].x) * (l[0].y - p.y) - (l[0].x - p.x) * (l[1].y - l[0].y)) /
-            Mathf.Sqrt(Mathf.Pow(l[1].x - l[0].x, 2f) + Mathf.Pow(l[1].y - l[0].y, 2f));
-    }
     public static class Mesh
     {
         public static UnityEngine.Mesh CollapseVertices(UnityEngine.Mesh mesh)
@@ -64,6 +58,18 @@ public static class IMath
 
             return newMesh;
         }
+    }
+
+    public static float SquareDistance(Vector3 a, Vector3 b)
+    {
+        return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y) + (a.z - b.z) * (a.z - b.z);
+    }
+
+    public static float RightAngleDistance(Vector3 p, Vector3[] l)
+    {
+        if (l.Length != 2) { Debug.LogError("l must have length of 2."); return -1f; }
+        return Mathf.Abs((l[1].x - l[0].x) * (l[0].y - p.y) - (l[0].x - p.x) * (l[1].y - l[0].y)) /
+            Mathf.Sqrt(Mathf.Pow(l[1].x - l[0].x, 2f) + Mathf.Pow(l[1].y - l[0].y, 2f));
     }
 
     public static Vector3 RandomVector3()
