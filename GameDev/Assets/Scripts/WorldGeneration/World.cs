@@ -5,8 +5,9 @@ using WorldGeneration.Maps;
 
 using System.Collections.Generic;
 
-using DelaunatorSharp;
-using DataStructures.ViliWonka.KDTree;
+using Unity.Collections;
+using Unity.Mathematics;
+using KNN;
 
 using static WorldData;
 
@@ -259,23 +260,28 @@ public class World : MonoBehaviour
 
     private void FindCellNeighbors()
     {
-        Vector3[] pointCloud = new Vector3[worldData.cells.Length];
+        NativeArray<float3> pointCloud = new NativeArray<float3>(worldData.cells.Length, Allocator.Persistent);
         for (int a = 0; a < worldData.cells.Length; a++)
         {
             pointCloud[a] = worldData.cells[a].center;
         }
-        KDTree kdTree = new KDTree(pointCloud, 1);
-        KDQuery query = new KDQuery();
+        KnnContainer kdTree = new KnnContainer(pointCloud, true, Allocator.Persistent);
+
+        
 
         for(int a = 0; a < worldData.cells.Length; a++)
         {
-            List<int> neighbors = new List<int>();
-            query.KNearest(kdTree, worldData.cells[a].center, worldData.cells[a].points.Length + 1, neighbors);
-            Cell[] cells = new Cell[neighbors.Count];
+            NativeArray<int> neighbors = new NativeArray<int>(worldData.cells[a].points.Length, Allocator.TempJob);
+            kdTree.QueryKNearest(worldData.cells[a].center, neighbors);
+            Cell[] cells = new Cell[neighbors.Length];
 
-            for(int b = 0; b < neighbors.Count; b++) { cells[b] = kdTree.Points[neighbors[b]]; }
+            for(int b = 0; b < neighbors.Length; b++) { cells[b] = worldData.cells[neighbors[b]]; }
             worldData.cells[a].neighbors = cells;
+            neighbors.Dispose();
         }
+
+        kdTree.Dispose();
+        pointCloud.Dispose();
     }
 
     private void BuildMaps(Save save = null)
