@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using IDict;
 
-using DataStructures.ViliWonka.KDTree;
+using Unity.Collections;
+using Unity.Mathematics;
+using KNN;
 
 using static WorldData;
 
@@ -273,7 +274,7 @@ namespace WorldGeneration.Maps
             HashSet<Cell> centers = new HashSet<Cell>();
             while(centers.Count < parameters.plateNumber)
             {
-                centers.Add(world.worldData.cells[Random.Range(0, world.worldData.cells.Length - 1)]);
+                centers.Add(world.worldData.cells[UnityEngine.Random.Range(0, world.worldData.cells.Length - 1)]);
             }
             return centers.ToArray();
         }
@@ -302,28 +303,74 @@ namespace WorldGeneration.Maps
 
         private void RandomFloodFillCells(Plate[] plates)
         {
-            List<Cell> queue = new List<Cell>();
-            for(int a = 0; a < plates.Length; a++) { queue.Add(plates[a].center); }
-            int cnt = 0;
-            while (queue.Count > 0 && cnt < world.parameters.resolution * 5)
+            /*
+            NativeArray<float3> pointCloud = new NativeArray<float3>(world.worldData.cells.Length, Allocator.Persistent);
+            for (int a = 0; a < world.worldData.cells.Length; a++)
             {
-                for (int a = 0; a < plates.Length; a++)
+                pointCloud[a] = world.worldData.cells[a].center;
+            }
+            KnnContainer kdTree = new KnnContainer(pointCloud, true, Allocator.Persistent);
+
+            NativeArray<int>[] distanceArray = new NativeArray<int>[plates.Length];
+            for(int a = 0; a < distanceArray.Length; a++)
+            {
+                distanceArray[a] = new NativeArray<int>(world.worldData.cells.Length, Allocator.Persistent);
+            }
+            for(int a = 0; a < distanceArray.Length; a++)
+            {
+                kdTree.QueryKNearest(plates[a].center.center, distanceArray[a]);
+            }
+
+            for(int a = 1; a < world.worldData.cells.Length - 1; a++)
+            {
+                for (int b = 0; b < plates.Length; b++)
                 {
-                    int randomPos = a + Random.Range(0, queue.Count - 1 - a);
-                    Cell currentCell = queue[randomPos];
-                    queue[randomPos] = queue[a];
-                    for (int b = 0; b < currentCell.neighbors.Length; b++)
-                    {
-                        if (currentCell.neighbors[b].plateId == -1)
-                        {
-                            currentCell.neighbors[b].plateId = a;
-                            queue.Add(currentCell.neighbors[b]);
-                        }
-                    }
-                    cnt++;
+                    Cell cell = world.worldData.cells[distanceArray[b][a]];
+                    if (cell.plateId == -1) { cell.plateId = b; }
                 }
             }
             
+
+            pointCloud.Dispose();
+            kdTree.Dispose();
+            for(int a = 0; a < distanceArray.Length; a++) { distanceArray[a].Dispose(); }
+            
+            */
+
+            /*
+            Queue<Cell> queue = new Queue<Cell>();
+            int[] plateIndices = new int[plates.Length];
+            for (int a = 0; a < plates.Length; a++) { plateIndices[a] = a; }
+
+            // Shuffles the indices
+            for (int a = 0; a < plateIndices.Length; a++)
+            {
+                int rand = a + UnityEngine.Random.Range(0, plateIndices.Length - 1 - a);
+                int temp = plateIndices[a];
+                plateIndices[a] = plateIndices[rand];
+                plateIndices[rand] = temp;
+            }
+
+            for(int a = 0; a < plateIndices.Length; a++) { queue.Enqueue(plates[plateIndices[a]].center); }
+
+            UnityEngine.Debug.Log(plateIndices.Length);
+
+            int cnt = 0;
+            while (queue.Count > 0 && cnt < world.parameters.resolution * 5)
+            {
+                Cell currentCell = queue.Dequeue();
+                for (int b = 0; b < currentCell.neighbors.Length; b++)
+                {
+                    if (currentCell.neighbors[b].plateId == -1)
+                    {
+                        currentCell.neighbors[b].plateId = currentCell.plateId;
+                        queue.Enqueue(currentCell.neighbors[b]);
+                    }
+                }
+                cnt++;
+            }
+            
+            */
 
             // Assign cells
             List<Cell>[] cells = new List<Cell>[plates.Length];
@@ -584,7 +631,7 @@ namespace WorldGeneration.Maps
             return edges.ToArray();
         }
         */
+        }
     }
-}
 
 
