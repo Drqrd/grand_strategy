@@ -8,6 +8,7 @@ public class WorldData
     public Save save { get; set; }
     public Debug debug { get; set; }
     public Mesh mesh { get; set; }
+    public Mesh[] voronoiMesh { get; set; }
     public Cell[] cells { get; set; }
     public Plate[] plates { get; set; }
 
@@ -65,6 +66,7 @@ public class WorldData
         public Vector3 center { get; private set; }
         public Vector3[] points { get; private set; }
         public int globalIndex { get; private set; }
+        public Color color { get; set; }
 
         // Setup
         public Cell[] neighbors { get; set; }
@@ -153,6 +155,24 @@ public class WorldData
             mesh.RecalculateNormals();
         }
     }
+
+    // To index into plates[plateId].cells[cellId]
+    public class CellEdge
+    {
+        public CellEdge(int p, int q, int cellId, int plateId)
+        {
+            this.p = p;
+            this.q = q;
+            this.cellId = cellId;
+            this.plateId = plateId;
+        }
+
+        public int p { get; private set; }
+        public int q { get; private set; }
+        public int cellId { get; private set; }
+        public int plateId { get; private set; }
+    }
+
 
     public class Plate
     {
