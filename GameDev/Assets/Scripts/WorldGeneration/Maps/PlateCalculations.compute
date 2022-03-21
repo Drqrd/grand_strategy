@@ -1,0 +1,31 @@
+#pragma kernel CalculatePlateDistance
+
+StructuredBuffer<float3> _Centers;
+StructuredBuffer<float3> _Cells;
+RWStructuredBuffer<uint> _ClosestCenter;
+
+float SquareDistance(float3 a, float3 b)
+{
+    return ((a.x - b.x) * (a.x - b.x)) +
+           ((a.y - b.y) * (a.y - b.y)) +
+           ((a.z - b.z) * (a.z - b.z));
+}
+
+
+[numthreads(64,1,1)]
+void CalculatePlateDistance (uint id: SV_DispatchThreadID)
+{
+    float1 minDistance = SquareDistance(_Centers[0], _Cells[id]);
+    uint minInd = 0;
+    for (uint a = 1; a < _Centers.Length; a++)
+    {
+        float1 distance = SquareDistance(_Centers[a], _Cells[id]);
+        if (distance < minDistance)
+        {
+            minDistance = distance;
+            minInd = a;
+        }
+    }
+
+    _ClosestCenter[id] = minInd;
+}
