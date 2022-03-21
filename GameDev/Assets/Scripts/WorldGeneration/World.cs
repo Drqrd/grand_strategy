@@ -95,6 +95,8 @@ public class World : MonoBehaviour
     [SerializeField] private bool d_constructedVoronoiEdges;
     [SerializeField] private bool d_finalCell;
 
+    [Header("Compute Shaders")]
+    [SerializeField] private ComputeShader plateCS;
     // Maps
     private TectonicPlateMap plateMap = null;
     private HeightMap heightMap = null;
@@ -153,7 +155,7 @@ public class World : MonoBehaviour
     {
         parameters = new Parameters(resolution);
         parameters.customMesh = new Parameters.CustomMesh(chunks);
-        parameters.plates = new Parameters.Plates(plateDeterminationType, plateViewLevel, plateNumber, continentalVsOceanic, neighborNumber);
+        parameters.plates = new Parameters.Plates(plateDeterminationType, plateViewLevel, plateNumber, continentalVsOceanic, neighborNumber, plateCS);
         parameters.height = new Parameters.Height(h_blendDepth, continentHeightMutiplier, oceanDepthMultiplier, heightMapGradient);
         parameters.moisture = new Parameters.Moisture(m_blendDepth, moistureMapGradient);
         parameters.temperature = new Parameters.Temperature(temperatureMapGradient);
@@ -437,13 +439,14 @@ public class World : MonoBehaviour
 
         public class Plates
         {
-            public Plates(PlateDetermination pdt, PlateViewLevel pvl, int pn, float cvo, int nn)
+            public Plates(PlateDetermination pdt, PlateViewLevel pvl, int pn, float cvo, int nn, ComputeShader cs)
             {
                 plateDeterminationType = pdt;
                 plateViewLevel = pvl;
                 plateNumber = pn;
                 continentalVsOceanic = cvo;
                 neighborNumber = nn;
+                computeShader = cs;
             }
 
             public PlateDetermination plateDeterminationType { get; private set; }
@@ -451,7 +454,7 @@ public class World : MonoBehaviour
             public int plateNumber { get; private set; }
             public float continentalVsOceanic { get; private set; }
             public int neighborNumber { get; private set; }
-            public int threadNumber { get; private set; }
+            public ComputeShader computeShader { get; private set; }
         }
 
 
