@@ -1,9 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
+using System;
 using UnityEngine;
 
 using Unity.Collections;
+using Unity.Jobs;
 using Unity.Mathematics;
+using BurstCompile = Unity.Burst.BurstCompileAttribute;
 using KNN;
 
 using static WorldData;
@@ -32,6 +35,10 @@ namespace WorldGeneration.Maps
 
         private World.Parameters.Plates parameters;
 
+        static readonly int centersId = Shader.PropertyToID("_Centers"),
+                            cellsId = Shader.PropertyToID("_Cells"),
+                            closestCenterId = Shader.PropertyToID("_ClosestCenter");
+
         public TectonicPlateMap(World world, Save save) : base(world)
         {
             this.world = world;
@@ -44,7 +51,7 @@ namespace WorldGeneration.Maps
         {
             faultData = new FaultData();
             BuildTectonicPlates();
-            BuildGameObject();
+            // BuildGameObject();
         }
 
         private void BuildTectonicPlates()
@@ -55,6 +62,8 @@ namespace WorldGeneration.Maps
 
         private void BuildGameObject()
         {
+            Mesh[] meshes = GetPlateMeshes();
+
             Plate[] plates = world.worldData.plates;
 
             GameObject parentObj = new GameObject(World.MapDisplay.TectonicPlateMap.ToString());
@@ -78,7 +87,7 @@ namespace WorldGeneration.Maps
                     cell.transform.parent = plateObj.transform;
 
                     Color[] colors = new Color[plate.cells[b].mesh.vertices.Length];
-                    for (int c = 0; c < colors.Length; c++) { colors[c] = plate.color; }
+                    for (int c = 0; c < colors.Length; c++) { colors[c] = plate.cells[b].color; }
 
                     MeshFilter meshFilter = cell.AddComponent<MeshFilter>();
                     meshFilter.sharedMesh = plate.cells[b].mesh;
@@ -120,84 +129,11 @@ namespace WorldGeneration.Maps
             planetMeshRenderer.enabled = parameters.plateViewLevel == World.PlateViewLevel.Planet;
         }
 
-        /*
-        private void BuildGameObject()
+        private Mesh[] GetPlateMeshes()
         {
-            WorldData.Plate[] plates = world.worldData.plates;
-
-            GameObject parentObj = new GameObject(World.MapDisplay.TectonicPlateMap.ToString());
-            parentObj.transform.parent = world.transform;
-
-            GameObject platesObj = new GameObject("Plates");
-            platesObj.transform.parent = parentObj.transform;
-
-            GameObject faultLinesObj = new GameObject("Fault Lines");
-            faultLinesObj.transform.parent = parentObj.transform;
-
-            List<LineRenderer> lines = new List<LineRenderer>();
-            List<Color> colors = new List<Color>();
-            List<Color> weightedColors = new List<Color>();
-
-
-            for (int i = 0; i < world.worldData.plates.Length; i++)
-            {
-                GameObject obj = new GameObject("Plate " + i);
-                obj.transform.parent = platesObj.transform;
-
-                MeshFilter meshFilter = obj.AddComponent<MeshFilter>();
-                meshFilter.sharedMesh = new UnityEngine.Mesh();
-
-                meshFilter.sharedMesh.vertices = plates[i].mesh.vertices;
-                meshFilter.sharedMesh.triangles = plates[i].mesh.triangles;
-
-                Color randomColor = world.worldData.plates[i].color;
-                Color[] clr = new Color[plates[i].mesh.vertices.Length];
-
-                for (int j = 0; j < clr.Length; j++)
-                {
-                    clr[j] = randomColor;
-                }
-
-                meshFilter.sharedMesh.colors = clr;
-
-                meshFilter.sharedMesh.RecalculateNormals();
-
-                obj.AddComponent<MeshRenderer>().material = materials.map;
-
-                List<LineRenderer>[] linesList;
-                List<Color>[] color;
-
-                // Build fault lines of plate
-                // BuildBoundaries(faultLinesObj.transform, i, out linesList, out color);
-                
-
-                // Collapse line and colors
-                for (int a = 0; a < linesList.Length; a++)
-                {
-                    for (int b = 0; b < linesList[a].Count; b++)
-                    {
-                        lines.Add(linesList[a][b]);
-                        colors.Add(color[a][b]);
-                    }
-                }
-
-                // Get weighted color
-                foreach (FaultLine faultLine in world.worldData.plates[i].faultLines)
-                {
-                    Color wc = FaultLine.FColor(faultLine);
-                    for (int b = 0; b < faultLine.edges.Length; b++)
-                    {
-                        weightedColors.Add(wc);
-                    }
-                }
-
-            }
-
-            faultData.lines = lines.ToArray();
-            faultData.colors = colors.ToArray();
-            faultData.weightedColors = weightedColors.ToArray();
-             
-    }
+            Mesh[] meshes = new Mesh[world.worldData.plates.Length];
+            return meshes;
+        }
 
     /*
     private void BuildBoundaries(Transform parent, int ind, out List<LineRenderer>[] linesList, out List<Color>[] color)
@@ -253,9 +189,9 @@ namespace WorldGeneration.Maps
         return line;
     }
     */
-    
-    // Empty for now
-    public void Load()
+
+        // Empty for now
+        public void Load()
         {
             GameObject parentObj = new GameObject(World.MapDisplay.TectonicPlateMap.ToString());
             parentObj.transform.parent = world.transform;
@@ -272,7 +208,7 @@ namespace WorldGeneration.Maps
         private Cell[] GeneratePlateCenters()
         {
             HashSet<Cell> centers = new HashSet<Cell>();
-            while(centers.Count < parameters.plateNumber)
+            while (centers.Count < parameters.plateNumber)
             {
                 centers.Add(world.worldData.cells[UnityEngine.Random.Range(0, world.worldData.cells.Length - 1)]);
             }
@@ -295,49 +231,77 @@ namespace WorldGeneration.Maps
             }
 
             RandomFloodFillCells(plates);
-
-            // GetPlatePointsAndTriangles(plates);
-            // GenerateFaultLines(plates);
+            GenerateFaultLines(plates);
             return plates;
         }
 
         private void RandomFloodFillCells(Plate[] plates)
         {
             /*
-            NativeArray<float3> pointCloud = new NativeArray<float3>(world.worldData.cells.Length, Allocator.Persistent);
-            for (int a = 0; a < world.worldData.cells.Length; a++)
-            {
-                pointCloud[a] = world.worldData.cells[a].center;
-            }
-            KnnContainer kdTree = new KnnContainer(pointCloud, true, Allocator.Persistent);
+            // Compute Shader Approach
+            ComputeShader computeShader = parameters.computeShader;
+            ComputeBuffer centersBuffer = new ComputeBuffer(plates.Length, 3 * 4);
+            ComputeBuffer cellsBuffer = new ComputeBuffer(world.worldData.cells.Length, 3 * 4);
+            ComputeBuffer closestCenterBuffer = new ComputeBuffer(world.worldData.cells.Length, 4);
 
-            NativeArray<int>[] distanceArray = new NativeArray<int>[plates.Length];
-            for(int a = 0; a < distanceArray.Length; a++)
-            {
-                distanceArray[a] = new NativeArray<int>(world.worldData.cells.Length, Allocator.Persistent);
-            }
-            for(int a = 0; a < distanceArray.Length; a++)
-            {
-                kdTree.QueryKNearest(plates[a].center.center, distanceArray[a]);
-            }
+            float3[] plateCenters = new float3[plates.Length];
+            for(int a =0; a < plateCenters.Length; a++) { plateCenters[a] = plates[a].center.center; }
+            float3[] cellCenters = new float3[world.worldData.cells.Length];
+            for(int a = 0; a < cellCenters.Length; a++) { cellCenters[a] = world.worldData.cells[a].center; }
 
-            for(int a = 1; a < world.worldData.cells.Length - 1; a++)
-            {
-                for (int b = 0; b < plates.Length; b++)
-                {
-                    Cell cell = world.worldData.cells[distanceArray[b][a]];
-                    if (cell.plateId == -1) { cell.plateId = b; }
-                }
-            }
+            centersBuffer.SetData(plateCenters);
+            cellsBuffer.SetData(cellCenters);
+
+            computeShader.SetBuffer(0, centersId, centersBuffer);
+            computeShader.SetBuffer(0, cellsId, cellsBuffer);
+            computeShader.SetBuffer(0, closestCenterId, closestCenterBuffer);
+
+            computeShader.Dispatch(0,Mathf.CeilToInt(world.worldData.cells.Length / 64f),1,1);
+
+            uint[] closestCenter = new uint[world.worldData.cells.Length];
+            closestCenterBuffer.GetData(closestCenter);
+
+            for(int a = 0; a < closestCenter.Length; a++) { world.worldData.cells[a].plateId = (int)closestCenter[a]; }
+
+
+            cellsBuffer.Release();
+            centersBuffer.Release();
+            closestCenterBuffer.Release();
+
+        
+            /*
+            // Parallel Job Approach
+            NativeArray<float3> centers = new NativeArray<float3>(plates.Length, Allocator.Persistent);
+            for(int a = 0; a < plates.Length; a++) { centers[a] = plates[a].center.center; }
+
+            NativeArray<float3> points = new NativeArray<float3>(world.worldData.cells.Length, Allocator.Persistent);
+            for(int a = 0; a < world.worldData.cells.Length; a++) { points[a] = world.worldData.cells[a].center; }
+
+            NativeArray<int> closestCenter = new NativeArray<int>(world.worldData.cells.Length, Allocator.Persistent);
+
+            ParallelClosestPlateJob job = new ParallelClosestPlateJob()
+            { 
+                centers = centers,
+                points = points,
+                closestCenter = closestCenter 
+            };
+
+            JobHandle jobHandle = job.Schedule(world.worldData.cells.Length, 10);
+
+            jobHandle.Complete();
             
+            for(int a = 0; a < world.worldData.cells.Length; a++)
+            {
+                world.worldData.cells[a].plateId = closestCenter[a];
+            }
 
-            pointCloud.Dispose();
-            kdTree.Dispose();
-            for(int a = 0; a < distanceArray.Length; a++) { distanceArray[a].Dispose(); }
-            
+            centers.Dispose();
+            points.Dispose();
+            closestCenter.Dispose();
+
             */
 
-            /*
+            // Flood Fill Approach
             Queue<Cell> queue = new Queue<Cell>();
             int[] plateIndices = new int[plates.Length];
             for (int a = 0; a < plates.Length; a++) { plateIndices[a] = a; }
@@ -353,8 +317,6 @@ namespace WorldGeneration.Maps
 
             for(int a = 0; a < plateIndices.Length; a++) { queue.Enqueue(plates[plateIndices[a]].center); }
 
-            UnityEngine.Debug.Log(plateIndices.Length);
-
             int cnt = 0;
             while (queue.Count > 0 && cnt < world.parameters.resolution * 5)
             {
@@ -369,269 +331,104 @@ namespace WorldGeneration.Maps
                 }
                 cnt++;
             }
-            
-            */
 
             // Assign cells
             List<Cell>[] cells = new List<Cell>[plates.Length];
-            for(int a = 0; a < cells.Length; a++) { cells[a] = new List<Cell>(); }
+            for (int a = 0; a < cells.Length; a++) { cells[a] = new List<Cell>(); }
             for (int a = 0; a < world.worldData.cells.Length; a++)
             {
                 try { cells[world.worldData.cells[a].plateId].Add(world.worldData.cells[a]); }
                 catch { UnityEngine.Debug.LogError(world.worldData.cells[a].plateId); }
             }
-            for(int a = 0; a < cells.Length; a++)
+            for (int a = 0; a < cells.Length; a++)
             {
                 plates[a].cells = cells[a].ToArray();
             }
         }
 
-        /*
-        private void GetPlatePointsAndTriangles(Plate[] plates)
+        private void GenerateFaultLines(Plate[] plates)
         {
-            int plateInd = 0;
-            foreach (Plate plate in plates)
-            {
-                Dictionary<Point, int> map = new Dictionary<Point, int>();
-                Dictionary<int[], int> triMap = new Dictionary<int[], int>();
 
-                for (int a = 0; a < plate.triangles.Length; a++)
-                {
-                    Triangle triangle = plate.triangles[a];
-                    for (int b = 0; b < triangle.points.Length; b++)
-                    {
-                        triangle.points[b].plateId = plateInd;
-                        if (map.ContainsKey(triangle.points[b])) { map[triangle.points[b]] += 1; }
-                        else { map.Add(triangle.points[b], 1); }
-                    }
+            GetBorderCells(plates);
 
-                    triMap.Add(triangle.triangles, 1);
-                }
-
-                List<Point> points = new List<Point>();
-                foreach (KeyValuePair<Point, int> kvp in map)
-                {
-                    points.Add(kvp.Key);
-                }
-
-                List<int> triangles = new List<int>();
-                foreach (KeyValuePair<int[], int> kvp in triMap)
-                {
-                    int[] tris = kvp.Key;
-                    triangles.Add(tris[0]);
-                    triangles.Add(tris[1]);
-                    triangles.Add(tris[2]);
-                }
-
-                plate.mesh = new Plate.Mesh(world.worldData.mesh.vertices, triangles.ToArray());
-                plateInd++;
-            }
         }
 
-        // Populates the Plates with fault lines containing all edges
-        public void GenerateFaultLines(Plate[] plates)
+        private void GetBorderCells(Plate[] plates)
         {
-            Edge[][] boundaryEdges = new Edge[plates.Length][];
-
-            // Find all boundary Edges
+            HashSet<CellEdge>[] borderCellEdges = new HashSet<CellEdge>[plates.Length];
             for (int a = 0; a < plates.Length; a++)
             {
-                boundaryEdges[a] = FindBoundaryEdges(plates[a]);
-            }
-
-
-            List<Edge> edges = new List<Edge>();
-            for (int a = 0; a < boundaryEdges.Length; a++)
-            {
-                for (int b = 0; b < boundaryEdges[a].Length; b++)
+                borderCellEdges[a] = new HashSet<CellEdge>();
+                for (int b = 0; b < plates[a].cells.Length; b++)
                 {
-                    edges.Add(boundaryEdges[a][b]);
-                }
-            }
-
-            List<Edge> trueEdges = new List<Edge>();
-
-            for (int a = 0; a < edges.Count; a++)
-            {
-                Edge currEdge = edges[a];
-                for (int b = a + 1; b < edges.Count; b++)
-                {
-                    if (currEdge == edges[b])
+                    Cell cellOne = plates[a].cells[b];
+                    for (int c = 0; c < cellOne.neighbors.Length; c++)
                     {
-                        currEdge.edgeOf[1] = edges[b].edgeOf[0];
-                        currEdge.edge[1] = edges[b].edge[0];
-                        // Sort by edgeOf[0]
-                        if (currEdge.edgeOf[0] > currEdge.edgeOf[1])
+                        Cell cellTwo = plates[a].cells[b].neighbors[c];
+                        if (cellOne.plateId != cellTwo.plateId)
                         {
-                            int temp = currEdge.edgeOf[0];
-                            currEdge.edgeOf[0] = currEdge.edgeOf[1];
-                            currEdge.edgeOf[1] = temp;
+                            HashSet<Vector3> cellOneHash = new HashSet<Vector3>();
+                            for (int d = 0; d < cellOne.points.Length; d++) { cellOneHash.Add(cellOne.points[d]); }
 
-                            Point tempI = currEdge.edge[0];
-                            currEdge.edge[0] = currEdge.edge[1];
-                            currEdge.edge[1] = tempI;
+                            HashSet<Vector3> cellTwoHash = new HashSet<Vector3>();
+                            for (int d = 0; d < cellTwo.points.Length; d++) { cellTwoHash.Add(cellTwo.points[d]); }
+
+                            Vector3[] pqVerts = cellOneHash.Intersect(cellTwoHash).ToArray();
+                            int[] pqs = new int[pqVerts.Length];
+                            for (int d = 0; d < pqVerts.Length; d++)
+                            {
+                                pqs[d] = Array.IndexOf(cellOne.points, pqVerts[d]);
+                            }
+
+                            borderCellEdges[a].Add(new CellEdge(pqs[pqs.Length - 1], pqs[0], b, a));
+                            for (int d = 0; d < pqs.Length - 1; d++)
+                            {
+                                borderCellEdges[a].Add(new CellEdge(pqs[d], pqs[d + 1], b, a));
+                            }
+
+                            break;
                         }
-
-                        trueEdges.Add(currEdge);
-                        break;
                     }
                 }
             }
 
-            // Sort by edgeOf[1]
-            List<List<Edge>> edgeMap = new List<List<Edge>>();
-            edgeMap.Add(new List<Edge>());
-            int ind = 0;
-            int prevInd = trueEdges[0].edgeOf[0];
-            // Seperate edges based on index 0
-            foreach (Edge edge in trueEdges)
+            for (int a = 0; a < borderCellEdges.Length; a++)
             {
-                if (edge.edgeOf[0] != prevInd)
+                for (int b = 0; b < borderCellEdges.Length; b++)
                 {
-                    ind += 1;
-                    edgeMap.Add(new List<Edge>());
-                    prevInd = edge.edgeOf[0];
-                }
-
-                edgeMap[ind].Add(edge);
-            }
-
-            trueEdges = null;
-
-            // Sort edges based on index 1
-            foreach (List<Edge> edgeList in edgeMap)
-            {
-                edgeList.Sort(SortAscendingByIndexOne);
-            }
-
-            // Iterate through, create a fault line for each list
-            List<FaultLine> faultLines = new List<FaultLine>();
-            int[] uniqueEdge = edgeMap[0][0].edgeOf;
-            ind = 0;
-
-            // Sort edges into unique faults
-            List<List<Edge>> faultEdges = new List<List<Edge>>();
-            faultEdges.Add(new List<Edge>());
-            foreach (List<Edge> edgeList in edgeMap)
-            {
-                List<Edge> uniqueEdges = new List<Edge>();
-                foreach (Edge edge in edgeList)
-                {
-                    if (edge.edgeOf[0] != uniqueEdge[0] || edge.edgeOf[1] != uniqueEdge[1])
+                    if (a != b)
                     {
-                        uniqueEdge = edge.edgeOf;
-                        faultEdges.Add(new List<Edge>());
-                        ind++;
+                        Cell[] commonCells;
                     }
-                    faultEdges[ind].Add(edge);
-                }
-            }
-
-            foreach (List<Edge> edgeList in faultEdges)
-            {
-                Plate p1 = plates[edgeList[0].edgeOf[0]];
-                Plate p2 = plates[edgeList[0].edgeOf[1]];
-                faultLines.Add(new FaultLine(edgeList.ToArray(), p1, p2));
-            }
-
-            edgeMap = null;
-
-            // Organize fault lines into seperate lists for each plate
-            List<FaultLine>[] faultLineMap = new List<FaultLine>[plates.Length];
-            // Initialize
-            for (int a = 0; a < faultLineMap.Length; a++) { faultLineMap[a] = new List<FaultLine>(); }
-
-            // Sort fault lines
-            foreach (FaultLine faultLine in faultLines)
-            {
-                int lineOf = faultLine.edges[0].edgeOf[0];
-
-                faultLineMap[lineOf].Add(faultLine);
-            }
-
-            // Assign values
-            for (int a = 0; a < plates.Length; a++)
-            {
-                plates[a].faultLines = faultLineMap[a].ToArray();
-            }
-
-            // Make plates determine their type
-            foreach (Plate plate in plates)
-            {
-                foreach (FaultLine faultLine in plate.faultLines)
-                {
-                    // world reference for plates
-                    faultLine.DetermineFaultLineType(world);
                 }
             }
         }
 
-        // Edge custom sorting function
-        private int SortAscendingByIndexOne(Edge a, Edge b)
+        [BurstCompile]
+        struct ParallelClosestPlateJob : IJobParallelFor
         {
-            int aa = a.edgeOf[1];
-            int bb = b.edgeOf[1];
+            [ReadOnly] public NativeArray<float3> centers;
+            [ReadOnly] public NativeArray<float3> points;
+            [WriteOnly] public NativeArray<int> closestCenter;
 
-            if (aa > bb) { return 1; }
-            else if (aa == bb) { return 0; }
-            else { return -1; }
-        }
-
-
-        // Finds the boundary edges for a given plate
-
-        private Edge[] FindBoundaryEdges(Plate plate)
-        {
-
-            List<Edge> edges = new List<Edge>();
-            Dictionary<Edge, int> map = new Dictionary<Edge, int>(new EdgeCompareOverride());
-            foreach (Triangle triangle in plate.triangles)
+            public void Execute(int ind)
             {
-                Edge[] es = new Edge[] { new Edge (triangle.points[0], triangle.points[1]),
-                                                new Edge (triangle.points[1], triangle.points[2]),
-                                                new Edge (triangle.points[2], triangle.points[0]) };
-
-                Edge[] esInv = new Edge[] { new Edge (triangle.points[1], triangle.points[0]),
-                                                new Edge (triangle.points[2], triangle.points[1]),
-                                                new Edge (triangle.points[0], triangle.points[2]) };
-
-                for (int j = 0; j < es.Length; j++)
+                float minDistance = IMath.SquareDistance(centers[0], points[ind]);
+                int minInd = 0;
+                for (int a = 1; a < centers.Length; a++)
                 {
-                    if (map.ContainsKey(es[j])) { map[es[j]] += 1; }
-                    else if (map.ContainsKey(esInv[j])) { map[esInv[j]] += 1; }
-                    else { map.Add(es[j], 1); }
-                }
-            }
-
-            // Add
-            foreach (KeyValuePair<Edge, int> entry in map)
-            {
-                entry.Key.edge[0].plate = plate;
-                entry.Key.edge[1].plate = plate;
-
-                uint num = uint.Parse(string.Join("", entry.Value));
-                if (num == 1) { edges.Add(entry.Key); }
-            }
-
-            // Reorder edges so that they connect
-            for (int i = 0; i < edges.Count - 1; i++)
-            {
-                for (int j = i + 2; j < edges.Count; j++)
-                {
-                    if (edges[j].edge[0] == edges[i].edge[1])
+                    float distance = IMath.SquareDistance(centers[a], points[ind]);
+                    if (distance < minDistance)
                     {
-                        Edge tempEdge = edges[j];
-                        edges[j] = edges[i + 1];
-                        edges[i + 1] = tempEdge;
-                        continue;
+                        minDistance = distance;
+                        minInd = a;
                     }
                 }
-            }
 
-            return edges.ToArray();
-        }
-        */
+                closestCenter[ind] = minInd;
+            }
         }
     }
+}
 
 
