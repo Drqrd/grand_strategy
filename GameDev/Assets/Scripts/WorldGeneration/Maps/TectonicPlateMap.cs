@@ -380,28 +380,39 @@ namespace WorldGeneration.Maps
                                 pqs[d] = Array.IndexOf(cellOne.points, pqVerts[d]);
                             }
 
-                            borderCellEdges[a].Add(new CellEdge(pqs[pqs.Length - 1], pqs[0], b, a));
-                            for (int d = 0; d < pqs.Length - 1; d++)
+                            if (pqs.Length > 0)
                             {
-                                borderCellEdges[a].Add(new CellEdge(pqs[d], pqs[d + 1], b, a));
-                            }
+                                borderCellEdges[a].Add(new CellEdge(pqs[pqs.Length - 1], pqs[0], b, a));
+                                for (int d = 0; d < pqs.Length - 1; d++)
+                                {
+                                    borderCellEdges[a].Add(new CellEdge(pqs[d], pqs[d + 1], b, a));
+                                }
 
+                            }
                             break;
                         }
                     }
                 }
             }
 
+            UnityEngine.Debug.Log(borderCellEdges.Length);
+
+            List<CellEdge[]> plateEdges = new List<CellEdge[]>();
             for (int a = 0; a < borderCellEdges.Length; a++)
             {
-                for (int b = 0; b < borderCellEdges.Length; b++)
+                for (int b = a + 1; b < borderCellEdges.Length; b++)
                 {
-                    if (a != b)
+                    for(int c = 0; c < borderCellEdges[a].Count; c++)
                     {
-                        Cell[] commonCells;
+                        for(int d = 0; d < borderCellEdges[b].Count; d++)
+                        {
+
+                        }
                     }
                 }
             }
+
+            UnityEngine.Debug.Log(plateEdges.Count);
         }
 
         [BurstCompile]
