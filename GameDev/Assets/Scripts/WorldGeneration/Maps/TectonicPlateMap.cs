@@ -387,9 +387,7 @@ namespace WorldGeneration.Maps
                                 {
                                     borderCellEdges[a].Add(new CellEdge(pqs[d], pqs[d + 1], b, a));
                                 }
-
                             }
-                            break;
                         }
                     }
                 }
@@ -397,7 +395,13 @@ namespace WorldGeneration.Maps
 
             UnityEngine.Debug.Log(borderCellEdges.Length);
 
+            // We have HashSet of all borderCellEdges for each plate (a)
+            // See if for each plate (a), that hash set contains a plate edge for another plate
+            // If it does, construct fault line and give to each plate
+
+
             List<CellEdge[]> plateEdges = new List<CellEdge[]>();
+            int count = 0;
             for (int a = 0; a < borderCellEdges.Length; a++)
             {
                 for (int b = a + 1; b < borderCellEdges.Length; b++)
@@ -406,13 +410,13 @@ namespace WorldGeneration.Maps
                     {
                         for(int d = 0; d < borderCellEdges[b].Count; d++)
                         {
-
+                            
                         }
                     }
                 }
             }
 
-            UnityEngine.Debug.Log(plateEdges.Count);
+            UnityEngine.Debug.Log(count);
         }
 
         [BurstCompile]
